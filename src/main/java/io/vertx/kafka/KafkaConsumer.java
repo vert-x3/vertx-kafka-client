@@ -10,6 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -25,10 +26,11 @@ public class KafkaConsumer<K, V> implements ReadStream<ConsumerRecord<K, V>> {
   }
 
   private final Context context;
-  private Consumer<K, V> consumer;
-  private boolean paused;
+  private final Consumer<K, V> consumer;
+  private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
+
+  private final AtomicBoolean paused = new AtomicBoolean(true);
   private Handler<ConsumerRecord<K, V>> recordHandler;
-  private Iterator<ConsumerRecord<K, V>> current;
 
   private KafkaConsumer(Context context, Map<String, Object> props) {
     this.consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(props);
@@ -41,28 +43,31 @@ public class KafkaConsumer<K, V> implements ReadStream<ConsumerRecord<K, V>> {
   }
 
   private void schedule(long delay) {
-    if (delay > 0) {
-      context.owner().setTimer(1, v -> run());
-    } else {
-      context.runOnContext(v -> run());
+    if (!paused.get()) {
+      Handler<ConsumerRecord<K, V>> handler = recordHandler;
+      if (delay > 0) {
+        context.owner().setTimer(1, v -> run(handler));
+      } else {
+        context.runOnContext(v -> run(handler));
+      }
     }
   }
 
-  private synchronized void run() {
-    if (!paused) {
-      if (current == null || !current.hasNext()) {
-        current = consumer.poll(0).iterator();
-      }
-      if (current.hasNext()) {
-        int count = 0;
-        while (current.hasNext() && count++ < 10) {
-          ConsumerRecord<K, V> next = current.next();
-          recordHandler.handle(next);
+  private void run(Handler<ConsumerRecord<K, V>> handler) {
+    if (current == null || !current.hasNext()) {
+      current = consumer.poll(0).iterator();
+    }
+    if (current.hasNext()) {
+      int count = 0;
+      while (current.hasNext() && count++ < 10) {
+        ConsumerRecord<K, V> next = current.next();
+        if (handler != null) {
+          handler.handle(next);
         }
-        schedule(0);
-      } else {
-        schedule(1);
       }
+      schedule(0);
+    } else {
+      schedule(1);
     }
   }
 
@@ -77,26 +82,23 @@ public class KafkaConsumer<K, V> implements ReadStream<ConsumerRecord<K, V>> {
   }
 
   @Override
-  public synchronized KafkaConsumer<K, V> handler(Handler<ConsumerRecord<K, V>> handler) {
+  public KafkaConsumer<K, V> handler(Handler<ConsumerRecord<K, V>> handler) {
     recordHandler = handler;
     if (handler != null) {
-      schedule(0);
+      resume();
     }
     return this;
   }
 
   @Override
-  public synchronized KafkaConsumer<K, V> pause() {
-    if (!paused) {
-      paused = true;
-    }
+  public KafkaConsumer<K, V> pause() {
+    paused.set(true);
     return this;
   }
 
   @Override
-  public synchronized KafkaConsumer<K, V> resume() {
-    if (paused) {
-      paused = false;
+  public KafkaConsumer<K, V> resume() {
+    if (paused.compareAndSet(true, false)) {
       schedule(0);
     }
     return this;

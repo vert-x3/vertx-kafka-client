@@ -62,8 +62,8 @@ public class KafkaProducer<K, V> implements WriteStream<ProducerRecord<K, V>> {
         // Callback from IO thread
         synchronized (KafkaProducer.this) {
           size -= len;
-          long l = maxSize / 2;
-          if (size < l && drainHandler != null) {
+          long lowWaterMark = maxSize / 2;
+          if (size < lowWaterMark && drainHandler != null) {
             Handler<Void> handler = drainHandler;
             drainHandler = null;
             context.runOnContext(handler);
