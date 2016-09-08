@@ -53,6 +53,7 @@ public class KafkaConsumer<K, V> implements ReadStream<ConsumerRecord<K, V>> {
     }
   }
 
+  // Access the consumer from the event loop since the consumer is not thread safe
   private void run(Handler<ConsumerRecord<K, V>> handler) {
     if (current == null || !current.hasNext()) {
       current = consumer.poll(0).iterator();
