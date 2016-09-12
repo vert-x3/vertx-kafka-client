@@ -1,5 +1,6 @@
 package io.vertx.kafka;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
@@ -48,6 +49,10 @@ public interface KafkaConsumer<K, V> extends ReadStream<ConsumerRecord<K, V>> {
   KafkaConsumer<K, V> subscribe(Set<String> topics);
 
   KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<Void> handler);
+
+  void commit();
+
+  void commit(Handler<AsyncResult<Void>> completionHandler);
 
   default void close() {
     close(null);

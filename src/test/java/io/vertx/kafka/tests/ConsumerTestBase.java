@@ -34,12 +34,12 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @After
   public void afterTest(TestContext ctx) {
     if (consumer != null) {
-      Async closeAsync = ctx.async();
+      Async close = ctx.async();
       consumer.close(v -> {
-        closeAsync.complete();
+        close.complete();
       });
       consumer = null;
-      closeAsync.awaitSuccess(10000);
+      close.awaitSuccess(10000);
     }
     vertx.close(ctx.asyncAssertSuccess());
     super.afterTest(ctx);
@@ -49,22 +49,22 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testConsume(TestContext ctx) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
-    Async producedAsync = ctx.async();
+    Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 20000;
-    kafkaCluster.useTo().produceStrings(numMessages, producedAsync::complete,  () ->
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete,  () ->
         new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
-    producedAsync.awaitSuccess(10000);
+    batch.awaitSuccess(10000);
     Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumer = createConsumer(vertx, config);
-    Async doneAsync = ctx.async();
+    Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
     consumer.exceptionHandler(ctx::fail);
     consumer.handler(rec -> {
       if (count.decrementAndGet() == 0) {
-        doneAsync.complete();
+        done.complete();
       }
     });
     consumer.subscribe(Collections.singleton("the_topic"));
@@ -73,17 +73,17 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testPause(TestContext ctx) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
-    Async producedAsync = ctx.async();
+    Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 10000;
-    kafkaCluster.useTo().produceStrings(numMessages, producedAsync::complete,  () ->
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete,  () ->
         new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
-    producedAsync.awaitSuccess(10000);
+    batch.awaitSuccess(10000);
     Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumer = createConsumer(vertx, config);
-    Async doneAsync = ctx.async();
+    Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
     consumer.exceptionHandler(ctx::fail);
     AtomicBoolean paused = new AtomicBoolean();
@@ -99,7 +99,57 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         });
       }
       if (val == 0) {
-        doneAsync.complete();
+        done.complete();
+      }
+    });
+    consumer.subscribe(Collections.singleton("the_topic"));
+  }
+
+  @Test
+  public void testCommit(TestContext ctx) throws Exception {
+    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
+    Async batch1 = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 500;
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
+        new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch1.awaitSuccess(10000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumer = createConsumer(vertx, config);
+    consumer.exceptionHandler(ctx::fail);
+    Async commited = ctx.async();
+    AtomicInteger count = new AtomicInteger();
+    consumer.handler(rec -> {
+      int idx = count.getAndIncrement();
+      ctx.assertEquals("key-" + idx, rec.key());
+      ctx.assertEquals("value-" + idx, rec.value());
+      if (idx == numMessages - 1) {
+        consumer.commit(ctx.asyncAssertSuccess(v1 -> {
+          consumer.close(v2 -> {
+            commited.complete();
+          });
+        }));
+      }
+    });
+    consumer.subscribe(Collections.singleton("the_topic"));
+    commited.awaitSuccess(10000);
+    Async batch2 = ctx.async();
+    kafkaCluster.useTo().produceStrings(numMessages, batch2::complete,  () ->
+        new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch2.awaitSuccess(10000);
+    consumer = createConsumer(vertx, config);
+    consumer.exceptionHandler(ctx::fail);
+    Async done = ctx.async();
+    consumer.handler(rec -> {
+      int idx = count.getAndIncrement();
+      ctx.assertEquals("key-" + idx, rec.key());
+      ctx.assertEquals("value-" + idx, rec.value());
+      if (idx == numMessages * 2 - 1) {
+        consumer.commit(ctx.asyncAssertSuccess(v1 -> {
+          done.complete();
+        }));
       }
     });
     consumer.subscribe(Collections.singleton("the_topic"));

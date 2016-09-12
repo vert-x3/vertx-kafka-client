@@ -1,6 +1,8 @@
 package io.vertx.kafka.impl;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.kafka.KafkaConsumer;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -97,6 +99,28 @@ abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
       });
     }
     return this;
+  }
+
+  @Override
+  public void commit() {
+    commit(null);
+  }
+
+  @Override
+  public void commit(Handler<AsyncResult<Void>> completionHandler) {
+    executeTask(cons -> {
+      cons.commitAsync((offsets, exception) -> {
+        if (completionHandler != null) {
+          Future<Void> result;
+          if (exception != null) {
+            result = Future.failedFuture(exception);
+          } else {
+            result = Future.succeededFuture();
+          }
+          context.runOnContext(v -> completionHandler.handle(result));
+        }
+      });
+    });
   }
 
   @Override
