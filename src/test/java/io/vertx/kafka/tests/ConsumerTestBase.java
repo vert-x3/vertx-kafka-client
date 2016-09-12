@@ -59,7 +59,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumer = createConsumer(vertx, config);
-    consumer.subscribe(Collections.singleton("the_topic"));
     Async doneAsync = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
     consumer.exceptionHandler(ctx::fail);
@@ -68,6 +67,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         doneAsync.complete();
       }
     });
+    consumer.subscribe(Collections.singleton("the_topic"));
   }
 
   @Test
@@ -83,7 +83,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumer = createConsumer(vertx, config);
-    consumer.subscribe(Collections.singleton("the_topic"));
     Async doneAsync = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
     consumer.exceptionHandler(ctx::fail);
@@ -103,6 +102,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         doneAsync.complete();
       }
     });
+    consumer.subscribe(Collections.singleton("the_topic"));
   }
 
   abstract <K, V> KafkaConsumer<K, V> createConsumer(Vertx vertx, Properties config);

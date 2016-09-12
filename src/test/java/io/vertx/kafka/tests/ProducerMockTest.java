@@ -5,9 +5,8 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.kafka.impl.KafkaConsumerBase;
+import io.vertx.kafka.KafkaConsumer;
 import io.vertx.kafka.KafkaProducer;
-import io.vertx.kafka.impl.VertxThreadConsumer;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -103,7 +102,7 @@ public class ProducerMockTest {
     consumerProps.put("group.id", "test_group_2");
     consumerProps.put("enable.auto.commit", "false");
     consumerProps.put("auto.offset.reset", "earliest");
-    KafkaConsumerBase<String, String> consumer = VertxThreadConsumer.create(vertx, consumerProps);
+    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, consumerProps);
     consumer.subscribe(Collections.singleton(topic));
     AtomicInteger received = new AtomicInteger();
 

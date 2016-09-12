@@ -14,19 +14,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
+abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
 
-  protected final Context context;
-  protected final Consumer<K, V> consumer;
+  final Context context;
+  final AtomicBoolean closed = new AtomicBoolean(true);
 
   private final AtomicBoolean paused = new AtomicBoolean(true);
-  protected final AtomicBoolean closed = new AtomicBoolean(true);
   private Handler<ConsumerRecord<K, V>> recordHandler;
+  private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
 
-  protected Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
-
-  protected KafkaConsumerBase(Context context, Consumer<K, V> consumer) {
-    this.consumer = consumer;
+  KafkaConsumerBase(Context context) {
     this.context = context;
   }
 
@@ -41,7 +38,11 @@ public abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
     }
   }
 
-  protected abstract ConsumerRecords<K, V> fetchRecords();
+  protected abstract void start(java.util.function.Consumer<Consumer> task);
+
+  protected abstract void executeTask(java.util.function.Consumer<Consumer> task);
+
+  protected abstract void poll(Handler<ConsumerRecords<K, V>> handler);
 
   // Access the consumer from the event loop since the consumer is not thread safe
   private void run(Handler<ConsumerRecord<K, V>> handler) {
@@ -49,26 +50,52 @@ public abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
       return;
     }
     if (current == null || !current.hasNext()) {
-      ConsumerRecords<K, V> records = fetchRecords();
-      if (records != null && records.count() > 0) {
-        current = records.iterator();
-      } else {
-        schedule(1);
-        return;
+      poll(records -> {
+        if (records != null && records.count() > 0) {
+          current = records.iterator();
+          schedule(0);
+        } else {
+          schedule(1);
+        }
+      });
+    } else {
+      int count = 0;
+      while (current.hasNext() && count++ < 10) {
+        ConsumerRecord<K, V> next = current.next();
+        if (handler != null) {
+          handler.handle(next);
+        }
       }
+      schedule(0);
     }
-    int count = 0;
-    while (current.hasNext() && count++ < 10) {
-      ConsumerRecord<K, V> next = current.next();
-      if (handler != null) {
-        handler.handle(next);
-      }
-    }
-    schedule(0);
   }
 
-  public KafkaConsumerBase<K, V> subscribe(Set<String> topics) {
-    consumer.subscribe(topics);
+  @Override
+  public KafkaConsumer<K, V> subscribe(Set<String> topics) {
+    return subscribe(topics, null);
+  }
+
+  @Override
+  public KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<Void> handler) {
+    if (recordHandler == null) {
+      throw new IllegalStateException();
+    }
+    if (closed.compareAndSet(true, false)) {
+      start(cons -> {
+        cons.subscribe(topics);
+        resume();
+        if (handler != null) {
+          handler.handle(null);
+        }
+      });
+    } else {
+      executeTask(cons -> {
+        cons.subscribe(topics);
+        if (handler != null) {
+          handler.handle(null);
+        }
+      });
+    }
     return this;
   }
 
@@ -80,14 +107,7 @@ public abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
   @Override
   public KafkaConsumerBase<K, V> handler(Handler<ConsumerRecord<K, V>> handler) {
     recordHandler = handler;
-    if (handler != null && closed.compareAndSet(true, false)) {
-      start();
-    }
     return this;
-  }
-
-  protected void start() {
-    resume();
   }
 
   @Override

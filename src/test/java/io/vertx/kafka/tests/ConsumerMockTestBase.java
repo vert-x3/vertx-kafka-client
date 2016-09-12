@@ -39,10 +39,6 @@ public abstract class ConsumerMockTestBase {
   public void testConsume(TestContext ctx) throws Exception {
     MockConsumer<String, String> mock = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
     KafkaConsumer<String, String> consumer = createConsumer(vertx, mock);
-    consumer.subscribe(Collections.singleton("the_topic"));
-    mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
-    mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "abc", "def"));
-    mock.seek(new TopicPartition("the_topic", 0), 0);
     Async doneLatch = ctx.async();
     consumer.handler(record -> {
       ctx.assertEquals("the_topic", record.topic());
@@ -51,6 +47,11 @@ public abstract class ConsumerMockTestBase {
       ctx.assertEquals("def", record.value());
       consumer.close(v -> doneLatch.complete());
     });
+    consumer.subscribe(Collections.singleton("the_topic"), v -> {
+      mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
+      mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "abc", "def"));
+      mock.seek(new TopicPartition("the_topic", 0), 0);
+    });
   }
 
   @Test
@@ -58,12 +59,6 @@ public abstract class ConsumerMockTestBase {
     int num = 50;
     MockConsumer<String, String> mock = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
     KafkaConsumer<String, String> consumer = createConsumer(vertx, mock);
-    consumer.subscribe(Collections.singleton("the_topic"));
-    mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
-    mock.seek(new TopicPartition("the_topic", 0), 0);
-    for (int i = 0;i < num;i++) {
-      mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "key-" + i, "value-" + i));
-    }
     Async doneLatch = ctx.async();
     AtomicInteger count = new AtomicInteger();
     consumer.handler(record -> {
@@ -76,6 +71,13 @@ public abstract class ConsumerMockTestBase {
         if (val == num - 1) {
           consumer.close(v -> doneLatch.complete());
         }
+      }
+    });
+    consumer.subscribe(Collections.singleton("the_topic"), v -> {
+      mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
+      mock.seek(new TopicPartition("the_topic", 0), 0);
+      for (int i = 0;i < num;i++) {
+        mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "key-" + i, "value-" + i));
       }
     });
   }
