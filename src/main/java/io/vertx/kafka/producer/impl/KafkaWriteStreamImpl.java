@@ -1,11 +1,11 @@
-package io.vertx.kafka.impl;
+package io.vertx.kafka.producer.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.kafka.KafkaProducer;
+import io.vertx.kafka.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
@@ -17,21 +17,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
+public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
-  public static <K, V> void create(Vertx vertx, Properties config, Handler<AsyncResult<KafkaProducer<K, V>>> handler) {
-    connect(new KafkaProducerImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config)), handler);
+  public static <K, V> void create(Vertx vertx, Properties config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
+    connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config)), handler);
   }
 
-  public static <K, V> void create(Vertx vertx, Map<String, Object> config, Handler<AsyncResult<KafkaProducer<K, V>>> handler) {
-    connect(new KafkaProducerImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config)), handler);
+  public static <K, V> void create(Vertx vertx, Map<String, Object> config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
+    connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config)), handler);
   }
 
-  public static <K, V> void create(Vertx vertx, Producer<K, V> producer, Handler<AsyncResult<KafkaProducer<K, V>>> handler) {
-    connect(new KafkaProducerImpl<>(vertx.getOrCreateContext(), producer), handler);
+  public static <K, V> void create(Vertx vertx, Producer<K, V> producer, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
+    connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), producer), handler);
   }
 
-  private static <K, V> void connect(KafkaProducerImpl<K, V> producer, Handler<AsyncResult<KafkaProducer<K, V>>> handler) {
+  private static <K, V> void connect(KafkaWriteStreamImpl<K, V> producer, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
     AtomicBoolean done = new AtomicBoolean();
     Context ctx = producer.context;
     ctx.owner().setTimer(2000, id -> {
@@ -55,7 +55,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   private Handler<Throwable> exceptionHandler;
   private final Context context;
 
-  private KafkaProducerImpl(Context context, Producer<K, V> producer) {
+  private KafkaWriteStreamImpl(Context context, Producer<K, V> producer) {
     this.producer = producer;
     this.context = context;
   }
@@ -71,14 +71,14 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public synchronized KafkaProducerImpl<K, V> write(ProducerRecord<K, V> record) {
+  public synchronized KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record) {
     int len = len(record.value());
     size += len;
     try {
       // Non blocking
       producer.send(record, (metadata, err) -> {
         // Callback from IO thread
-        synchronized (KafkaProducerImpl.this) {
+        synchronized (KafkaWriteStreamImpl.this) {
           size -= len;
           long lowWaterMark = maxSize / 2;
           if (size < lowWaterMark && drainHandler != null) {
@@ -99,7 +99,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducerImpl<K, V> setWriteQueueMaxSize(int size) {
+  public KafkaWriteStreamImpl<K, V> setWriteQueueMaxSize(int size) {
     maxSize = size;
     return this;
   }
@@ -110,7 +110,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public synchronized KafkaProducerImpl<K, V> drainHandler(Handler<Void> handler) {
+  public synchronized KafkaWriteStreamImpl<K, V> drainHandler(Handler<Void> handler) {
     drainHandler = handler;
     return this;
   }
@@ -120,7 +120,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducerImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
+  public KafkaWriteStreamImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
     exceptionHandler = handler;
     return this;
   }

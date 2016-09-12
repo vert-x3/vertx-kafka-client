@@ -4,8 +4,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.kafka.*;
-import io.vertx.kafka.KafkaConsumer;
+import io.vertx.kafka.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.After;
@@ -16,7 +15,6 @@ import org.junit.runner.RunWith;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static javafx.scene.input.KeyCode.V;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
@@ -38,7 +36,7 @@ public abstract class ConsumerMockTestBase {
   @Test
   public void testConsume(TestContext ctx) throws Exception {
     MockConsumer<String, String> mock = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-    KafkaConsumer<String, String> consumer = createConsumer(vertx, mock);
+    KafkaReadStream<String, String> consumer = createConsumer(vertx, mock);
     Async doneLatch = ctx.async();
     consumer.handler(record -> {
       ctx.assertEquals("the_topic", record.topic());
@@ -58,7 +56,7 @@ public abstract class ConsumerMockTestBase {
   public void testBatch(TestContext ctx) throws Exception {
     int num = 50;
     MockConsumer<String, String> mock = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-    KafkaConsumer<String, String> consumer = createConsumer(vertx, mock);
+    KafkaReadStream<String, String> consumer = createConsumer(vertx, mock);
     Async doneLatch = ctx.async();
     AtomicInteger count = new AtomicInteger();
     consumer.handler(record -> {
@@ -82,5 +80,5 @@ public abstract class ConsumerMockTestBase {
     });
   }
 
-  abstract <K, V> KafkaConsumer<K, V> createConsumer(Vertx vertx, Consumer<K, V> consumer);
+  abstract <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Consumer<K, V> consumer);
 }

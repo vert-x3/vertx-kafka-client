@@ -5,7 +5,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.KafkaProducer;
+import io.vertx.kafka.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ProducerTest extends KafkaClusterTestBase {
 
   private Vertx vertx;
-  private KafkaProducer<String, String> producer;
+  private KafkaWriteStream<String, String> producer;
 
   @Before
   public void beforeTest() {
@@ -50,7 +50,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    producer = producer(fut -> KafkaProducer.create(Vertx.vertx(), config, fut.completer()));
+    producer = producer(fut -> KafkaWriteStream.create(Vertx.vertx(), config, fut.completer()));
     producer.exceptionHandler(ctx::fail);
     int numMessages = 100000;
     for (int i = 0;i < numMessages;i++) {
@@ -77,7 +77,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    KafkaProducer.create(Vertx.vertx(), props, ctx.asyncAssertFailure());
+    KafkaWriteStream.create(Vertx.vertx(), props, ctx.asyncAssertFailure());
   }
 
   @Test
@@ -87,6 +87,6 @@ public class ProducerTest extends KafkaClusterTestBase {
     props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    KafkaProducer.create(Vertx.vertx(), props, ctx.asyncAssertFailure());
+    KafkaWriteStream.create(Vertx.vertx(), props, ctx.asyncAssertFailure());
   }
 }

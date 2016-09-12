@@ -1,8 +1,8 @@
 package io.vertx.kafka.tests;
 
 import io.vertx.core.Vertx;
-import io.vertx.kafka.ConsumerOptions;
-import io.vertx.kafka.KafkaConsumer;
+import io.vertx.kafka.consumer.ConsumerOptions;
+import io.vertx.kafka.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
 
 /**
@@ -11,7 +11,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 public class WorkerThreadConsumerMockTest extends ConsumerMockTestBase {
 
   @Override
-  <K, V> KafkaConsumer<K, V> createConsumer(Vertx vertx, Consumer<K, V> consumer) {
-    return KafkaConsumer.create(vertx, new ConsumerOptions().setWorkerThread(true), consumer);
+  <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Consumer<K, V> consumer) {
+    return KafkaReadStream.create(vertx, new ConsumerOptions().setWorkerThread(true), consumer);
   }
 }

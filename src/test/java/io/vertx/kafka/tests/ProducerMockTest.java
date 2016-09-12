@@ -5,8 +5,8 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.kafka.KafkaConsumer;
-import io.vertx.kafka.KafkaProducer;
+import io.vertx.kafka.consumer.KafkaReadStream;
+import io.vertx.kafka.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -44,7 +44,7 @@ public class ProducerMockTest {
   @Test
   public void testProducerDrain(TestContext ctx) throws Exception {
     MockProducer<String, String> mock = new MockProducer<>(false, new StringSerializer(), new StringSerializer());
-    KafkaProducer<String, String> producer = ProducerTest.producer(fut -> KafkaProducer.create(Vertx.vertx(), mock, fut.completer()));
+    KafkaWriteStream<String, String> producer = ProducerTest.producer(fut -> KafkaWriteStream.create(Vertx.vertx(), mock, fut.completer()));
     int sent = 0;
     while (!producer.writeQueueFull()) {
       producer.write(new ProducerRecord<>("the_topic", 0, 0L, "abc", "def"));
@@ -67,7 +67,7 @@ public class ProducerMockTest {
   @Test
   public void testProducerError(TestContext ctx) throws Exception {
     MockProducer<String, String> mock = new MockProducer<>(false, new StringSerializer(), new StringSerializer());
-    KafkaProducer<String, String> producer = ProducerTest.producer(fut -> KafkaProducer.create(Vertx.vertx(), mock, fut.completer()));
+    KafkaWriteStream<String, String> producer = ProducerTest.producer(fut -> KafkaWriteStream.create(Vertx.vertx(), mock, fut.completer()));
     producer.write(new ProducerRecord<>("the_topic", 0, 0L, "abc", "def"));
     RuntimeException cause = new RuntimeException();
     Async async = ctx.async();
@@ -87,7 +87,7 @@ public class ProducerMockTest {
     Map<String, Object> producerProps = new HashMap<>();
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");;
 //    props.put(ProducerConfig.ACKS_CONFIG, "all");
-    KafkaProducer<String, String> producer = ProducerTest.producer(fut -> KafkaProducer.create(vertx, producerProps, fut.completer()));
+    KafkaWriteStream<String, String> producer = ProducerTest.producer(fut -> KafkaWriteStream.create(vertx, producerProps, fut.completer()));
     for (int i = 0;i < numMsg;i++) {
       producer.write(new ProducerRecord<>(topic, 0, 0L, "the_key_" + i, "the_value_" + i));
     }
@@ -102,7 +102,7 @@ public class ProducerMockTest {
     consumerProps.put("group.id", "test_group_2");
     consumerProps.put("enable.auto.commit", "false");
     consumerProps.put("auto.offset.reset", "earliest");
-    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, consumerProps);
+    KafkaReadStream<String, String> consumer = KafkaReadStream.create(vertx, consumerProps);
     consumer.subscribe(Collections.singleton(topic));
     AtomicInteger received = new AtomicInteger();
 

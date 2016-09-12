@@ -1,10 +1,10 @@
-package io.vertx.kafka.impl;
+package io.vertx.kafka.consumer.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.kafka.KafkaConsumer;
+import io.vertx.kafka.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
+abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
 
   final Context context;
   final AtomicBoolean closed = new AtomicBoolean(true);
@@ -25,7 +25,7 @@ abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
   private Handler<ConsumerRecord<K, V>> recordHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
 
-  KafkaConsumerBase(Context context) {
+  KafkaReadStreamBase(Context context) {
     this.context = context;
   }
 
@@ -73,12 +73,12 @@ abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> subscribe(Set<String> topics) {
+  public KafkaReadStream<K, V> subscribe(Set<String> topics) {
     return subscribe(topics, null);
   }
 
   @Override
-  public KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<Void> handler) {
+  public KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<Void> handler) {
     if (recordHandler == null) {
       throw new IllegalStateException();
     }
@@ -124,24 +124,24 @@ abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumerBase<K, V> exceptionHandler(Handler<Throwable> handler) {
+  public KafkaReadStreamBase<K, V> exceptionHandler(Handler<Throwable> handler) {
     return this;
   }
 
   @Override
-  public KafkaConsumerBase<K, V> handler(Handler<ConsumerRecord<K, V>> handler) {
+  public KafkaReadStreamBase<K, V> handler(Handler<ConsumerRecord<K, V>> handler) {
     recordHandler = handler;
     return this;
   }
 
   @Override
-  public KafkaConsumerBase<K, V> pause() {
+  public KafkaReadStreamBase<K, V> pause() {
     paused.set(true);
     return this;
   }
 
   @Override
-  public KafkaConsumerBase<K, V> resume() {
+  public KafkaReadStreamBase<K, V> resume() {
     if (paused.compareAndSet(true, false)) {
       schedule(0);
     }
@@ -149,7 +149,7 @@ abstract class KafkaConsumerBase<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumerBase<K, V> endHandler(Handler<Void> endHandler) {
+  public KafkaReadStreamBase<K, V> endHandler(Handler<Void> endHandler) {
     return this;
   }
 

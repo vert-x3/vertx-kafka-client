@@ -1,8 +1,8 @@
 package io.vertx.kafka.tests;
 
 import io.vertx.core.Vertx;
-import io.vertx.kafka.ConsumerOptions;
-import io.vertx.kafka.KafkaConsumer;
+import io.vertx.kafka.consumer.ConsumerOptions;
+import io.vertx.kafka.consumer.KafkaReadStream;
 
 import java.util.Properties;
 
@@ -12,7 +12,7 @@ import java.util.Properties;
 public class WorkerThreadConsumerTest extends ConsumerTestBase {
 
   @Override
-  <K, V> KafkaConsumer<K, V> createConsumer(Vertx vertx, Properties config) {
-    return KafkaConsumer.create(vertx, new ConsumerOptions().setWorkerThread(true), config);
+  <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Properties config) {
+    return KafkaReadStream.create(vertx, new ConsumerOptions().setWorkerThread(true), config);
   }
 }

@@ -1,4 +1,4 @@
-package io.vertx.kafka.impl;
+package io.vertx.kafka.consumer.impl;
 
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class WorkerThreadConsumer<K, V> extends KafkaConsumerBase<K, V> {
+public class WorkerThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
 
 
   private final Consumer<K, V> consumer;

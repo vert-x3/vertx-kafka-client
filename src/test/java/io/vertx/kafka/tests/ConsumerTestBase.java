@@ -4,7 +4,7 @@ import io.debezium.kafka.KafkaCluster;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.KafkaConsumer;
+import io.vertx.kafka.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   private Vertx vertx;
-  private KafkaConsumer<String, String> consumer;
+  private KafkaReadStream<String, String> consumer;
 
   @Before
   public void beforeTest() {
@@ -155,5 +155,5 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.subscribe(Collections.singleton("the_topic"));
   }
 
-  abstract <K, V> KafkaConsumer<K, V> createConsumer(Vertx vertx, Properties config);
+  abstract <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Properties config);
 }
