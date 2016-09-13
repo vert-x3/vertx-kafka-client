@@ -220,6 +220,40 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.subscribe(Collections.singleton("the_topic"));
   }
 
+  @Test
+  public void testSeek(TestContext ctx) throws Exception {
+    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
+    kafkaCluster.createTopic("the_topic", 2, 1);
+    Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+    Async batch1 = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 500;
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
+        new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch1.awaitSuccess(10000);
+    AtomicInteger count = new AtomicInteger(numMessages);
+    Async done = ctx.async();
+    consumer.handler(record -> {
+      int dec = count.decrementAndGet();
+      if (dec >= 0) {
+        ctx.assertEquals("key-" + (numMessages - dec - 1), record.key());
+      } else {
+        ctx.assertEquals("key-" + (-1 - dec), record.key());
+      }
+      if (dec == 0) {
+        consumer.seek(new TopicPartition("the_topic", 0), 0);
+      } else if (dec == -numMessages) {
+        done.complete();
+      }
+    });
+    consumer.subscribe(Collections.singleton("the_topic"));
+
+  }
+
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {
