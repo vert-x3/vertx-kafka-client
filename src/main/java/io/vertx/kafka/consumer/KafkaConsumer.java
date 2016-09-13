@@ -39,7 +39,7 @@ public interface KafkaConsumer extends ReadStream<KafkaConsumerRecord> {
 
   KafkaConsumer subscribe(Set<String> topics);
 
-  KafkaConsumer subscribe(Set<String> topics, Handler<Void> handler);
+  KafkaConsumer subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler);
 
   void commit();
 

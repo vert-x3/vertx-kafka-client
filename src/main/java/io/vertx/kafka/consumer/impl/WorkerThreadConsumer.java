@@ -1,6 +1,8 @@
 package io.vertx.kafka.consumer.impl;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -24,14 +26,26 @@ public class WorkerThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
   }
 
   @Override
-  protected void start(java.util.function.Consumer<Consumer> task) {
+  protected void start(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler) {
     worker = Executors.newSingleThreadExecutor();
-    executeTask(task);
+    executeTask(task, completionHandler);
   }
 
   @Override
-  protected void executeTask(java.util.function.Consumer<Consumer> task) {
-    worker.submit(() -> task.accept(consumer));
+  protected void executeTask(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler) {
+    worker.submit(() -> {
+      try {
+        task.accept(consumer);
+      } catch (Exception e) {
+        if (completionHandler != null) {
+          context.runOnContext(v -> completionHandler.handle(Future.failedFuture(e)));
+        }
+        return;
+      }
+      if (completionHandler != null) {
+        context.runOnContext(v -> completionHandler.handle(Future.succeededFuture()));
+      }
+    });
   }
 
   @Override
@@ -46,6 +60,8 @@ public class WorkerThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
           ConsumerRecords<K, V> records = consumer.poll(1000);
           if (records != null && records.count() > 0) {
             context.runOnContext(v -> handler.handle(records));
+          } else {
+            poll(handler);
           }
         } catch (WakeupException ignore) {
         }

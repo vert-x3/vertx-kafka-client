@@ -8,7 +8,9 @@ import io.vertx.kafka.consumer.impl.WorkerThreadConsumer;
 import io.vertx.kafka.consumer.impl.EventLoopThreadConsumer;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.TopicPartition;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -46,9 +48,17 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
     return create(vertx, new ConsumerOptions(), consumer);
   }
 
+  KafkaReadStream<K, V> seek(TopicPartition partition, long offset);
+
+  KafkaReadStream<K, V> seek(TopicPartition partition, long offset, Handler<AsyncResult<Void>> completionHandler);
+
+  KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Collection<TopicPartition>> handler);
+
+  KafkaReadStream<K, V> partitionsAssignedHandler(Handler<Collection<TopicPartition>> handler);
+
   KafkaReadStream<K, V> subscribe(Set<String> topics);
 
-  KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<Void> handler);
+  KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler);
 
   void commit();
 

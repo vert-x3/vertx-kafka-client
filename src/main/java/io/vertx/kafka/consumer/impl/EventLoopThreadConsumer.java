@@ -1,6 +1,8 @@
 package io.vertx.kafka.consumer.impl;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -18,13 +20,23 @@ public class EventLoopThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
   }
 
   @Override
-  protected void start(java.util.function.Consumer<Consumer> task) {
-    task.accept(consumer);
+  protected void start(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler) {
+    executeTask(task, completionHandler);
   }
 
   @Override
-  protected void executeTask(java.util.function.Consumer<Consumer> task) {
-    task.accept(consumer);
+  protected void executeTask(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler) {
+    try {
+      task.accept(consumer);
+    } catch (Exception e) {
+      if (completionHandler != null) {
+        completionHandler.handle(Future.failedFuture(e));
+      }
+      return;
+    }
+    if (completionHandler != null) {
+      completionHandler.handle(Future.succeededFuture());
+    }
   }
 
   @Override

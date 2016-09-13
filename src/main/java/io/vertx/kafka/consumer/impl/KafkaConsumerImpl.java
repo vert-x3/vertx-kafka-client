@@ -60,7 +60,7 @@ public class KafkaConsumerImpl implements KafkaConsumer {
   }
 
   @Override
-  public KafkaConsumer subscribe(Set<String> topics, Handler<Void> handler) {
+  public KafkaConsumer subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler) {
     stream.subscribe(topics, handler);
     return this;
   }

@@ -9,7 +9,7 @@ import io.vertx.core.json.JsonObject;
 @DataObject
 public class ConsumerOptions {
 
-  private boolean workerThread = false;
+  private boolean workerThread = true;
 
   public ConsumerOptions() {
   }

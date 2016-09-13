@@ -6,9 +6,12 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.kafka.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.common.TopicPartition;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,6 +27,29 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   private final AtomicBoolean paused = new AtomicBoolean(true);
   private Handler<ConsumerRecord<K, V>> recordHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
+  private Handler<Collection<TopicPartition>> partitionsRevokedHandler;
+  private Handler<Collection<TopicPartition>> partitionsAssignedHandler;
+
+  private final ConsumerRebalanceListener rebalanceListener =  new ConsumerRebalanceListener() {
+    @Override
+    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+      Handler<Collection<TopicPartition>> handler = partitionsRevokedHandler;
+      if (handler != null) {
+        context.runOnContext(v -> {
+          handler.handle(partitions);
+        });
+      }
+    }
+    @Override
+    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+      Handler<Collection<TopicPartition>> handler = partitionsAssignedHandler;
+      if (handler != null) {
+        context.runOnContext(v -> {
+          handler.handle(partitions);
+        });
+      }
+    }
+  };
 
   KafkaReadStreamBase(Context context) {
     this.context = context;
@@ -40,9 +66,9 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
     }
   }
 
-  protected abstract void start(java.util.function.Consumer<Consumer> task);
+  protected abstract void start(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler);
 
-  protected abstract void executeTask(java.util.function.Consumer<Consumer> task);
+  protected abstract void executeTask(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler);
 
   protected abstract void poll(Handler<ConsumerRecords<K, V>> handler);
 
@@ -73,30 +99,45 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public KafkaReadStream<K, V> seek(TopicPartition partition, long offset) {
+    return seek(partition, offset, null);
+  }
+
+  @Override
+  public KafkaReadStream<K, V> seek(TopicPartition partition, long offset, Handler<AsyncResult<Void>> completionHandler) {
+    executeTask(cons -> cons.seek(partition, offset), completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Collection<TopicPartition>> handler) {
+    partitionsRevokedHandler = handler;
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> partitionsAssignedHandler(Handler<Collection<TopicPartition>> handler) {
+    partitionsAssignedHandler = handler;
+    return this;
+  }
+
+  @Override
   public KafkaReadStream<K, V> subscribe(Set<String> topics) {
     return subscribe(topics, null);
   }
 
   @Override
-  public KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<Void> handler) {
+  public KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler) {
     if (recordHandler == null) {
       throw new IllegalStateException();
     }
     if (closed.compareAndSet(true, false)) {
       start(cons -> {
-        cons.subscribe(topics);
+        cons.subscribe(topics, rebalanceListener);
         resume();
-        if (handler != null) {
-          handler.handle(null);
-        }
-      });
+      }, handler);
     } else {
-      executeTask(cons -> {
-        cons.subscribe(topics);
-        if (handler != null) {
-          handler.handle(null);
-        }
-      });
+      executeTask(cons -> cons.subscribe(topics, rebalanceListener), handler);
     }
     return this;
   }
@@ -108,19 +149,17 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public void commit(Handler<AsyncResult<Void>> completionHandler) {
-    executeTask(cons -> {
-      cons.commitAsync((offsets, exception) -> {
-        if (completionHandler != null) {
-          Future<Void> result;
-          if (exception != null) {
-            result = Future.failedFuture(exception);
-          } else {
-            result = Future.succeededFuture();
-          }
-          context.runOnContext(v -> completionHandler.handle(result));
+    executeTask(cons -> cons.commitAsync((offsets, exception) -> {
+      if (completionHandler != null) {
+        Future<Void> result;
+        if (exception != null) {
+          result = Future.failedFuture(exception);
+        } else {
+          result = Future.succeededFuture();
         }
-      });
-    });
+        context.runOnContext(v -> completionHandler.handle(result));
+      }
+    }), null);
   }
 
   @Override
