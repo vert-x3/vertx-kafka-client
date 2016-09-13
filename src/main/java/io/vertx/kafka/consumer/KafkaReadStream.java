@@ -8,6 +8,7 @@ import io.vertx.kafka.consumer.impl.WorkerThreadConsumer;
 import io.vertx.kafka.consumer.impl.EventLoopThreadConsumer;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 
 import java.util.Collection;
@@ -48,9 +49,11 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
     return create(vertx, new ConsumerOptions(), consumer);
   }
 
-  KafkaReadStream<K, V> seek(TopicPartition partition, long offset);
+  void commited(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
 
-  KafkaReadStream<K, V> seek(TopicPartition partition, long offset, Handler<AsyncResult<Void>> completionHandler);
+  KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset);
+
+  KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler);
 
   KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Collection<TopicPartition>> handler);
 
@@ -62,7 +65,11 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
   void commit();
 
-  void commit(Handler<AsyncResult<Void>> completionHandler);
+  void commit(Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
+
+  void commit(Map<TopicPartition, OffsetAndMetadata> offsets);
+
+  void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
 
   default void close() {
     close(null);

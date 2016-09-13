@@ -9,10 +9,13 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.common.TopicPartition;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -66,9 +69,9 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
     }
   }
 
-  protected abstract void start(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler);
+  protected abstract <T> void start(java.util.function.BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler);
 
-  protected abstract void executeTask(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler);
+  protected abstract <T> void executeTask(java.util.function.BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler);
 
   protected abstract void poll(Handler<ConsumerRecords<K, V>> handler);
 
@@ -99,13 +102,28 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> seek(TopicPartition partition, long offset) {
-    return seek(partition, offset, null);
+  public void commited(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler) {
+    executeTask((cons, fut) -> {
+      OffsetAndMetadata result = cons.committed(topicPartition);
+      if (fut != null) {
+        fut.complete(result);
+      }
+    }, handler);
   }
 
   @Override
-  public KafkaReadStream<K, V> seek(TopicPartition partition, long offset, Handler<AsyncResult<Void>> completionHandler) {
-    executeTask(cons -> cons.seek(partition, offset), completionHandler);
+  public KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset) {
+    return seek(topicPartition, offset, null);
+  }
+
+  @Override
+  public KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler) {
+    executeTask((cons, fut) -> {
+      cons.seek(topicPartition, offset);
+      if (fut != null) {
+        fut.complete();
+      }
+    }, completionHandler);
     return this;
   }
 
@@ -132,34 +150,57 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
       throw new IllegalStateException();
     }
     if (closed.compareAndSet(true, false)) {
-      start(cons -> {
+      start((cons, fut) -> {
         cons.subscribe(topics, rebalanceListener);
         resume();
+        if (fut != null) {
+          fut.complete();
+        }
       }, handler);
     } else {
-      executeTask(cons -> cons.subscribe(topics, rebalanceListener), handler);
+      executeTask((cons, fut) -> {
+        cons.subscribe(topics, rebalanceListener);
+        if (fut != null) {
+          fut.complete();
+        }
+      }, handler);
     }
     return this;
   }
 
   @Override
   public void commit() {
-    commit(null);
+    commit((Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>>) null);
   }
 
   @Override
-  public void commit(Handler<AsyncResult<Void>> completionHandler) {
-    executeTask(cons -> cons.commitAsync((offsets, exception) -> {
-      if (completionHandler != null) {
-        Future<Void> result;
-        if (exception != null) {
-          result = Future.failedFuture(exception);
-        } else {
-          result = Future.succeededFuture();
+  public void commit(Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
+    commit(null, completionHandler);
+  }
+
+  @Override
+  public void commit(Map<TopicPartition, OffsetAndMetadata> offsets) {
+    commit(offsets, null);
+  }
+
+  @Override
+  public void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
+    executeTask((cons, fut) -> {
+      OffsetCommitCallback callback = (result, exception) -> {
+        if (fut != null) {
+          if (exception != null) {
+            fut.fail(exception);
+          } else {
+            fut.complete(result);
+          }
         }
-        context.runOnContext(v -> completionHandler.handle(result));
+      };
+      if (offsets == null) {
+        cons.commitAsync(callback);
+      } else {
+        cons.commitAsync(offsets, callback);
       }
-    }), null);
+    }, completionHandler);
   }
 
   @Override

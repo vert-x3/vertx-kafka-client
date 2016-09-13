@@ -1,6 +1,7 @@
 package io.vertx.kafka.consumer.impl;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.kafka.consumer.KafkaConsumer;
 import io.vertx.kafka.consumer.KafkaConsumerRecord;
@@ -72,7 +73,13 @@ public class KafkaConsumerImpl implements KafkaConsumer {
 
   @Override
   public void commit(Handler<AsyncResult<Void>> completionHandler) {
-    stream.commit(completionHandler);
+    stream.commit(completionHandler != null ? ar -> {
+      if (ar.succeeded()) {
+        completionHandler.handle(Future.succeededFuture());
+      } else {
+        completionHandler.handle(Future.failedFuture(ar.cause()));
+      }
+    } : null);
   }
 
   @Override

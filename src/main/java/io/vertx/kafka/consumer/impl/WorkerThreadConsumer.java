@@ -10,6 +10,7 @@ import org.apache.kafka.common.errors.WakeupException;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiConsumer;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -26,24 +27,27 @@ public class WorkerThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
   }
 
   @Override
-  protected void start(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler) {
+  protected <T> void start(BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler) {
     worker = Executors.newSingleThreadExecutor();
-    executeTask(task, completionHandler);
+    executeTask(task, handler);
   }
 
   @Override
-  protected void executeTask(java.util.function.Consumer<Consumer> task, Handler<AsyncResult<Void>> completionHandler) {
+  protected <T> void executeTask(BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler) {
     worker.submit(() -> {
-      try {
-        task.accept(consumer);
-      } catch (Exception e) {
-        if (completionHandler != null) {
-          context.runOnContext(v -> completionHandler.handle(Future.failedFuture(e)));
-        }
-        return;
+      Future<T> fut;
+      if (handler != null) {
+        fut = Future.future();
+        fut.setHandler(handler);
+      } else {
+        fut = null;
       }
-      if (completionHandler != null) {
-        context.runOnContext(v -> completionHandler.handle(Future.succeededFuture()));
+      try {
+        task.accept(consumer, fut);
+      } catch (Exception e) {
+        if (fut != null && !fut.isComplete()) {
+          fut.fail(e);
+        }
       }
     });
   }
@@ -73,7 +77,9 @@ public class WorkerThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
   protected void doClose(Handler<Void> completionHandler) {
     worker.submit(() -> {
       consumer.close();
-      context.runOnContext(v -> completionHandler.handle(null));
+      if (completionHandler != null) {
+        context.runOnContext(completionHandler);
+      }
     });
     consumer.wakeup();
   }
