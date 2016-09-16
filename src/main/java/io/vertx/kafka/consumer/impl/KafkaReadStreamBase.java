@@ -102,6 +102,38 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions) {
+    return pause(topicPartitions, null);
+  }
+
+  @Override
+  public KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    executeTask((cons, fut) -> {
+      cons.pause(topicPartitions);
+      if (fut != null) {
+        fut.complete();
+      }
+    }, completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions) {
+    return resume(topicPartitions, null);
+  }
+
+  @Override
+  public KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    executeTask((cons, fut) -> {
+      cons.resume(topicPartitions);
+      if (fut != null) {
+        fut.complete();
+      }
+    }, completionHandler);
+    return this;
+  }
+
+  @Override
   public void commited(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler) {
     executeTask((cons, fut) -> {
       OffsetAndMetadata result = cons.committed(topicPartition);
