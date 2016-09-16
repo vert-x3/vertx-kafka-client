@@ -112,6 +112,38 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions) {
+    return seekToEnd(topicPartitions, null);
+  }
+
+  @Override
+  public KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    executeTask((cons, fut) -> {
+      cons.seekToEnd(topicPartitions);
+      if (fut != null) {
+        fut.complete();
+      }
+    }, completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions) {
+    return seekToBeginning(topicPartitions, null);
+  }
+
+  @Override
+  public KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    executeTask((cons, fut) -> {
+      cons.seekToBeginning(topicPartitions);
+      if (fut != null) {
+        fut.complete();
+      }
+    }, completionHandler);
+    return this;
+  }
+
+  @Override
   public KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset) {
     return seek(topicPartition, offset, null);
   }

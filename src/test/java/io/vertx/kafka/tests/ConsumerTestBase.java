@@ -3,7 +3,6 @@ package io.vertx.kafka.tests;
 import io.debezium.kafka.KafkaCluster;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.consumer.KafkaReadStream;
@@ -18,14 +17,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -273,6 +269,29 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testSeek(TestContext ctx) throws Exception {
+    int numMessages = 500;
+    testSeek(numMessages, ctx, () -> {
+      consumer.seek(new TopicPartition("the_topic", 0), 0);
+    }, -numMessages);
+  }
+
+  @Test
+  public void testSeekToBeginning(TestContext ctx) throws Exception {
+    int numMessages = 500;
+    testSeek(numMessages, ctx, () -> {
+      consumer.seekToBeginning(Collections.singleton(new TopicPartition("the_topic", 0)));
+    }, -numMessages);
+  }
+
+  @Test
+  public void testSeekToEnd(TestContext ctx) throws Exception {
+    int numMessages = 500;
+    testSeek(numMessages, ctx, () -> {
+      consumer.seekToEnd(Collections.singleton(new TopicPartition("the_topic", 0)));
+    }, 0);
+  }
+
+  private void testSeek(int numMessages, TestContext ctx, Runnable seeker, int abc) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
     kafkaCluster.createTopic("the_topic", 2, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
@@ -282,7 +301,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer = createConsumer(context, config);
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
-    int numMessages = 500;
     kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
         new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
@@ -296,8 +314,9 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         ctx.assertEquals("key-" + (-1 - dec), record.key());
       }
       if (dec == 0) {
-        consumer.seek(new TopicPartition("the_topic", 0), 0);
-      } else if (dec == -numMessages) {
+        seeker.run();
+      }
+      if (dec == abc) {
         done.complete();
       }
     });

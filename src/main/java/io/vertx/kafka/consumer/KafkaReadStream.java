@@ -51,6 +51,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
   void commited(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
 
+  KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions);
+
+  KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+
+  KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions);
+
+  KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+
   KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset);
 
   KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler);
