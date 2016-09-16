@@ -1,6 +1,6 @@
-package io.vertx.kafka.consumer.impl;
+package io.vertx.kafka.client.consumer.impl;
 
-import io.vertx.kafka.consumer.KafkaConsumerRecord;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.record.TimestampType;
 

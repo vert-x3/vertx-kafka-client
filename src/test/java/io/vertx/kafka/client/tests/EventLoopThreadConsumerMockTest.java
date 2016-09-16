@@ -1,8 +1,8 @@
-package io.vertx.kafka.tests;
+package io.vertx.kafka.client.tests;
 
 import io.vertx.core.Vertx;
-import io.vertx.kafka.consumer.ConsumerOptions;
-import io.vertx.kafka.consumer.KafkaReadStream;
+import io.vertx.kafka.client.consumer.ConsumerOptions;
+import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
 
 /**

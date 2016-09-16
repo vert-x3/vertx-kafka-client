@@ -1,4 +1,4 @@
-package io.vertx.kafka.consumer;
+package io.vertx.kafka.client.consumer;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;

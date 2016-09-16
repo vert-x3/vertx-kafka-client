@@ -1,12 +1,12 @@
-package io.vertx.kafka.tests;
+package io.vertx.kafka.client.tests;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.kafka.consumer.KafkaReadStream;
-import io.vertx.kafka.producer.KafkaWriteStream;
+import io.vertx.kafka.client.consumer.KafkaReadStream;
+import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;

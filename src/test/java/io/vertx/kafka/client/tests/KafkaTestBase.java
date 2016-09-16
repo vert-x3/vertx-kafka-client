@@ -1,10 +1,10 @@
-package io.vertx.kafka.tests;
+package io.vertx.kafka.client.tests;
 
 import io.vertx.core.Future;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.consumer.KafkaReadStream;
-import io.vertx.kafka.producer.KafkaWriteStream;
+import io.vertx.kafka.client.consumer.KafkaReadStream;
+import io.vertx.kafka.client.producer.KafkaWriteStream;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;

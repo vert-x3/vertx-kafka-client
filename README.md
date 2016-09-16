@@ -1,4 +1,4 @@
-# Vertx Kafka integration
+# Vertx Kafka Client
 
 Todo:
 

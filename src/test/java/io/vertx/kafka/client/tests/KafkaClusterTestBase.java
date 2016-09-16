@@ -1,4 +1,4 @@
-package io.vertx.kafka.tests;
+package io.vertx.kafka.client.tests;
 
 import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;

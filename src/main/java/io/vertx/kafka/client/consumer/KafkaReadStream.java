@@ -1,11 +1,11 @@
-package io.vertx.kafka.consumer;
+package io.vertx.kafka.client.consumer;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
-import io.vertx.kafka.consumer.impl.WorkerThreadConsumer;
-import io.vertx.kafka.consumer.impl.EventLoopThreadConsumer;
+import io.vertx.kafka.client.consumer.impl.WorkerThreadConsumer;
+import io.vertx.kafka.client.consumer.impl.EventLoopThreadConsumer;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;

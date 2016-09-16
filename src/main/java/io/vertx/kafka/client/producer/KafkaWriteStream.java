@@ -1,10 +1,10 @@
-package io.vertx.kafka.producer;
+package io.vertx.kafka.client.producer;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.WriteStream;
-import io.vertx.kafka.producer.impl.KafkaWriteStreamImpl;
+import io.vertx.kafka.client.producer.impl.KafkaWriteStreamImpl;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 

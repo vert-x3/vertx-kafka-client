@@ -1,11 +1,11 @@
-package io.vertx.kafka.tests;
+package io.vertx.kafka.client.tests;
 
 import io.debezium.kafka.KafkaCluster;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.producer.KafkaWriteStream;
+import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;

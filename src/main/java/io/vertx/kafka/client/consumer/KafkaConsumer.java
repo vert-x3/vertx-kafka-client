@@ -1,11 +1,11 @@
-package io.vertx.kafka.consumer;
+package io.vertx.kafka.client.consumer;
 
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
-import io.vertx.kafka.consumer.impl.KafkaConsumerImpl;
+import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
 
 import java.util.HashMap;
 import java.util.Map;

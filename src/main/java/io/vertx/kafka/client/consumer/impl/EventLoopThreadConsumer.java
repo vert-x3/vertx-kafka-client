@@ -1,4 +1,4 @@
-package io.vertx.kafka.consumer.impl;
+package io.vertx.kafka.client.consumer.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
