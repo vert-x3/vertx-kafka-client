@@ -32,14 +32,7 @@ public class ProducerTest extends KafkaClusterTestBase {
 
   @After
   public void afterTest(TestContext ctx) {
-    if (producer != null) {
-      Async closeAsync = ctx.async();
-      producer.close(2000, v -> {
-        closeAsync.complete();
-      });
-      producer = null;
-      closeAsync.awaitSuccess(10000);
-    }
+    close(ctx, producer);
     vertx.close(ctx.asyncAssertSuccess());
     super.afterTest(ctx);
   }

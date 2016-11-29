@@ -4,12 +4,16 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
+import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.consumer.impl.WorkerThreadConsumer;
 import io.vertx.kafka.client.consumer.impl.EventLoopThreadConsumer;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Collection;
 import java.util.Map;
@@ -17,6 +21,15 @@ import java.util.Properties;
 import java.util.Set;
 
 /**
+ * A {@link ReadStream} for consuming Kafka {@link ConsumerRecord}.
+ * <p>
+ * The {@code pause()} and {@code resume()} provides global control over reading the records from the consumer.
+ * <p>
+ * The {@link #pause(Collection)} and {@link #resume(Collection)} provides finer grained control over reading records
+ * for specific Topic/Partition, these are Kafka's specific operations.
+ *
+ * note : should we provide ReadStream for specific Topic/Partition ?
+ *
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> {
@@ -25,8 +38,20 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
     return create(vertx, options,  new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
   }
 
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Properties config, Class<K> keyType, Class<V> valueType) {
+    Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
+    Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
+    return create(vertx, options,  new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
+  }
+
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Map<String, Object> config) {
     return create(vertx, options, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
+  }
+
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
+    Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
+    Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
+    return create(vertx, options, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Consumer<K, V> consumer) {

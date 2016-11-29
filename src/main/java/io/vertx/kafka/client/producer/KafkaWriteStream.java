@@ -22,8 +22,16 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
     KafkaWriteStreamImpl.create(vertx, config, handler);
   }
 
+  static <K, V> void create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
+    KafkaWriteStreamImpl.create(vertx, config, keyType, valueType, handler);
+  }
+
   static <K, V> void create(Vertx vertx, Map<String, Object> config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
     KafkaWriteStreamImpl.create(vertx, config, handler);
+  }
+
+  static <K, V> void create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
+    KafkaWriteStreamImpl.create(vertx, config, keyType, valueType, handler);
   }
 
   static <K, V> void create(Vertx vertx, Producer<K, V> producer, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {

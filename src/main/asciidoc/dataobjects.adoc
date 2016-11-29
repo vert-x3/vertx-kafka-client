@@ -14,3 +14,18 @@
 |[[workerThread]]`workerThread`|`Boolean`|-
 |===
 
+[[TopicPartition]]
+== TopicPartition
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[partition]]`partition`|`Number (int)`|-
+|[[topic]]`topic`|`String`|-
+|===
+

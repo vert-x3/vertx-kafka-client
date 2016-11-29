@@ -15,6 +15,16 @@ import java.util.function.Consumer;
  */
 public class KafkaTestBase {
 
+  static void close(TestContext ctx, KafkaWriteStream<?, ?> producer) {
+    if (producer != null) {
+      Async closeAsync = ctx.async();
+      producer.close(2000, v -> {
+        closeAsync.complete();
+      });
+      closeAsync.awaitSuccess(10000);
+    }
+  }
+
   static void close(TestContext ctx, KafkaReadStream<?, ?> consumer) {
     if (consumer != null) {
       Async close = ctx.async();

@@ -7,11 +7,11 @@ import org.apache.kafka.common.record.TimestampType;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class KafkaConsumerRecordImpl implements KafkaConsumerRecord {
+public class KafkaConsumerRecordImpl<K, V> implements KafkaConsumerRecord<K, V> {
 
-  private final ConsumerRecord<?, ?> record;
+  private final ConsumerRecord<K, V> record;
 
-  public KafkaConsumerRecordImpl(ConsumerRecord<?, ?> record) {
+  public KafkaConsumerRecordImpl(ConsumerRecord<K, V> record) {
     this.record = record;
   }
 
@@ -46,12 +46,17 @@ public class KafkaConsumerRecordImpl implements KafkaConsumerRecord {
   }
 
   @Override
-  public <K> K key() {
-    return (K) record.key();
+  public K key() {
+    return record.key();
   }
 
   @Override
-  public <V> V value() {
-    return (V) record.value();
+  public V value() {
+    return record.value();
+  }
+
+  @Override
+  public ConsumerRecord record() {
+    return record;
   }
 }

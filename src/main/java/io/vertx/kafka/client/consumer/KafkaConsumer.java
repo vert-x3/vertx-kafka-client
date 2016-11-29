@@ -1,45 +1,101 @@
 package io.vertx.kafka.client.consumer;
 
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.ReadStream;
+import io.vertx.kafka.client.BufferSerializer;
+import io.vertx.kafka.client.KafkaCodecs;
+import io.vertx.kafka.client.TopicPartition;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 @VertxGen
-public interface KafkaConsumer extends ReadStream<KafkaConsumerRecord> {
+public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V>> {
 
-  static KafkaConsumer create(Vertx vertx, ConsumerOptions options, Map<String, String> config) {
-    KafkaReadStream<?, ?> stream = KafkaReadStream.create(vertx, options, new HashMap<>(config));
-    return new KafkaConsumerImpl(stream);
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Map<String, String> config) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, new HashMap<>(config));
+    return new KafkaConsumerImpl<>(stream);
   }
 
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Map<String, String> config,
+                                           Class<K> keyType, Class<V> valueType) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, new HashMap<>(config), keyType, valueType);
+    return new KafkaConsumerImpl<>(stream);
+  }
+
+  @GenIgnore
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Properties config) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, new Properties(config));
+    return new KafkaConsumerImpl<>(stream);
+  }
+
+  @GenIgnore
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Properties config,
+                                           Class<K> keyType, Class<V> valueType) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, new Properties(config), keyType, valueType);
+    return new KafkaConsumerImpl<>(stream);
+  }
+
+  @Fluent
   @Override
-  KafkaConsumer exceptionHandler(Handler<Throwable> handler);
+  KafkaConsumer<K, V> exceptionHandler(Handler<Throwable> handler);
 
+  @Fluent
   @Override
-  KafkaConsumer handler(Handler<KafkaConsumerRecord> handler);
+  KafkaConsumer<K, V> handler(Handler<KafkaConsumerRecord<K, V>> handler);
 
+  @Fluent
   @Override
-  KafkaConsumer pause();
+  KafkaConsumer<K, V> pause();
 
+  @Fluent
   @Override
-  KafkaConsumer resume();
+  KafkaConsumer<K, V> resume();
 
+  @Fluent
   @Override
-  KafkaConsumer endHandler(Handler<Void> endHandler);
+  KafkaConsumer<K, V> endHandler(Handler<Void> endHandler);
 
-  KafkaConsumer subscribe(Set<String> topics);
+  @Fluent
+  KafkaConsumer<K, V> subscribe(Set<String> topics);
 
-  KafkaConsumer subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler);
+  @Fluent
+  KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler);
+
+  @Fluent
+  KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions);
+
+  @Fluent
+  KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+
+  @Fluent
+  KafkaConsumer<K, V> resume(Set<TopicPartition> topicPartitions);
+
+  @Fluent
+  KafkaConsumer<K, V> resume(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+
+  @Fluent
+  KafkaConsumer<K, V> partitionsRevokedHandler(Handler<Set<TopicPartition>> handler);
+
+  @Fluent
+  KafkaConsumer<K, V> partitionsAssignedHandler(Handler<Set<TopicPartition>> handler);
 
   void commit();
 
@@ -50,5 +106,8 @@ public interface KafkaConsumer extends ReadStream<KafkaConsumerRecord> {
   }
 
   void close(Handler<Void> completionHandler);
+
+  @GenIgnore
+  KafkaReadStream<K, V> asStream();
 
 }
