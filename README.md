@@ -1,12 +1,10 @@
 # Vertx Kafka Client
 
-## Java API
-
-- `io.vertx.kafka.client.consumer.KafkaReadStream`
-- `io.vertx.kafka.client.producer.KafkaWriteStream`
-
 ## Todo
 
-- polyglot API
+- polyglot producer
+- documentation
+- examples
+- more tests
+- review Kafka's API and find uncovered use cases
 - pause/resume topic partitions tests
-
