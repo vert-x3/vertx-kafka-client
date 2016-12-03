@@ -5,15 +5,13 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.KafkaCodecs;
-import io.vertx.kafka.client.consumer.impl.WorkerThreadConsumer;
 import io.vertx.kafka.client.consumer.impl.EventLoopThreadConsumer;
+import io.vertx.kafka.client.consumer.impl.WorkerThreadConsumer;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Collection;
 import java.util.Map;

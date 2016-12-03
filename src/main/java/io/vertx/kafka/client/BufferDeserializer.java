@@ -2,7 +2,6 @@ package io.vertx.kafka.client;
 
 import io.vertx.core.buffer.Buffer;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
 

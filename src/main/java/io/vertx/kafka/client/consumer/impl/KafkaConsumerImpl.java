@@ -1,14 +1,12 @@
 package io.vertx.kafka.client.consumer.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.kafka.client.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
-import io.vertx.kafka.client.TopicPartition;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**

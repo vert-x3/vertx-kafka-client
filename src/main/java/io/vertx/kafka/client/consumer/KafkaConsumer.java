@@ -6,18 +6,10 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.ReadStream;
-import io.vertx.kafka.client.BufferSerializer;
-import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.TopicPartition;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
