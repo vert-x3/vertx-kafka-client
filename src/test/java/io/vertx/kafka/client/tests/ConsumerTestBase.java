@@ -293,7 +293,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   private void testSeek(int numMessages, TestContext ctx, Runnable seeker, int abc) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
-    kafkaCluster.createTopic("the_topic", 2, 1);
+    kafkaCluster.createTopic("the_topic", 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
