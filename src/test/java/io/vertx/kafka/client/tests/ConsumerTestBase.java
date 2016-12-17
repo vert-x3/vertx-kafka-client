@@ -79,7 +79,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     int numMessages = 10000;
     kafkaCluster.useTo().produceStrings(numMessages, batch::complete,  () ->
         new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
-    batch.awaitSuccess(10000);
+    batch.awaitSuccess(20000);
     Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
