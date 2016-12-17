@@ -270,30 +270,30 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testSeek(TestContext ctx) throws Exception {
     int numMessages = 500;
-    testSeek(numMessages, ctx, () -> {
-      consumer.seek(new TopicPartition("the_topic", 0), 0);
+    testSeek("the_topic_0", numMessages, ctx, () -> {
+      consumer.seek(new TopicPartition("the_topic_0", 0), 0);
     }, -numMessages);
   }
 
   @Test
   public void testSeekToBeginning(TestContext ctx) throws Exception {
     int numMessages = 500;
-    testSeek(numMessages, ctx, () -> {
-      consumer.seekToBeginning(Collections.singleton(new TopicPartition("the_topic", 0)));
+    testSeek("the_topic_1", numMessages, ctx, () -> {
+      consumer.seekToBeginning(Collections.singleton(new TopicPartition("the_topic_1", 0)));
     }, -numMessages);
   }
 
   @Test
   public void testSeekToEnd(TestContext ctx) throws Exception {
     int numMessages = 500;
-    testSeek(numMessages, ctx, () -> {
-      consumer.seekToEnd(Collections.singleton(new TopicPartition("the_topic", 0)));
+    testSeek("the_topic_2", numMessages, ctx, () -> {
+      consumer.seekToEnd(Collections.singleton(new TopicPartition("the_topic_2", 0)));
     }, 0);
   }
 
-  private void testSeek(int numMessages, TestContext ctx, Runnable seeker, int abc) throws Exception {
+  private void testSeek(String topic, int numMessages, TestContext ctx, Runnable seeker, int abc) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
-    kafkaCluster.createTopic("the_topic", 1, 1);
+    kafkaCluster.createTopic(topic, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -302,7 +302,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
     kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
-        new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+        new ProducerRecord<>(topic, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
     AtomicInteger count = new AtomicInteger(numMessages);
     Async done = ctx.async();
@@ -320,7 +320,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         done.complete();
       }
     });
-    consumer.subscribe(Collections.singleton("the_topic"));
+    consumer.subscribe(Collections.singleton(topic));
   }
 
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
