@@ -11,52 +11,57 @@ public class KafkaConsumerRecordImpl<K, V> implements KafkaConsumerRecord<K, V> 
 
   private final ConsumerRecord<K, V> record;
 
+  /**
+   * Constructor
+   *
+   * @param record  Kafka consumer record for backing information
+   */
   public KafkaConsumerRecordImpl(ConsumerRecord<K, V> record) {
     this.record = record;
   }
 
   @Override
   public String topic() {
-    return record.topic();
+    return this.record.topic();
   }
 
   @Override
   public int partition() {
-    return record.partition();
+    return this.record.partition();
   }
 
   @Override
   public long offset() {
-    return record.offset();
+    return this.record.offset();
   }
 
   @Override
   public long timestamp() {
-    return record.timestamp();
+    return this.record.timestamp();
   }
 
   @Override
   public TimestampType timestampType() {
-    return record.timestampType();
+    return this.record.timestampType();
   }
 
   @Override
   public long checksum() {
-    return record.checksum();
+    return this.record.checksum();
   }
 
   @Override
   public K key() {
-    return record.key();
+    return this.record.key();
   }
 
   @Override
   public V value() {
-    return record.value();
+    return this.record.value();
   }
 
   @Override
   public ConsumerRecord record() {
-    return record;
+    return this.record;
   }
 }
