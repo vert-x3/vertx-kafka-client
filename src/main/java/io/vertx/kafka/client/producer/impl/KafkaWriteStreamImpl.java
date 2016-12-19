@@ -21,6 +21,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
+  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config) {
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
+  }
+
+  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
+    Serializer<K> keySerializer = KafkaCodecs.serializer(keyType);
+    Serializer<V> valueSerializer = KafkaCodecs.serializer(valueType);
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
+  }
+
+  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config) {
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
+  }
+
+  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
+    Serializer<K> keySerializer = KafkaCodecs.serializer(keyType);
+    Serializer<V> valueSerializer = KafkaCodecs.serializer(valueType);
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
+  }
+
   public static <K, V> void create(Vertx vertx, Properties config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
     connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config)), handler);
   }

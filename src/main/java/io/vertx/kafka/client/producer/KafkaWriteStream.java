@@ -18,6 +18,22 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
 
   int DEFAULT_MAX_SIZE = 1024 * 1024;
 
+  static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Properties config) {
+    return KafkaWriteStreamImpl.create(vertx, config);
+  }
+
+  static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
+    return KafkaWriteStreamImpl.create(vertx, config, keyType, valueType);
+  }
+
+  static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Map<String, Object> config) {
+    return KafkaWriteStreamImpl.create(vertx, config);
+  }
+
+  static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
+    return KafkaWriteStreamImpl.create(vertx, config, keyType, valueType);
+  }
+
   static <K, V> void create(Vertx vertx, Properties config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
     KafkaWriteStreamImpl.create(vertx, config, handler);
   }
