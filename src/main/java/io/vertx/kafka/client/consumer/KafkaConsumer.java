@@ -34,14 +34,14 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   @GenIgnore
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Properties config) {
-    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, new Properties(config));
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, config);
     return new KafkaConsumerImpl<>(stream);
   }
 
   @GenIgnore
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Properties config,
                                            Class<K> keyType, Class<V> valueType) {
-    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, new Properties(config), keyType, valueType);
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, config, keyType, valueType);
     return new KafkaConsumerImpl<>(stream);
   }
 
