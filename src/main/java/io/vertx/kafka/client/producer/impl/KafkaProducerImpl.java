@@ -17,39 +17,56 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducerImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
+  public KafkaProducer<K, V> exceptionHandler(Handler<Throwable> handler) {
     this.stream.exceptionHandler(handler);
     return this;
   }
 
   @Override
-  public KafkaProducerImpl<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord) {
+  public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord) {
     this.stream.write(kafkaProducerRecord.record());
     return this;
   }
 
   @Override
   public void end() {
-
+    this.stream.end();
   }
 
   @Override
   public void end(KafkaProducerRecord<K, V> kafkaProducerRecord) {
-
+    this.stream.end(kafkaProducerRecord.record());
   }
 
   @Override
-  public KafkaProducerImpl<K, V> setWriteQueueMaxSize(int i) {
-    return null;
+  public KafkaProducer<K, V> setWriteQueueMaxSize(int size) {
+    this.stream.setWriteQueueMaxSize(size);
+    return this;
   }
 
   @Override
   public boolean writeQueueFull() {
-    return false;
+    return this.stream.writeQueueFull();
   }
 
   @Override
-  public KafkaProducerImpl<K, V> drainHandler(Handler<Void> handler) {
-    return null;
+  public KafkaProducer<K, V> drainHandler(Handler<Void> handler) {
+    this.stream.drainHandler(handler);
+    return this;
+  }
+
+  @Override
+  public void close() {
+    this.stream.close();
+  }
+
+  @Override
+  public void close(long timeout, Handler<Void> completionHandler) {
+    this.stream.close(timeout, completionHandler);
+  }
+
+  @Override
+  public KafkaWriteStream<K, V> asStream() {
+    return this.stream;
   }
 }

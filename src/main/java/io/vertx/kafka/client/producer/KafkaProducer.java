@@ -64,4 +64,11 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @Fluent
   @Override
   KafkaProducer<K, V> drainHandler(Handler<Void> handler);
+
+  void close();
+
+  void close(long timeout, Handler<Void> completionHandler);
+
+  @GenIgnore
+  KafkaWriteStream<K, V> asStream();
 }
