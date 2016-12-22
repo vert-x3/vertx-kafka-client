@@ -190,7 +190,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
+  public KafkaWriteStreamImpl<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
 
     AtomicBoolean done = new AtomicBoolean();
 
@@ -208,6 +208,19 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
         fut.complete(partitions);
       }
     }, handler);
+
+    return this;
+  }
+
+  @Override
+  public KafkaWriteStreamImpl<K, V> flush(Handler<Void> completionHandler) {
+
+    this.context.executeBlocking(fut -> {
+
+      this.producer.flush();
+      fut.complete();
+
+    }, ar -> completionHandler.handle(null));
 
     return this;
   }

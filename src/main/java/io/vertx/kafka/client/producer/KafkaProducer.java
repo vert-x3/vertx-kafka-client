@@ -74,6 +74,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @Fluent
   KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<KafkaPartitionInfo>>> handler);
 
+  @Fluent
+  KafkaProducer<K, V> flush(Handler<Void> completionHandler);
+
   void close();
 
   void close(long timeout, Handler<Void> completionHandler);

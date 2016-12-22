@@ -61,6 +61,8 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
 
   KafkaWriteStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
+  KafkaWriteStream<K, V> flush(Handler<Void> completionHandler);
+
   void close();
 
   void close(long timeout, Handler<Void> completionHandler);
