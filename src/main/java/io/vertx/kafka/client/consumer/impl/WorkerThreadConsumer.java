@@ -28,25 +28,28 @@ public class WorkerThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
 
   @Override
   protected <T> void start(BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler) {
-    worker = Executors.newSingleThreadExecutor();
-    executeTask(task, handler);
+
+    this.worker = Executors.newSingleThreadExecutor();
+    this.executeTask(task, handler);
   }
 
   @Override
   protected <T> void executeTask(BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler) {
-    worker.submit(() -> {
-      Future<T> fut;
+
+    this.worker.submit(() -> {
+
+      Future<T> future;
       if (handler != null) {
-        fut = Future.future();
-        fut.setHandler(handler);
+        future = Future.future();
+        future.setHandler(handler);
       } else {
-        fut = null;
+        future = null;
       }
       try {
-        task.accept(consumer, fut);
+        task.accept(this.consumer, future);
       } catch (Exception e) {
-        if (fut != null && !fut.isComplete()) {
-          fut.fail(e);
+        if (future != null && !future.isComplete()) {
+          future.fail(e);
         }
       }
     });
@@ -54,18 +57,20 @@ public class WorkerThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
 
   @Override
   protected void poll(Handler<ConsumerRecords<K, V>> handler) {
-    worker.submit(run(handler));
+    this.worker.submit(run(handler));
   }
 
   private Runnable run(Handler<ConsumerRecords<K, V>> handler) {
+
     return () -> {
-      if (!closed.get()) {
+
+      if (!this.closed.get()) {
         try {
-          ConsumerRecords<K, V> records = consumer.poll(1000);
+          ConsumerRecords<K, V> records = this.consumer.poll(1000);
           if (records != null && records.count() > 0) {
-            context.runOnContext(v -> handler.handle(records));
+            this.context.runOnContext(v -> handler.handle(records));
           } else {
-            poll(handler);
+            this.poll(handler);
           }
         } catch (WakeupException ignore) {
         }
@@ -75,12 +80,14 @@ public class WorkerThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
 
   @Override
   protected void doClose(Handler<Void> completionHandler) {
-    worker.submit(() -> {
-      consumer.close();
+
+    this.worker.submit(() -> {
+
+      this.consumer.close();
       if (completionHandler != null) {
-        context.runOnContext(completionHandler);
+        this.context.runOnContext(completionHandler);
       }
     });
-    consumer.wakeup();
+    this.consumer.wakeup();
   }
 }

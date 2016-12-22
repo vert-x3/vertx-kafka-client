@@ -22,101 +22,101 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> exceptionHandler(Handler<Throwable> handler) {
-    stream.exceptionHandler(handler);
+    this.stream.exceptionHandler(handler);
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> handler(Handler<KafkaConsumerRecord<K, V>> handler) {
     if (handler != null) {
-      stream.handler(record -> handler.handle(new KafkaConsumerRecordImpl<>(record)));
+      this.stream.handler(record -> handler.handle(new KafkaConsumerRecordImpl<>(record)));
     } else {
-      stream.handler(null);
+      this.stream.handler(null);
     }
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> pause() {
-    stream.pause();
+    this.stream.pause();
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> resume() {
-    stream.resume();
+    this.stream.resume();
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions) {
-    return pause(topicPartitions, null);
+    return this.pause(topicPartitions, null);
   }
 
   @Override
   public KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
-    stream.pause(Helper.to(topicPartitions), completionHandler);
+    this.stream.pause(Helper.to(topicPartitions), completionHandler);
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> resume(Set<TopicPartition> topicPartitions) {
-    return resume(topicPartitions, null);
+    return this.resume(topicPartitions, null);
   }
 
   @Override
   public KafkaConsumer<K, V> resume(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
-    stream.resume(Helper.to(topicPartitions), completionHandler);
+    this.stream.resume(Helper.to(topicPartitions), completionHandler);
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> endHandler(Handler<Void> endHandler) {
-    stream.endHandler(endHandler);
+    this.stream.endHandler(endHandler);
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> subscribe(Set<String> topics) {
-    stream.subscribe(topics);
+    this.stream.subscribe(topics);
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler) {
-    stream.subscribe(topics, handler);
+    this.stream.subscribe(topics, handler);
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> partitionsRevokedHandler(Handler<Set<TopicPartition>> handler) {
-    stream.partitionsRevokedHandler(Helper.adaptHandler(handler));
+    this.stream.partitionsRevokedHandler(Helper.adaptHandler(handler));
     return this;
   }
 
   @Override
   public KafkaConsumer<K, V> partitionsAssignedHandler(Handler<Set<TopicPartition>> handler) {
-    stream.partitionsAssignedHandler(Helper.adaptHandler(handler));
+    this.stream.partitionsAssignedHandler(Helper.adaptHandler(handler));
     return this;
   }
 
   @Override
   public void commit() {
-    stream.commit();
+    this.stream.commit();
   }
 
   @Override
   public void commit(Handler<AsyncResult<Void>> completionHandler) {
-    stream.commit(completionHandler != null ? ar -> ar.map((Object) null) : null);
+    this.stream.commit(completionHandler != null ? ar -> ar.map((Object) null) : null);
   }
 
   @Override
   public void close(Handler<Void> completionHandler) {
-    stream.close(completionHandler);
+    this.stream.close(completionHandler);
   }
 
   @Override
   public KafkaReadStream<K, V> asStream() {
-    return stream;
+    return this.stream;
   }
 }

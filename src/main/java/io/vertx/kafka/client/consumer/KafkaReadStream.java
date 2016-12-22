@@ -72,7 +72,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
     return create(vertx, new ConsumerOptions(), consumer);
   }
 
-  void commited(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
+  void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
 
   KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions);
 

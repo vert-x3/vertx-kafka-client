@@ -16,17 +16,17 @@ public class TopicPartition {
   }
 
   public TopicPartition(JsonObject json) {
-    topic = json.getString("topic");
-    partition = json.getInteger("partition");
+    this.topic = json.getString("topic");
+    this.partition = json.getInteger("partition");
   }
 
   public TopicPartition(TopicPartition that) {
-    topic = that.topic;
-    partition = that.partition;
+    this.topic = that.topic;
+    this.partition = that.partition;
   }
 
-  public String getTopic() {
-    return topic;
+  public String topic() {
+    return this.topic;
   }
 
   public TopicPartition setTopic(String topic) {
@@ -34,8 +34,8 @@ public class TopicPartition {
     return this;
   }
 
-  public int getPartition() {
-    return partition;
+  public int partition() {
+    return this.partition;
   }
 
   public TopicPartition setPartition(int partition) {
@@ -44,6 +44,6 @@ public class TopicPartition {
   }
 
   public JsonObject toJson() {
-    return new JsonObject().put("topic", topic).put("partition", partition);
+    return new JsonObject().put("topic", this.topic).put("partition", this.partition);
   }
 }

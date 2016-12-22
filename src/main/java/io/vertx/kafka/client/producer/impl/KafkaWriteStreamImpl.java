@@ -76,11 +76,11 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
         handler.handle(Future.failedFuture("Kafka connect timeout"));
       }
     });
-    ctx.executeBlocking(fut -> {
+    ctx.executeBlocking(future -> {
       // This force to connect to Kafka - which can hang
       producer.producer.partitionsFor("the_topic");
       if (done.compareAndSet(false, true)) {
-        fut.complete(producer);
+        future.complete(producer);
       }
     }, handler);
   }
@@ -164,18 +164,18 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public KafkaWriteStreamImpl<K, V> setWriteQueueMaxSize(int size) {
-    maxSize = size;
+    this.maxSize = size;
     return this;
   }
 
   @Override
   public synchronized boolean writeQueueFull() {
-    return size >= maxSize;
+    return (this.size >= this.maxSize);
   }
 
   @Override
   public synchronized KafkaWriteStreamImpl<K, V> drainHandler(Handler<Void> handler) {
-    drainHandler = handler;
+    this.drainHandler = handler;
     return this;
   }
 
@@ -185,7 +185,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public KafkaWriteStreamImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
-    exceptionHandler = handler;
+    this.exceptionHandler = handler;
     return this;
   }
 
@@ -201,11 +201,11 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
       }
     });
 
-    this.context.executeBlocking(fut -> {
+    this.context.executeBlocking(future -> {
 
       List<PartitionInfo> partitions = this.producer.partitionsFor(topic);
       if (done.compareAndSet(false, true)) {
-        fut.complete(partitions);
+        future.complete(partitions);
       }
     }, handler);
 
@@ -215,10 +215,10 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   @Override
   public KafkaWriteStreamImpl<K, V> flush(Handler<Void> completionHandler) {
 
-    this.context.executeBlocking(fut -> {
+    this.context.executeBlocking(future -> {
 
       this.producer.flush();
-      fut.complete();
+      future.complete();
 
     }, ar -> completionHandler.handle(null));
 
@@ -230,9 +230,11 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   public void close(long timeout, Handler<Void> completionHandler) {
-    context.executeBlocking(f -> {
-      producer.close(timeout, TimeUnit.MILLISECONDS);
-      f.complete();
+
+    this.context.executeBlocking(future -> {
+
+      this.producer.close(timeout, TimeUnit.MILLISECONDS);
+      future.complete();
     }, ar -> completionHandler.handle(null));
   }
 }

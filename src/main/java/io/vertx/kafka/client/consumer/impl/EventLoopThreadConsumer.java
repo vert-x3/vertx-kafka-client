@@ -23,36 +23,39 @@ public class EventLoopThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
 
   @Override
   protected <T> void start(BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler) {
-    executeTask(task, handler);
+    this.executeTask(task, handler);
   }
 
   @Override
   protected <T> void executeTask(BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler) {
-    Future<T> fut;
+
+    Future<T> future;
     if (handler != null) {
-      fut = Future.future();
-      fut.setHandler(handler);
+      future = Future.future();
+      future.setHandler(handler);
     } else {
-      fut = null;
+      future = null;
     }
+
     try {
-      task.accept(consumer, fut);
+      task.accept(this.consumer, future);
     } catch (Exception e) {
-      if (fut != null && !fut.isComplete()) {
-        fut.fail(e);
+      if (future != null && !future.isComplete()) {
+        future.fail(e);
       }
     }
   }
 
   @Override
   protected void poll(Handler<ConsumerRecords<K, V>> handler) {
-    handler.handle(consumer.poll(0));
+    handler.handle(this.consumer.poll(0));
   }
 
   @Override
   protected void doClose(Handler<Void> completionHandler) {
-    context.runOnContext(v -> {
-      consumer.close();
+    this.context.runOnContext(v -> {
+
+      this.consumer.close();
       if (completionHandler != null) {
         completionHandler.handle(null);
       }

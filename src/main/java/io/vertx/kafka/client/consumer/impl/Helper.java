@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class Helper {
 
   public static org.apache.kafka.common.TopicPartition to(TopicPartition topicPartition) {
-    return new org.apache.kafka.common.TopicPartition(topicPartition.getTopic(), topicPartition.getPartition());
+    return new org.apache.kafka.common.TopicPartition(topicPartition.topic(), topicPartition.partition());
   }
 
   public static Collection<org.apache.kafka.common.TopicPartition> to(Collection<TopicPartition> topicPartitions) {
