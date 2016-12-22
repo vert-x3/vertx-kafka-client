@@ -65,6 +65,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @Override
   KafkaProducer<K, V> drainHandler(Handler<Void> handler);
 
+  @Fluent
+  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<KafkaRecordMetadata> handler);
+
   void close();
 
   void close(long timeout, Handler<Void> completionHandler);

@@ -7,6 +7,7 @@ import io.vertx.core.streams.WriteStream;
 import io.vertx.kafka.client.producer.impl.KafkaWriteStreamImpl;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 
 import java.util.Map;
 import java.util.Properties;
@@ -53,6 +54,8 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   static <K, V> void create(Vertx vertx, Producer<K, V> producer, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
     KafkaWriteStreamImpl.create(vertx, producer, handler);
   }
+
+  KafkaWriteStream<K, V> write(ProducerRecord<K, V> record, Handler<RecordMetadata> handler);
 
   void close();
 

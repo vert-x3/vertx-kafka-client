@@ -3,6 +3,7 @@ package io.vertx.kafka.client.producer.impl;
 import io.vertx.core.Handler;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
+import io.vertx.kafka.client.producer.KafkaRecordMetadata;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 
 /**
@@ -25,6 +26,14 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   @Override
   public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord) {
     this.stream.write(kafkaProducerRecord.record());
+    return this;
+  }
+
+  @Override
+  public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<KafkaRecordMetadata> handler) {
+    this.stream.write(kafkaProducerRecord.record(), metadata -> {
+      handler.handle(new KafkaRecordMetadataImpl(metadata));
+    });
     return this;
   }
 

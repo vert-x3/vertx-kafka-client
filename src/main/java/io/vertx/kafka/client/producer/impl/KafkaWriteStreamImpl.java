@@ -9,6 +9,7 @@ import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
@@ -105,31 +106,58 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public synchronized KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record) {
-    int len = len(record.value());
-    size += len;
+  public synchronized KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record, Handler<RecordMetadata> handler) {
+
+    int len = this.len(record.value());
+    this.size += len;
+
     try {
-      // Non blocking
-      producer.send(record, (metadata, err) -> {
-        // Callback from IO thread
+
+      // non blocking
+      this.producer.send(record, (metadata, err) -> {
+
+        // callback from IO thread
         synchronized (KafkaWriteStreamImpl.this) {
-          size -= len;
-          long lowWaterMark = maxSize / 2;
-          if (size < lowWaterMark && drainHandler != null) {
-            Handler<Void> handler = drainHandler;
-            drainHandler = null;
-            context.runOnContext(handler);
+
+          // if exception happens, no record written
+          if (err != null) {
+
+            if (this.exceptionHandler != null) {
+              Handler<Throwable> exceptionHandler = this.exceptionHandler;
+              this.context.runOnContext(v -> exceptionHandler.handle(err));
+            }
+
+          // no error, record written
+          } else {
+
+            this.size -= len;
+
+            if (handler != null) {
+              handler.handle(metadata);
+            }
+
+            long lowWaterMark = this.maxSize / 2;
+            if (this.size < lowWaterMark && this.drainHandler != null) {
+              Handler<Void> drainHandler = this.drainHandler;
+              this.drainHandler = null;
+              this.context.runOnContext(drainHandler);
+            }
           }
-          if (err != null && exceptionHandler != null) {
-            Handler<Throwable> handler = exceptionHandler;
-            context.runOnContext(v -> handler.handle(err));
-          }
+
         }
       });
+
     } catch (Exception e) {
-      size -= len;
+      this.size -= len;
     }
+
     return this;
+  }
+
+  @Override
+  public KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record) {
+
+    return this.write(record, null);
   }
 
   @Override
