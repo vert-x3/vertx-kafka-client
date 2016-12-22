@@ -8,7 +8,9 @@ import io.vertx.kafka.client.producer.impl.KafkaWriteStreamImpl;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.PartitionInfo;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -56,6 +58,8 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   }
 
   KafkaWriteStream<K, V> write(ProducerRecord<K, V> record, Handler<RecordMetadata> handler);
+
+  KafkaWriteStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
   void close();
 

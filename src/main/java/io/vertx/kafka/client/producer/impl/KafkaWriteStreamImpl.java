@@ -10,8 +10,10 @@ import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.serialization.Serializer;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -184,6 +186,29 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   @Override
   public KafkaWriteStreamImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
     exceptionHandler = handler;
+    return this;
+  }
+
+  @Override
+  public KafkaWriteStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
+
+    AtomicBoolean done = new AtomicBoolean();
+
+    // TODO: should be this timeout related to the Kafka producer property "metadata.fetch.timeout.ms" ?
+    this.context.owner().setTimer(2000, id -> {
+      if (done.compareAndSet(false, true)) {
+        handler.handle(Future.failedFuture("Kafka connect timeout"));
+      }
+    });
+
+    this.context.executeBlocking(fut -> {
+
+      List<PartitionInfo> partitions = this.producer.partitionsFor(topic);
+      if (done.compareAndSet(false, true)) {
+        fut.complete(partitions);
+      }
+    }, handler);
+
     return this;
   }
 
