@@ -7,7 +7,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
-import io.vertx.kafka.client.TopicPartition;
+import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
 
 import java.util.HashMap;

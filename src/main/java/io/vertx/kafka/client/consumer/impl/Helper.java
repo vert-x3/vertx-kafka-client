@@ -1,7 +1,7 @@
 package io.vertx.kafka.client.consumer.impl;
 
 import io.vertx.core.Handler;
-import io.vertx.kafka.client.TopicPartition;
+import io.vertx.kafka.client.common.TopicPartition;
 
 import java.util.Collection;
 import java.util.Set;
