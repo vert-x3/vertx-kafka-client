@@ -3,12 +3,15 @@ package io.vertx.kafka.client.producer;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.WriteStream;
+import io.vertx.kafka.client.common.KafkaPartitionInfo;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -67,6 +70,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   @Fluent
   KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<KafkaRecordMetadata> handler);
+
+  @Fluent
+  KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<KafkaPartitionInfo>>> handler);
 
   void close();
 

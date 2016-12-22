@@ -1,10 +1,18 @@
 package io.vertx.kafka.client.producer.impl;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.kafka.client.common.KafkaPartitionInfo;
+import io.vertx.kafka.client.common.impl.KafkaPartitionInfoImpl;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaRecordMetadata;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+import org.apache.kafka.common.PartitionInfo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="mailto:ppatierno@live.com">Paolo Patierno</a>
@@ -33,6 +41,24 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<KafkaRecordMetadata> handler) {
     this.stream.write(kafkaProducerRecord.record(), metadata -> {
       handler.handle(new KafkaRecordMetadataImpl(metadata));
+    });
+    return this;
+  }
+
+  @Override
+  public KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<KafkaPartitionInfo>>> handler) {
+    this.stream.partitionsFor(topic, done -> {
+
+      if (done.succeeded()) {
+        List<KafkaPartitionInfo> partitions = new ArrayList<>();
+        for (PartitionInfo partition: done.result()) {
+          partitions.add(new KafkaPartitionInfoImpl(partition));
+        }
+        handler.handle(Future.succeededFuture(partitions));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+
     });
     return this;
   }
