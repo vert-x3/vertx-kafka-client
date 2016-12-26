@@ -14,6 +14,84 @@
 |[[workerThread]]`workerThread`|`Boolean`|-
 |===
 
+[[Node]]
+== Node
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[empty]]`empty`|`Boolean`|
++++
+Check whether this node is empty, which may be the case if noNode() is used as a placeholder in a response payload with an error
++++
+|[[hasRack]]`hasRack`|`Boolean`|
++++
+Set if this node has a defined rack
++++
+|[[host]]`host`|`String`|
++++
+Set the host name for this node
++++
+|[[id]]`id`|`Number (int)`|
++++
+Set the node id of this node
++++
+|[[idString]]`idString`|`String`|
++++
+Set the string representation of the node id
++++
+|[[isEmpty]]`isEmpty`|`Boolean`|
++++
+Set if this node is empty
++++
+|[[port]]`port`|`Number (int)`|
++++
+Set the port for this node
++++
+|[[rack]]`rack`|`String`|
++++
+Set the rack for this node
++++
+|===
+
+[[PartitionInfo]]
+== PartitionInfo
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[inSyncReplicas]]`inSyncReplicas`|`Array of link:dataobjects.html#Node[Node]`|
++++
+Set the subset of the replicas that are in sync
++++
+|[[leader]]`leader`|`link:dataobjects.html#Node[Node]`|
++++
+Set the node id of the node currently acting as a leader
++++
+|[[partition]]`partition`|`Number (int)`|
++++
+Set the partition id
++++
+|[[replicas]]`replicas`|`Array of link:dataobjects.html#Node[Node]`|
++++
+Set the complete set of replicas for this partition
++++
+|[[topic]]`topic`|`String`|
++++
+Set the topic name
++++
+|===
+
 [[RecordMetadata]]
 == RecordMetadata
 

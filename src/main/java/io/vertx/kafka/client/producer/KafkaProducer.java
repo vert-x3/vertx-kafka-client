@@ -7,7 +7,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.WriteStream;
-import io.vertx.kafka.client.common.KafkaPartitionInfo;
+import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 
 import java.util.HashMap;
@@ -72,7 +72,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<RecordMetadata> handler);
 
   @Fluent
-  KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<KafkaPartitionInfo>>> handler);
+  KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
   @Fluent
   KafkaProducer<K, V> flush(Handler<Void> completionHandler);

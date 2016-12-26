@@ -1,7 +1,7 @@
-package io.vertx.kafka.client.consumer.impl;
+package io.vertx.kafka.client.common;
 
 import io.vertx.core.Handler;
-import io.vertx.kafka.client.common.TopicPartition;
+import io.vertx.kafka.client.producer.RecordMetadata;
 
 import java.util.Collection;
 import java.util.Set;
@@ -34,5 +34,25 @@ public class Helper {
     } else {
       return null;
     }
+  }
+
+  public static Node from(org.apache.kafka.common.Node node) {
+    return new Node()
+      .setHasRack(node.hasRack())
+      .setHost(node.host())
+      .setId(node.id())
+      .setIdString(node.idString())
+      .setIsEmpty(node.isEmpty())
+      .setPort(node.port())
+      .setRack(node.rack());
+  }
+
+  public static RecordMetadata from(org.apache.kafka.clients.producer.RecordMetadata metadata) {
+    return new RecordMetadata()
+      .setChecksum(metadata.checksum())
+      .setOffset(metadata.offset())
+      .setPartition(metadata.partition())
+      .setTimestamp(metadata.timestamp())
+      .setTopic(metadata.topic());
   }
 }

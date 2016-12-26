@@ -3,16 +3,17 @@ package io.vertx.kafka.client.producer.impl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.kafka.client.common.KafkaPartitionInfo;
-import io.vertx.kafka.client.common.impl.KafkaPartitionInfoImpl;
+import io.vertx.kafka.client.common.Helper;
+import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.producer.RecordMetadata;
-import org.apache.kafka.common.PartitionInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author <a href="mailto:ppatierno@live.com">Paolo Patierno</a>
@@ -40,24 +41,31 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   @Override
   public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<RecordMetadata> handler) {
     this.stream.write(kafkaProducerRecord.record(), metadata -> {
-      handler.handle(new RecordMetadata()
-        .setChecksum(metadata.checksum())
-        .setOffset(metadata.offset())
-        .setPartition(metadata.partition())
-        .setTimestamp(metadata.timestamp())
-        .setTopic(metadata.topic()));
+      handler.handle(Helper.from(metadata));
     });
     return this;
   }
 
   @Override
-  public KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<KafkaPartitionInfo>>> handler) {
+  public KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
     this.stream.partitionsFor(topic, done -> {
 
       if (done.succeeded()) {
-        List<KafkaPartitionInfo> partitions = new ArrayList<>();
-        for (PartitionInfo partition: done.result()) {
-          partitions.add(new KafkaPartitionInfoImpl(partition));
+        List<PartitionInfo> partitions = new ArrayList<>();
+        for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo: done.result()) {
+
+          PartitionInfo partitionInfo = new PartitionInfo();
+
+          partitionInfo
+            .setInSyncReplicas(
+              Stream.of(kafkaPartitionInfo.inSyncReplicas()).map(Helper::from).collect(Collectors.toList()))
+            .setLeader(Helper.from(kafkaPartitionInfo.leader()))
+            .setPartition(kafkaPartitionInfo.partition())
+            .setReplicas(
+              Stream.of(kafkaPartitionInfo.replicas()).map(Helper::from).collect(Collectors.toList()))
+            .setTopic(kafkaPartitionInfo.topic());
+
+          partitions.add(partitionInfo);
         }
         handler.handle(Future.succeededFuture(partitions));
       } else {
