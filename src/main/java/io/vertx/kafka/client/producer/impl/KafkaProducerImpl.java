@@ -7,8 +7,8 @@ import io.vertx.kafka.client.common.KafkaPartitionInfo;
 import io.vertx.kafka.client.common.impl.KafkaPartitionInfoImpl;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import io.vertx.kafka.client.producer.KafkaRecordMetadata;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 
 import java.util.ArrayList;
@@ -38,9 +38,14 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<KafkaRecordMetadata> handler) {
+  public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<RecordMetadata> handler) {
     this.stream.write(kafkaProducerRecord.record(), metadata -> {
-      handler.handle(new KafkaRecordMetadataImpl(metadata));
+      handler.handle(new RecordMetadata()
+        .setChecksum(metadata.checksum())
+        .setOffset(metadata.offset())
+        .setPartition(metadata.partition())
+        .setTimestamp(metadata.timestamp())
+        .setTopic(metadata.topic()));
     });
     return this;
   }

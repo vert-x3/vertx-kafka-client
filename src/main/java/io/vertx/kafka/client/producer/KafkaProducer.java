@@ -69,7 +69,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   KafkaProducer<K, V> drainHandler(Handler<Void> handler);
 
   @Fluent
-  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<KafkaRecordMetadata> handler);
+  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<RecordMetadata> handler);
 
   @Fluent
   KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<KafkaPartitionInfo>>> handler);

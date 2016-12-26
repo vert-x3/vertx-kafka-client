@@ -14,6 +14,39 @@
 |[[workerThread]]`workerThread`|`Boolean`|-
 |===
 
+[[RecordMetadata]]
+== RecordMetadata
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[checksum]]`checksum`|`Number (long)`|
++++
+Set the checksum (CRC32) of the record.
++++
+|[[offset]]`offset`|`Number (long)`|
++++
+Set the offset of the record in the topic/partition.
++++
+|[[partition]]`partition`|`Number (int)`|
++++
+Set the partition the record was sent to
++++
+|[[timestamp]]`timestamp`|`Number (long)`|
++++
+Set the timestamp of the record in the topic/partition
++++
+|[[topic]]`topic`|`String`|
++++
+Set the topic the record was appended to
++++
+|===
+
 [[TopicPartition]]
 == TopicPartition
 
@@ -25,7 +58,13 @@
 [frame="topbot"]
 |===
 ^|Name | Type ^| Description
-|[[partition]]`partition`|`Number (int)`|-
-|[[topic]]`topic`|`String`|-
+|[[partition]]`partition`|`Number (int)`|
++++
+Set the partition number
++++
+|[[topic]]`topic`|`String`|
++++
+Set the topic name
++++
 |===
 
