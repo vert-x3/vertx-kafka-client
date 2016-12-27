@@ -3,8 +3,14 @@ package io.vertx.kafka.client.tests;
 import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.Pump;
 import io.vertx.core.streams.ReadStream;
+import io.vertx.kafka.client.common.Node;
+import io.vertx.kafka.client.common.PartitionInfo;
+import io.vertx.kafka.client.consumer.ConsumerOptions;
+import io.vertx.kafka.client.producer.KafkaWriteStream;
+import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import kafka.server.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -19,11 +25,15 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -182,9 +192,130 @@ public class SimpleTest {
 
 
 
+    Properties props = new Properties();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    props.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+    /*
+    io.vertx.kafka.client.consumer.KafkaConsumer<String, String> c =
+      io.vertx.kafka.client.consumer.KafkaConsumer.create(Vertx.vertx(), (new ConsumerOptions()).setWorkerThread(false), props);
+    Set<String> topics = new HashSet<String>();
+    topics.add("mytopic");
+    c.subscribe(topics);
+    c.handler(record -> {
+      System.out.println(record.value());
+    });
+    */
+
+    Map<String, String> map = new HashMap<>();
+    map.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    map.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+    //map.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    //map.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
 
+    /*
+    io.vertx.kafka.client.producer.KafkaProducer<String, String> p =
+      io.vertx.kafka.client.producer.KafkaProducer.create(Vertx.vertx(), props);
 
+    p.partitionsFor("the_topic", done -> {
+
+      if (done.succeeded()) {
+        System.out.println(done.result());
+      } else {
+        System.out.println(done.cause());
+      }
+
+    });
+    */
+
+    //p.write(new KafkaProducerRecordImpl<>(new ProducerRecord<String, String>("the_topic", "Pippo")));
+
+    /*io.vertx.kafka.client.producer.KafkaProducer<String, String> p =
+      io.vertx.kafka.client.producer.KafkaProducer.create(Vertx.vertx(), props, String.class, String.class);
+
+    p.write(new KafkaProducerRecordImpl<>(new ProducerRecord<String, String>("the_topic", "Pippo")));*/
+
+    /*io.vertx.kafka.client.producer.KafkaProducer<String, String> p =
+      io.vertx.kafka.client.producer.KafkaProducer.create(Vertx.vertx(), map);
+
+    p.write(new KafkaProducerRecordImpl<>(new ProducerRecord<String, String>("the_topic", "Pippo")));*/
+
+    /*
+    io.vertx.kafka.client.producer.KafkaProducer<String, String> p =
+      io.vertx.kafka.client.producer.KafkaProducer.create(Vertx.vertx(), map, String.class, String.class);
+
+    p.write(new KafkaProducerRecordImpl<>(new ProducerRecord<String, String>("the_topic", "Pippo")));
+    */
+
+
+    /*
+    io.vertx.kafka.client.producer.KafkaProducer<String, String> w =
+      io.vertx.kafka.client.producer.KafkaProducer.create(Vertx.vertx(), props);
+
+    w.write(new KafkaProducerRecordImpl<>(new ProducerRecord<String, String>("the_topic", "Pippo")), recordMetadata -> {
+      System.out.println(recordMetadata.topic() + " " + recordMetadata.partition() + " " + recordMetadata.offset());
+    });
+    */
+
+    /*
+    KafkaWriteStream<String, String> c = KafkaWriteStream.create(Vertx.vertx(), props);
+
+    c.drainHandler(v -> {
+      System.out.println("drain");
+    });
+    c.exceptionHandler(e -> {
+      System.out.println(e);
+    });
+    c.write(new ProducerRecord<>("the_topic", "Paolo"));
+    */
+
+
+    /*
+    KafkaWriteStream<String, String> p = KafkaWriteStream.create(Vertx.vertx(), props);
+    p.partitionsFor("the_topic", done -> {
+
+      if (done.succeeded()) {
+        System.out.println(done.result());
+      } else {
+        System.out.println(done.cause());
+      }
+    });
+    */
+
+    /*p.write(new ProducerRecord<String, String>("the_topic", "Paolo"), (recordMetadata, e) -> {
+
+      System.out.println(recordMetadata.topic() + " " + recordMetadata.partition() + " " + recordMetadata.offset());
+    });*/
+
+    /*
+    Node node = new Node()
+      .setHasRack(false)
+      .setHost("Host")
+      .setId(1)
+      .setIdString("idString")
+      .setIsEmpty(true)
+      .setPort(10)
+      .setRack("Rack");
+
+    List<Node> list = new ArrayList<>();
+    list.add(node);
+    list.add(node);
+
+    PartitionInfo partition = new PartitionInfo()
+      .setPartition(1)
+      .setInSyncReplicas(list)
+      .setLeader(node)
+      .setReplicas(list)
+      .setTopic("topic");
+
+    JsonObject json = partition.toJson();
+
+    PartitionInfo p = new PartitionInfo(json);
+    */
+    System.in.read();
 
   }
 }

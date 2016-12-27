@@ -84,8 +84,20 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler) {
-    this.stream.subscribe(topics, handler);
+  public KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler) {
+    this.stream.subscribe(topics, completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> unsubscribe() {
+    this.stream.unsubscribe();
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> unsubscribe(Handler<AsyncResult<Void>> completionHandler) {
+    this.stream.unsubscribe(completionHandler);
     return this;
   }
 

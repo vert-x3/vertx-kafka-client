@@ -65,7 +65,7 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   private void schedule(long delay) {
     if (!this.paused.get()) {
 
-      Handler<ConsumerRecord<K, V>> handler = recordHandler;
+      Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
       if (delay > 0) {
         this.context.owner().setTimer(delay, v -> run(handler));
       } else {
@@ -121,8 +121,8 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
 
-    this.executeTask((cons, future) -> {
-      cons.pause(topicPartitions);
+    this.executeTask((consumer, future) -> {
+      consumer.pause(topicPartitions);
       if (future != null) {
         future.complete();
       }
@@ -139,8 +139,8 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
 
-    this.executeTask((cons, future) -> {
-      cons.resume(topicPartitions);
+    this.executeTask((consumer, future) -> {
+      consumer.resume(topicPartitions);
       if (future != null) {
         future.complete();
       }
@@ -152,8 +152,8 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   @Override
   public void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler) {
 
-    this.executeTask((cons, future) -> {
-      OffsetAndMetadata result = cons.committed(topicPartition);
+    this.executeTask((consumer, future) -> {
+      OffsetAndMetadata result = consumer.committed(topicPartition);
       if (future != null) {
         future.complete(result);
       }
@@ -168,8 +168,8 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
 
-    this.executeTask((cons, future) -> {
-      cons.seekToEnd(topicPartitions);
+    this.executeTask((consumer, future) -> {
+      consumer.seekToEnd(topicPartitions);
       if (future != null) {
         future.complete();
       }
@@ -186,8 +186,8 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
 
-    this.executeTask((cons, future) -> {
-      cons.seekToBeginning(topicPartitions);
+    this.executeTask((consumer, future) -> {
+      consumer.seekToBeginning(topicPartitions);
       if (future != null) {
         future.complete();
       }
@@ -204,8 +204,8 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler) {
 
-    this.executeTask((cons, future) -> {
-      cons.seek(topicPartition, offset);
+    this.executeTask((consumer, future) -> {
+      consumer.seek(topicPartition, offset);
       if (future != null) {
         future.complete();
       }
@@ -232,7 +232,7 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> handler) {
+  public KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler) {
 
     if (this.recordHandler == null) {
       throw new IllegalStateException();
@@ -240,23 +240,41 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
 
     if (this.closed.compareAndSet(true, false)) {
 
-      this.start((cons, future) -> {
-        cons.subscribe(topics, this.rebalanceListener);
+      this.start((consumer, future) -> {
+        consumer.subscribe(topics, this.rebalanceListener);
         this.resume();
         if (future != null) {
           future.complete();
         }
-      }, handler);
+      }, completionHandler);
 
     } else {
 
-      this.executeTask((cons, future) -> {
-        cons.subscribe(topics, this.rebalanceListener);
+      this.executeTask((consumer, future) -> {
+        consumer.subscribe(topics, this.rebalanceListener);
         if (future != null) {
           future.complete();
         }
-      }, handler);
+      }, completionHandler);
     }
+
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> unsubscribe() {
+    return this.unsubscribe(null);
+  }
+
+  @Override
+  public KafkaReadStream<K, V> unsubscribe(Handler<AsyncResult<Void>> completionHandler) {
+
+    this.executeTask((consumer, future) -> {
+      consumer.unsubscribe();
+      if (future != null) {
+        future.complete();
+      }
+    }, completionHandler);
 
     return this;
   }
@@ -279,7 +297,7 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   @Override
   public void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
 
-    this.executeTask((cons, future) -> {
+    this.executeTask((consumer, future) -> {
 
       OffsetCommitCallback callback = (result, exception) -> {
         if (future != null) {
@@ -291,9 +309,9 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
         }
       };
       if (offsets == null) {
-        cons.commitAsync(callback);
+        consumer.commitAsync(callback);
       } else {
-        cons.commitAsync(offsets, callback);
+        consumer.commitAsync(offsets, callback);
       }
     }, completionHandler);
   }
