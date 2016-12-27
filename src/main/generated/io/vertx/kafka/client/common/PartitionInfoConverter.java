@@ -55,5 +55,26 @@ public class PartitionInfoConverter {
   }
 
   public static void toJson(PartitionInfo obj, JsonObject json) {
+    if (obj.getInSyncReplicas() != null) {
+      json.put("inSyncReplicas", new JsonArray(
+          obj.getInSyncReplicas().
+              stream().
+              map(item -> item.toJson()).
+              collect(java.util.stream.Collectors.toList())));
+    }
+    if (obj.getLeader() != null) {
+      json.put("leader", obj.getLeader().toJson());
+    }
+    json.put("partition", obj.getPartition());
+    if (obj.getReplicas() != null) {
+      json.put("replicas", new JsonArray(
+          obj.getReplicas().
+              stream().
+              map(item -> item.toJson()).
+              collect(java.util.stream.Collectors.toList())));
+    }
+    if (obj.getTopic() != null) {
+      json.put("topic", obj.getTopic());
+    }
   }
 }

@@ -40,7 +40,7 @@ public class PartitionInfo {
    *
    * @return
    */
-  public List<Node> inSyncReplicas() {
+  public List<Node> getInSyncReplicas() {
     return this.inSyncReplicas;
   }
 
@@ -60,7 +60,7 @@ public class PartitionInfo {
    *
    * @return
    */
-  public Node leader() {
+  public Node getLeader() {
     return this.leader;
   }
 
@@ -80,7 +80,7 @@ public class PartitionInfo {
    *
    * @return
    */
-  public int partition() {
+  public int getPartition() {
     return this.partition;
   }
 
@@ -100,7 +100,7 @@ public class PartitionInfo {
    *
    * @return
    */
-  public List<Node> replicas() {
+  public List<Node> getReplicas() {
     return this.replicas;
   }
 
@@ -120,7 +120,7 @@ public class PartitionInfo {
    *
    * @return
    */
-  public String topic() {
+  public String getTopic() {
     return this.topic;
   }
 
@@ -141,25 +141,9 @@ public class PartitionInfo {
    * @return  JSON representation
    */
   public JsonObject toJson() {
-    JsonObject jsonObject = new JsonObject();
 
-    if (this.inSyncReplicas != null) {
-      JsonArray inSyncReplicas = new JsonArray();
-      this.inSyncReplicas.forEach(node -> inSyncReplicas.add(node.toJson()));
-    }
-
-    if (this.replicas != null) {
-      JsonArray replicas = new JsonArray();
-      this.replicas.forEach(node -> replicas.add(node.toJson()));
-    }
-
-    jsonObject
-      .put("inSyncReplicas", inSyncReplicas)
-      .put("leader", this.leader.toJson())
-      .put("partition", this.partition)
-      .put("replicas", replicas)
-      .put("topic", this.topic);
-
-    return jsonObject;
+    JsonObject json = new JsonObject();
+    PartitionInfoConverter.toJson(this, json);
+    return json;
   }
 }

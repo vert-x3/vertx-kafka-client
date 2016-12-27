@@ -64,7 +64,7 @@ public class Node {
    *
    * @return
    */
-  public String host() {
+  public String getHost() {
     return this.host;
   }
 
@@ -84,7 +84,7 @@ public class Node {
    *
    * @return
    */
-  public int id() {
+  public int getId() {
     return this.id;
   }
 
@@ -104,7 +104,7 @@ public class Node {
    *
    * @return
    */
-  public String idString() {
+  public String getIdString() {
     return this.idString;
   }
 
@@ -144,7 +144,7 @@ public class Node {
    *
    * @return
    */
-  public int port() {
+  public int getPort() {
     return this.port;
   }
 

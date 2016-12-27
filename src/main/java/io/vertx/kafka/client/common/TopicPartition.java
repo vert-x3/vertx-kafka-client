@@ -43,7 +43,7 @@ public class TopicPartition {
    *
    * @return
    */
-  public String topic() {
+  public String getTopic() {
     return this.topic;
   }
 
@@ -63,7 +63,7 @@ public class TopicPartition {
    *
    * @return
    */
-  public int partition() {
+  public int getPartition() {
     return this.partition;
   }
 
