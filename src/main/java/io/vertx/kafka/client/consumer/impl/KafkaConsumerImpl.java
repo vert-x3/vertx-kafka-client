@@ -102,6 +102,12 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public KafkaConsumer<K, V> subscription(Handler<AsyncResult<Set<String>>> handler) {
+    this.stream.subscription(handler);
+    return this;
+  }
+
+  @Override
   public KafkaConsumer<K, V> partitionsRevokedHandler(Handler<Set<TopicPartition>> handler) {
     this.stream.partitionsRevokedHandler(Helper.adaptHandler(handler));
     return this;

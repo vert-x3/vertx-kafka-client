@@ -106,6 +106,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
   KafkaReadStream<K, V> unsubscribe(Handler<AsyncResult<Void>> completionHandler);
 
+  KafkaReadStream<K, V> subscription(Handler<AsyncResult<Set<String>>> handler);
+
   void commit();
 
   void commit(Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);

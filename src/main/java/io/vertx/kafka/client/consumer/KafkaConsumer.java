@@ -78,6 +78,9 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   KafkaConsumer<K, V> unsubscribe(Handler<AsyncResult<Void>> completionHandler);
 
   @Fluent
+  KafkaConsumer<K, V> subscription(Handler<AsyncResult<Set<String>>> handler);
+
+  @Fluent
   KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions);
 
   @Fluent

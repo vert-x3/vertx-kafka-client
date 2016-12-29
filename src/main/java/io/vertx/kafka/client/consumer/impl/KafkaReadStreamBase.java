@@ -280,6 +280,19 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public KafkaReadStream<K, V> subscription(Handler<AsyncResult<Set<String>>> handler) {
+
+    this.executeTask((consumer, future) -> {
+      Set<String> subscription = consumer.subscription();
+      if (future != null) {
+        future.complete(subscription);
+      }
+    }, handler);
+
+    return this;
+  }
+
+  @Override
   public void commit() {
     this.commit((Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>>) null);
   }
