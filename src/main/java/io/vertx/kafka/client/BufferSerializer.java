@@ -16,6 +16,9 @@ public class BufferSerializer implements Serializer<Buffer> {
 
   @Override
   public byte[] serialize(String topic, Buffer data) {
+    if (data == null)
+      return null;
+
     return data.getBytes();
   }
 
