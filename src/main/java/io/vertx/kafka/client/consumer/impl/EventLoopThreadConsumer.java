@@ -4,6 +4,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 
@@ -28,6 +29,13 @@ public class EventLoopThreadConsumer<K, V> extends KafkaReadStreamBase<K, V> {
 
   @Override
   protected <T> void executeTask(BiConsumer<Consumer, Future<T>> task, Handler<AsyncResult<T>> handler) {
+
+    if (Vertx.currentContext() != this.context) {
+      this.context.runOnContext(v -> {
+        this.executeTask(task, handler);
+      });
+      return;
+    }
 
     Future<T> future;
     if (handler != null) {

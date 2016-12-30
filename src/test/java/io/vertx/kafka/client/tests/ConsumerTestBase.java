@@ -325,7 +325,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   @Test
-  @Ignore
   public void testSubscription(TestContext ctx) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
     kafkaCluster.createTopic("the_topic", 1, 1);
