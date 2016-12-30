@@ -108,6 +108,12 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
   KafkaReadStream<K, V> subscription(Handler<AsyncResult<Set<String>>> handler);
 
+  KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions);
+
+  KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
+
+  KafkaReadStream<K, V> assignment(Handler<AsyncResult<Set<TopicPartition>>> handler);
+
   void commit();
 
   void commit(Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);

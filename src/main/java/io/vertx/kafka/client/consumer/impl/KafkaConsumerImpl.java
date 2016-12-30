@@ -1,6 +1,7 @@
 package io.vertx.kafka.client.consumer.impl;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.kafka.client.common.Helper;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -86,6 +87,32 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler) {
     this.stream.subscribe(topics, completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> assign(Set<TopicPartition> topicPartitions) {
+    this.stream.assign(Helper.to(topicPartitions));
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> assign(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    this.stream.assign(Helper.to(topicPartitions), completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> assignment(Handler<AsyncResult<Set<TopicPartition>>> handler) {
+    this.stream.assignment(done -> {
+
+      if (done.succeeded()) {
+        handler.handle(Future.succeededFuture(Helper.from(done.result())));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+
+    });
     return this;
   }
 

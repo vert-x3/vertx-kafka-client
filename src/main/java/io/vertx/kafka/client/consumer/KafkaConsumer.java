@@ -72,6 +72,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler);
 
   @Fluent
+  KafkaConsumer<K, V> assign(Set<TopicPartition> topicPartitions);
+
+  @Fluent
+  KafkaConsumer<K, V> assign(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+
+  @Fluent
+  KafkaConsumer<K, V> assignment(Handler<AsyncResult<Set<TopicPartition>>> handler);
+
+  @Fluent
   KafkaConsumer<K, V> unsubscribe();
 
   @Fluent

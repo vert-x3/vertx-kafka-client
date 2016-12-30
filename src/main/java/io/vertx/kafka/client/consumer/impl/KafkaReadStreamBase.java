@@ -293,6 +293,54 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions) {
+    return this.assign(partitions, null);
+  }
+
+  @Override
+  public KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
+
+    if (this.recordHandler == null) {
+      throw new IllegalStateException();
+    }
+
+    if (this.closed.compareAndSet(true, false)) {
+
+      this.start((consumer, future) -> {
+        consumer.assign(partitions);
+        this.resume();
+        if (future != null) {
+          future.complete();
+        }
+      }, completionHandler);
+
+    } else {
+
+      this.executeTask((consumer, future) -> {
+        consumer.assign(partitions);
+        if (future != null) {
+          future.complete();
+        }
+      }, completionHandler);
+    }
+
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> assignment(Handler<AsyncResult<Set<TopicPartition>>> handler) {
+
+    this.executeTask((consumer, future) -> {
+      Set<TopicPartition> partitions = consumer.assignment();
+      if (future != null) {
+        future.complete(partitions);
+      }
+    }, handler);
+
+    return this;
+  }
+
+  @Override
   public void commit() {
     this.commit((Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>>) null);
   }
