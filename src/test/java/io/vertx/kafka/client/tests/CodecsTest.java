@@ -5,11 +5,14 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.consumer.ConsumerOptions;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,11 +23,14 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public class CodecsTest extends KafkaClusterTestBase {
 
+  final private String topic = "the_topic";
   private Vertx vertx;
   private KafkaWriteStream<?, ?> producer;
   private KafkaReadStream<?, ?> consumer;
@@ -41,6 +47,22 @@ public class CodecsTest extends KafkaClusterTestBase {
     vertx.close(ctx.asyncAssertSuccess());
     super.afterTest(ctx);
   }
+
+
+  @Test
+  public void testBufferSerializer() {
+    final Deserializer<Buffer> deserializer = KafkaCodecs.deserializer(Buffer.class);
+    final Serializer<Buffer> serializer = KafkaCodecs.serializer(Buffer.class);
+
+    final Buffer stringBuffer = Buffer.buffer("Hello");
+
+    assertEquals("Should get the original Buffer after serialization and deserialization",
+      stringBuffer, deserializer.deserialize(topic, serializer.serialize(topic, stringBuffer)));
+
+    assertEquals("Should support null in serialization and deserialization",
+      null, deserializer.deserialize(topic, serializer.serialize(topic, null)));
+  }
+
 
   @Test
   public void testStringCodec(TestContext ctx) throws Exception {
@@ -66,7 +88,7 @@ public class CodecsTest extends KafkaClusterTestBase {
       V value = valueConv.apply(i);
       keys.add(key);
       values.add(value);
-      writeStream.write(new ProducerRecord<>("the_topic", 0, key, value));
+      writeStream.write(new ProducerRecord<>(topic, 0, key, value));
     }
     Async done = ctx.async();
     Properties consumerConfig = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);;
@@ -81,6 +103,6 @@ public class CodecsTest extends KafkaClusterTestBase {
         done.complete();
       }
     });
-    readStream.subscribe(Collections.singleton("the_topic"));
+    readStream.subscribe(Collections.singleton(topic));
   }
 }
