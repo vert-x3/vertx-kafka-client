@@ -364,7 +364,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   @Test
-  @Ignore
   public void testAssign(TestContext ctx) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
     kafkaCluster.createTopic("the_topic", 1, 1);
@@ -380,7 +379,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       // no need for handling incoming records in this test
     });
 
-    TopicPartition partition = new TopicPartition("the_topic", 1);
+    TopicPartition partition = new TopicPartition("the_topic", 0);
 
     consumer.assign(Collections.singleton(partition), asyncResult -> {
 
