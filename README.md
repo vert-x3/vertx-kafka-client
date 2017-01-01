@@ -4,7 +4,6 @@
 
 ## Todo
 
-- polyglot producer
 - documentation
 - examples
 - more tests
