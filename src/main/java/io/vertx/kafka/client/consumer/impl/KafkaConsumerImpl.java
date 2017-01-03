@@ -4,12 +4,19 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.kafka.client.common.Helper;
+import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -108,6 +115,46 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
       if (done.succeeded()) {
         handler.handle(Future.succeededFuture(Helper.from(done.result())));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+
+    });
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> listTopics(Handler<AsyncResult<Map<String,List<PartitionInfo>>>> handler) {
+    this.stream.listTopics(done -> {
+
+      if (done.succeeded()) {
+        // TODO: use Helper class and stream approach
+        Map<String,List<PartitionInfo>> topics = new HashMap<>();
+
+        for (Map.Entry<String,List<org.apache.kafka.common.PartitionInfo>> topicEntry: done.result().entrySet()) {
+
+          List<PartitionInfo> partitions = new ArrayList<>();
+
+          for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo: topicEntry.getValue()) {
+
+            PartitionInfo partitionInfo = new PartitionInfo();
+
+            partitionInfo
+              .setInSyncReplicas(
+                Stream.of(kafkaPartitionInfo.inSyncReplicas()).map(Helper::from).collect(Collectors.toList()))
+              .setLeader(Helper.from(kafkaPartitionInfo.leader()))
+              .setPartition(kafkaPartitionInfo.partition())
+              .setReplicas(
+                Stream.of(kafkaPartitionInfo.replicas()).map(Helper::from).collect(Collectors.toList()))
+              .setTopic(kafkaPartitionInfo.topic());
+
+            partitions.add(partitionInfo);
+
+          }
+
+          topics.put(topicEntry.getKey(), partitions);
+        }
+        handler.handle(Future.succeededFuture(topics));
       } else {
         handler.handle(Future.failedFuture(done.cause()));
       }

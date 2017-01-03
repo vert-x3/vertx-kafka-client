@@ -11,10 +11,12 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -334,6 +336,19 @@ abstract class KafkaReadStreamBase<K, V> implements KafkaReadStream<K, V> {
       Set<TopicPartition> partitions = consumer.assignment();
       if (future != null) {
         future.complete(partitions);
+      }
+    }, handler);
+
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> listTopics(Handler<AsyncResult<Map<String,List<PartitionInfo>>>> handler) {
+
+    this.executeTask((consumer, future) -> {
+      Map<String, List<PartitionInfo>> topics = consumer.listTopics();
+      if (future != null) {
+        future.complete(topics);
       }
     }, handler);
 

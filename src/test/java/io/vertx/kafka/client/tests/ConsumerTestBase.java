@@ -404,6 +404,45 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     });
   }
 
+  @Test
+  public void testListTopics(TestContext ctx) throws Exception {
+    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
+    kafkaCluster.createTopic("the_topic", 1, 1);
+    Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+
+    Async done = ctx.async();
+
+    consumer.handler(record -> {
+      // no need for handling incoming records in this test
+    });
+
+    consumer.subscribe(Collections.singleton("the_topic"), asyncResult -> {
+
+      if (asyncResult.succeeded()) {
+
+        consumer.listTopics(asyncResult1 -> {
+
+          if (asyncResult1.succeeded()) {
+
+            ctx.assertTrue(asyncResult1.result().containsKey("the_topic"));
+            done.complete();
+
+          } else {
+            ctx.fail();
+          }
+        });
+
+      } else {
+        ctx.fail();
+      }
+
+    });
+  }
+
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {

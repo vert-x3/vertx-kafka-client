@@ -51,6 +51,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     this.stream.partitionsFor(topic, done -> {
 
       if (done.succeeded()) {
+        // TODO: use Helper class and stream approach
         List<PartitionInfo> partitions = new ArrayList<>();
         for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo: done.result()) {
 
