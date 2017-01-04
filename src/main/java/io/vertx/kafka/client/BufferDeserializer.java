@@ -16,6 +16,9 @@ public class BufferDeserializer implements Deserializer<Buffer> {
 
   @Override
   public Buffer deserialize(String topic, byte[] data) {
+    if (data == null)
+      return null;
+
     return Buffer.buffer(data);
   }
 
