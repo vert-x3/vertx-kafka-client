@@ -23,27 +23,27 @@ import java.util.Set;
 @VertxGen
 public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V>> {
 
-  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Map<String, String> config) {
-    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, new HashMap<>(config));
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, new HashMap<>(config));
     return new KafkaConsumerImpl<>(stream);
   }
 
-  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Map<String, String> config,
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config,
                                            Class<K> keyType, Class<V> valueType) {
-    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, new HashMap<>(config), keyType, valueType);
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, new HashMap<>(config), keyType, valueType);
     return new KafkaConsumerImpl<>(stream);
   }
 
   @GenIgnore
-  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Properties config) {
-    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, config);
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config);
     return new KafkaConsumerImpl<>(stream);
   }
 
   @GenIgnore
-  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, ConsumerOptions options, Properties config,
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config,
                                            Class<K> keyType, Class<V> valueType) {
-    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, config, keyType, valueType);
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config, keyType, valueType);
     return new KafkaConsumerImpl<>(stream);
   }
 

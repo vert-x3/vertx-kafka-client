@@ -6,7 +6,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.KafkaCodecs;
-import io.vertx.kafka.client.consumer.ConsumerOptions;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
@@ -92,7 +91,7 @@ public class CodecsTest extends KafkaClusterTestBase {
     }
     Async done = ctx.async();
     Properties consumerConfig = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);;
-    KafkaReadStream<K, V> readStream = KafkaReadStream.create(vertx, new ConsumerOptions().setWorkerThread(true), consumerConfig, keyType, valueType);
+    KafkaReadStream<K, V> readStream = KafkaReadStream.create(vertx, consumerConfig, keyType, valueType);
     consumer = readStream;
     AtomicInteger count = new AtomicInteger(numMessages);
     readStream.exceptionHandler(ctx::fail);

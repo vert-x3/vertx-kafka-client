@@ -1,19 +1,5 @@
 = Cheatsheets
 
-[[ConsumerOptions]]
-== ConsumerOptions
-
-++++
-++++
-'''
-
-[cols=">25%,^25%,50%"]
-[frame="topbot"]
-|===
-^|Name | Type ^| Description
-|[[workerThread]]`workerThread`|`Boolean`|-
-|===
-
 [[Node]]
 == Node
 

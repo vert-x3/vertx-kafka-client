@@ -8,7 +8,6 @@ import io.vertx.core.streams.Pump;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.PartitionInfo;
-import io.vertx.kafka.client.consumer.ConsumerOptions;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import kafka.server.KafkaConfig;

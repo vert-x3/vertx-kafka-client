@@ -5,8 +5,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.KafkaCodecs;
-import io.vertx.kafka.client.consumer.impl.EventLoopThreadConsumer;
-import io.vertx.kafka.client.consumer.impl.WorkerThreadConsumer;
+import io.vertx.kafka.client.consumer.impl.KafkaReadStreamImpl;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -34,44 +33,28 @@ import java.util.Set;
  */
 public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> {
 
-  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Properties config) {
-    return create(vertx, options,  new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
-  }
-
-  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Properties config, Class<K> keyType, Class<V> valueType) {
-    Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
-    Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
-    return create(vertx, options,  new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
-  }
-
-  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Map<String, Object> config) {
-    return create(vertx, options, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
-  }
-
-  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
-    Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
-    Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
-    return create(vertx, options, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
-  }
-
-  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, ConsumerOptions options, Consumer<K, V> consumer) {
-    if (options.isWorkerThread()) {
-      return new WorkerThreadConsumer<>(vertx.getOrCreateContext(), consumer);
-    } else {
-      return new EventLoopThreadConsumer<>(vertx.getOrCreateContext(), consumer);
-    }
-  }
-
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config) {
-    return create(vertx, new ConsumerOptions(), config);
+    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
+  }
+
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
+    Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
+    Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
+    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config) {
-    return create(vertx, new ConsumerOptions(), config);
+    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
+  }
+
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
+    Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
+    Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
+    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Consumer<K, V> consumer) {
-    return create(vertx, new ConsumerOptions(), consumer);
+    return new KafkaReadStreamImpl<>(vertx.getOrCreateContext(), consumer);
   }
 
   void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
