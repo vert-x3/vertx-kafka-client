@@ -432,6 +432,19 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public KafkaReadStreamImpl<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
+
+    this.submitTask((consumer, future) -> {
+      List<PartitionInfo> partitions = consumer.partitionsFor(topic);
+      if (future != null) {
+        future.complete(partitions);
+      }
+    }, handler);
+
+    return this;
+  }
+
+  @Override
   public KafkaReadStreamImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
     return this;
   }

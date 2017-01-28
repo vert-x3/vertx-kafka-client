@@ -204,6 +204,37 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public KafkaConsumer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
+
+    this.stream.partitionsFor(topic, done -> {
+
+      if (done.succeeded()) {
+        // TODO: use Helper class and stream approach
+        List<PartitionInfo> partitions = new ArrayList<>();
+        for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo: done.result()) {
+
+          PartitionInfo partitionInfo = new PartitionInfo();
+
+          partitionInfo
+            .setInSyncReplicas(
+              Stream.of(kafkaPartitionInfo.inSyncReplicas()).map(Helper::from).collect(Collectors.toList()))
+            .setLeader(Helper.from(kafkaPartitionInfo.leader()))
+            .setPartition(kafkaPartitionInfo.partition())
+            .setReplicas(
+              Stream.of(kafkaPartitionInfo.replicas()).map(Helper::from).collect(Collectors.toList()))
+            .setTopic(kafkaPartitionInfo.topic());
+
+          partitions.add(partitionInfo);
+        }
+        handler.handle(Future.succeededFuture(partitions));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
+    return this;
+  }
+
+  @Override
   public void close(Handler<Void> completionHandler) {
     this.stream.close(completionHandler);
   }

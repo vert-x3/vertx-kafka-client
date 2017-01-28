@@ -109,6 +109,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
   void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
 
+  KafkaReadStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
+
   default void close() {
     close(null);
   }

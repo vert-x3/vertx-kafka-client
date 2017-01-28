@@ -117,6 +117,9 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   void commit(Handler<AsyncResult<Void>> completionHandler);
 
+  @Fluent
+  KafkaConsumer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
+
   default void close() {
     close(null);
   }
