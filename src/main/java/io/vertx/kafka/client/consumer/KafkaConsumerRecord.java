@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Red Hat Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.vertx.kafka.client.consumer;
 
 import io.vertx.codegen.annotations.GenIgnore;
@@ -6,71 +22,53 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.record.TimestampType;
 
 /**
- * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
+ * Vert.x Kafka consumer record
  */
 @VertxGen
 public interface KafkaConsumerRecord<K, V> {
 
   /**
-   * The topic this record is received from
-   *
-   * @return
+   * @return  the topic this record is received from
    */
   String topic();
 
   /**
-   * The partition from which this record is received
-   *
-   * @return
+   * @return  the partition from which this record is received
    */
   int partition();
 
   /**
-   * The position of this record in the corresponding Kafka partition.
-   *
-   * @return
+   * @return  the position of this record in the corresponding Kafka partition.
    */
   long offset();
 
   /**
-   * The timestamp of this record
-   *
-   * @return
+   * @return  the timestamp of this record
    */
   long timestamp();
 
   /**
-   * The timestamp type of this record
-   *
-   * @return
+   * @return  the timestamp type of this record
    */
   TimestampType timestampType();
 
   /**
-   * The checksum (CRC32) of the record.
-   *
-   * @return
+   * @return  the checksum (CRC32) of the record.
    */
   long checksum();
 
   /**
-   * The key (or null if no key is specified)
-   *
-   * @return
+   * @return  the key (or null if no key is specified)
    */
   K key();
 
   /**
-   * The value
-   *
-   * @return
+   * @return  the value
    */
   V value();
 
   /**
-   * Kafka consumer record with backed information
-   *
-   * @return
+   * @return  the native Kafka consumer record with backed information
    */
   @GenIgnore
   ConsumerRecord record();

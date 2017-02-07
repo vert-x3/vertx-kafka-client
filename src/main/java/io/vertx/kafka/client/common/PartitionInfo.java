@@ -1,13 +1,28 @@
+/*
+ * Copyright 2016 Red Hat Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.vertx.kafka.client.common;
 
 import io.vertx.codegen.annotations.DataObject;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
 
 /**
- * @author <a href="mailto:ppatierno@live.com">Paolo Patierno</a>
+ * Information about a specific Kafka topic partition
  */
 @DataObject(generateConverter = true)
 public class PartitionInfo {
@@ -36,9 +51,7 @@ public class PartitionInfo {
   }
 
   /**
-   * The subset of the replicas that are in sync, that is caught-up to the leader and ready to take over as leader if the leader should fail
-   *
-   * @return
+   * @return  the subset of the replicas that are in sync, that is caught-up to the leader and ready to take over as leader if the leader should fail
    */
   public List<Node> getInSyncReplicas() {
     return this.inSyncReplicas;
@@ -56,9 +69,7 @@ public class PartitionInfo {
   }
 
   /**
-   * The node id of the node currently acting as a leader for this partition or null if there is no leader
-   *
-   * @return
+   * @return  the node id of the node currently acting as a leader for this partition or null if there is no leader
    */
   public Node getLeader() {
     return this.leader;
@@ -76,9 +87,7 @@ public class PartitionInfo {
   }
 
   /**
-   * The partition id
-   *
-   * @return
+   * @return  the partition id
    */
   public int getPartition() {
     return this.partition;
@@ -96,9 +105,7 @@ public class PartitionInfo {
   }
 
   /**
-   * The complete set of replicas for this partition regardless of whether they are alive or up-to-date
-   *
-   * @return
+   * @return  the complete set of replicas for this partition regardless of whether they are alive or up-to-date
    */
   public List<Node> getReplicas() {
     return this.replicas;
@@ -116,9 +123,7 @@ public class PartitionInfo {
   }
 
   /**
-   * The topic name
-   *
-   * @return
+   * @return  the topic name
    */
   public String getTopic() {
     return this.topic;

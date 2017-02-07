@@ -14,19 +14,7 @@
  * limitations under the License.
  */
 
-package io.vertx.kafka.client.tests;
+@Source
+package examples;
 
-import io.vertx.core.Vertx;
-import io.vertx.kafka.client.consumer.KafkaReadStream;
-import org.apache.kafka.clients.consumer.Consumer;
-
-/**
- * Tests using the consumer with worker thread implementation with mock consumer
- */
-public class WorkerThreadConsumerMockTest extends ConsumerMockTestBase {
-
-  @Override
-  <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Consumer<K, V> consumer) {
-    return KafkaReadStream.create(vertx, consumer);
-  }
-}
+import io.vertx.docgen.Source;

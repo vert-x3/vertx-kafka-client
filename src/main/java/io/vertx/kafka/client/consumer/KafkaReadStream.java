@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Red Hat Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.vertx.kafka.client.consumer;
 
 import io.vertx.core.AsyncResult;
@@ -27,9 +43,6 @@ import java.util.Set;
  * The {@link #pause(Collection)} and {@link #resume(Collection)} provides finer grained control over reading records
  * for specific Topic/Partition, these are Kafka's specific operations.
  *
- * note : should we provide ReadStream for specific Topic/Partition ?
- *
- * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> {
 

@@ -1,10 +1,26 @@
+/*
+ * Copyright 2016 Red Hat Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.vertx.kafka.client.producer;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 /**
- * @author <a href="mailto:ppatierno@live.com">Paolo Patierno</a>
+ * Metadata related to a Kafka record
  */
 @DataObject
 public class RecordMetadata {
@@ -36,9 +52,7 @@ public class RecordMetadata {
   }
 
   /**
-   * The checksum (CRC32) of the record.
-   *
-   * @return
+   * @return  the checksum (CRC32) of the record.
    */
   public long checksum() {
     return this.checksum;
@@ -56,9 +70,7 @@ public class RecordMetadata {
   }
 
   /**
-   * The offset of the record in the topic/partition.
-   *
-   * @return
+   * @return  the offset of the record in the topic/partition.
    */
   public long offset() {
     return this.offset;
@@ -76,9 +88,7 @@ public class RecordMetadata {
   }
 
   /**
-   * The partition the record was sent to
-   *
-   * @return
+   * @return  the partition the record was sent to
    */
   public int partition() {
     return this.partition;
@@ -96,9 +106,7 @@ public class RecordMetadata {
   }
 
   /**
-   * The timestamp of the record in the topic/partition
-   *
-   * @return
+   * @return  the timestamp of the record in the topic/partition
    */
   public long timestamp() {
     return this.timestamp;
@@ -116,9 +124,7 @@ public class RecordMetadata {
   }
 
   /**
-   * The topic the record was appended to
-   *
-   * @return
+   * @return  the topic the record was appended to
    */
   public String topic() {
     return this.topic;

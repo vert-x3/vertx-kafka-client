@@ -1,10 +1,26 @@
+/*
+ * Copyright 2016 Red Hat Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.vertx.kafka.client.common;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 /**
- * @author <a href="mailto:ppatierno@live.com">Paolo Patierno</a>
+ * Information about a Kafka cluster node
  */
 @DataObject
 public class Node {
@@ -40,9 +56,7 @@ public class Node {
   }
 
   /**
-   * True if this node has a defined rack
-   *
-   * @return
+   * @return  true if this node has a defined rack
    */
   public boolean hasRack() {
     return this.hasRack;
@@ -60,9 +74,7 @@ public class Node {
   }
 
   /**
-   * The host name for this node
-   *
-   * @return
+   * @return  the host name for this node
    */
   public String getHost() {
     return this.host;
@@ -80,9 +92,7 @@ public class Node {
   }
 
   /**
-   * The node id of this node
-   *
-   * @return
+   * @return  the node id of this node
    */
   public int getId() {
     return this.id;
@@ -100,9 +110,7 @@ public class Node {
   }
 
   /**
-   * String representation of the node id
-   *
-   * @return
+   * @return  String representation of the node id
    */
   public String getIdString() {
     return this.idString;
@@ -120,9 +128,7 @@ public class Node {
   }
 
   /**
-   * Check whether this node is empty, which may be the case if noNode() is used as a placeholder in a response payload with an error
-   *
-   * @return
+   * @return  if this node is empty, which may be the case if noNode() is used as a placeholder in a response payload with an error
    */
   public boolean isEmpty() {
     return this.isEmpty;
@@ -140,9 +146,7 @@ public class Node {
   }
 
   /**
-   * The port for this node
-   *
-   * @return
+   * @return  the port for this node
    */
   public int getPort() {
     return this.port;
@@ -160,9 +164,7 @@ public class Node {
   }
 
   /**
-   * The rack for this node
-   *
-   * @return
+   * @return  the rack for this node
    */
   public String rack() {
     return this.rack;

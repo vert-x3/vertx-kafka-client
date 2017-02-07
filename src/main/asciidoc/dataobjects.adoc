@@ -4,6 +4,7 @@
 == Node
 
 ++++
+ Information about a Kafka cluster node
 ++++
 '''
 
@@ -13,7 +14,7 @@
 ^|Name | Type ^| Description
 |[[empty]]`empty`|`Boolean`|
 +++
-Check whether this node is empty, which may be the case if noNode() is used as a placeholder in a response payload with an error
+
 +++
 |[[hasRack]]`hasRack`|`Boolean`|
 +++
@@ -49,6 +50,7 @@ Set the rack for this node
 == PartitionInfo
 
 ++++
+ Information about a specific Kafka topic partition
 ++++
 '''
 
@@ -82,6 +84,7 @@ Set the topic name
 == RecordMetadata
 
 ++++
+ Metadata related to a Kafka record
 ++++
 '''
 
@@ -115,6 +118,7 @@ Set the topic the record was appended to
 == TopicPartition
 
 ++++
+ Represent information related to a partition for a topic
 ++++
 '''
 

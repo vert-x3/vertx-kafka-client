@@ -1,10 +1,26 @@
+/*
+ * Copyright 2016 Red Hat Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.vertx.kafka.client.common;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 /**
- * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
+ * Represent information related to a partition for a topic
  */
 @DataObject
 public class TopicPartition {
@@ -39,9 +55,7 @@ public class TopicPartition {
   }
 
   /**
-   * The topic name
-   *
-   * @return
+   * @return  the topic name
    */
   public String getTopic() {
     return this.topic;
@@ -59,9 +73,7 @@ public class TopicPartition {
   }
 
   /**
-   * The partition number
-   *
-   * @return
+   * @return  the partition number
    */
   public int getPartition() {
     return this.partition;
