@@ -60,6 +60,36 @@
  * ----
  * compile io.vertx:vertx-kafka-client:3.4.0-SNAPSHOT
  * ----
+ *
+ * == Getting Started
+ *
+ * === Creating Kafka clients
+ *
+ * The creation of both clients, consumer and producer, is quite similar and it's strictly related on how it works using
+ * the native Kafka client library. They need to be configured with a bunch of properties as described in the official
+ * Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
+ * for the link:https://kafka.apache.org/documentation/#producerconfigs[producer].
+ * In order to do that, a {@link java.util.Properties} instance can be filled with such properties passing it to one of the
+ * static creation methods exposed by {@link io.vertx.kafka.client.consumer.KafkaConsumer} and
+ * {@link io.vertx.kafka.client.producer.KafkaProducer} interfaces. Another way is filling a {@link java.util.Map} instance
+ * instead of the {@link java.util.Properties} one.
+ * More advanced creation methods allow to specify the class type for the key and the value used for sending messages
+ * or provided by received messages; this is a way for setting the key and value serializers/deserializers instead of
+ * using the related properties for that.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example1}
+ * ----
+ *
+ * In the above example, a {@link io.vertx.kafka.client.consumer.KafkaConsumer} instance is created using a {@link java.util.Properties}
+ * instance in order to specify the Kafka nodes list to connect (just one) and the deserializers to use for getting key
+ * and value from each received message.
+ * The {@link io.vertx.kafka.client.producer.KafkaProducer} instance is created in a different way using a {@link java.util.Map}
+ * instance for specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value
+ * deserializers are specified as parameters in the
+ * {@link io.vertx.kafka.client.producer.KafkaProducer#create(io.vertx.core.Vertx, java.util.Map, java.lang.Class, java.lang.Class)}
+ * method.
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")

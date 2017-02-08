@@ -44,3 +44,45 @@ maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
 ----
 compile io.vertx:vertx-kafka-client:3.4.0-SNAPSHOT
 ----
+
+== Getting Started
+
+=== Creating Kafka clients
+
+The creation of both clients, consumer and producer, is quite similar and it's strictly related on how it works using
+the native Kafka client library. They need to be configured with a bunch of properties as described in the official
+Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
+for the link:https://kafka.apache.org/documentation/#producerconfigs[producer].
+In order to do that, a `link:../../apidocs/java/util/Properties.html[Properties]` instance can be filled with such properties passing it to one of the
+static creation methods exposed by `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and
+`link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` interfaces. Another way is filling a `link:../../apidocs/java/util/Map.html[Map]` instance
+instead of the `link:../../apidocs/java/util/Properties.html[Properties]` one.
+More advanced creation methods allow to specify the class type for the key and the value used for sending messages
+or provided by received messages; this is a way for setting the key and value serializers/deserializers instead of
+using the related properties for that.
+
+[source,java]
+----
+Properties props = new Properties();
+props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, props);
+
+// creating the producer using map and class types for key and value serializers/deserializers
+Map<String, String> map = new HashMap<>();
+map.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+map.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+
+KafkaProducer<String, String> producer = KafkaProducer.create(vertx, map, String.class, String.class);
+----
+
+In the above example, a `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` instance is created using a `link:../../apidocs/java/util/Properties.html[Properties]`
+instance in order to specify the Kafka nodes list to connect (just one) and the deserializers to use for getting key
+and value from each received message.
+The `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` instance is created in a different way using a `link:../../apidocs/java/util/Map.html[Map]`
+instance for specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value
+deserializers are specified as parameters in the
+`link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#create-io.vertx.core.Vertx-java.util.Map-java.lang.Class-java.lang.Class-[KafkaProducer.create]`
+method.
