@@ -2,10 +2,12 @@
 
 # Vert.x Kafka Client
 
-## Todo
+This component provides a Kafka client for reading and sending messages from/to an [Apache Kafka](https://kafka.apache.org/) cluster.
+From the consumer point of view, its API provides a bunch of methods for subscribing to a topic partition receiving
+messages asynchronously or reading them as a stream (even with the possibility to pause the stream itself).
+As producer, its API provides methods for sending message to a topic partition like writing on a stream.
 
-- documentation
-- examples
-- more tests
-- review Kafka's API and find uncovered use cases
-- pause/resume topic partitions tests
+See the in-source docs for more details:
+- [Java](src/main/asciidoc/java/index.adoc).
+
+**Note: This module has Tech Preview status, this means the API can change between versions.**
