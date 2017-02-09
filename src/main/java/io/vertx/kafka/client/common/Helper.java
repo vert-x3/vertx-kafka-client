@@ -78,4 +78,8 @@ public class Helper {
       .setOffset(offsetAndMetadata.offset())
       .setMetadata(offsetAndMetadata.metadata());
   }
+
+  public static org.apache.kafka.clients.consumer.OffsetAndMetadata to(OffsetAndMetadata offsetAndMetadata) {
+    return new org.apache.kafka.clients.consumer.OffsetAndMetadata(offsetAndMetadata.getOffset(), offsetAndMetadata.getMetadata());
+  }
 }

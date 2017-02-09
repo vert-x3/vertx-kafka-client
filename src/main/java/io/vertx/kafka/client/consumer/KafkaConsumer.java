@@ -159,6 +159,12 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   void commit(Handler<AsyncResult<Void>> completionHandler);
 
+  @GenIgnore
+  void commit(Map<TopicPartition, OffsetAndMetadata> offsets);
+
+  @GenIgnore
+  void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
+
   void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
 
   @Fluent

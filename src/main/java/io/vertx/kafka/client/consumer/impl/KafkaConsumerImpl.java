@@ -272,6 +272,48 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public void commit(Map<TopicPartition, OffsetAndMetadata> offsets) {
+
+    Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndMetadata> kafkaOffsets =
+      new HashMap<>();
+
+    // TODO: use Helper class
+    offsets.forEach((topicPartition, offsetAndMetadata) -> {
+      kafkaOffsets.put(Helper.to(topicPartition), Helper.to(offsetAndMetadata));
+    });
+
+    this.stream.commit(kafkaOffsets);
+  }
+
+  @Override
+  public void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
+    Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndMetadata> kafkaOffsets =
+      new HashMap<>();
+
+    // TODO: use Helper class
+    offsets.forEach((topicPartition, offsetAndMetadata) -> {
+      kafkaOffsets.put(Helper.to(topicPartition), Helper.to(offsetAndMetadata));
+    });
+
+    this.stream.commit(kafkaOffsets, done -> {
+
+      if (done.succeeded()) {
+        Map<TopicPartition, OffsetAndMetadata> result = new HashMap<>();
+
+        done.result().forEach(((topicPartition, offsetAndMetadata) -> {
+          result.put(new TopicPartition().setTopic(topicPartition.topic()).setPartition(topicPartition.partition()),
+            new OffsetAndMetadata().setOffset(offsetAndMetadata.offset()).setMetadata(offsetAndMetadata.metadata()));
+        }));
+
+        completionHandler.handle(Future.succeededFuture(result));
+      } else {
+        completionHandler.handle(Future.failedFuture(done.cause()));
+      }
+
+    });
+  }
+
+  @Override
   public void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler) {
     this.stream.committed(Helper.to(topicPartition), done -> {
 
