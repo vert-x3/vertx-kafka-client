@@ -151,6 +151,21 @@
  * method for getting information about all available topics with related partitions.
  * This is the {@link io.vertx.kafka.client.consumer.KafkaConsumer#listTopics(io.vertx.core.Handler)} method which is not
  * available in the {@link io.vertx.kafka.client.producer.KafkaProducer} interface.
+ *
+ * === Committing offset manually
+ *
+ * In Apache Kafka, one of the main features is that the consumer is in charge to handle the offset of the last read message.
+ * This is executed by the commit operation that can be executed automatically every time a bunch of messages are read
+ * from a topic partition; in this case the "enable.auto.commit" configuration parameter needs to be set to "true" in
+ * the properties bag for the consumer creation.
+ * The other way is using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#commit(io.vertx.core.Handler)} method
+ * in order to do that manually (it's useful for having an "at least once" delivery to be sure that the read messages
+ * are processed before committing the offset).
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example6}
+ * ----
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")

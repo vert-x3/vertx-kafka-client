@@ -185,4 +185,22 @@ public class VertxKafkaClientExamples {
       }
     });
   }
+
+  /**
+   * Example about how Kafka consumer can handle manual commit
+   * of the current offset for a topic partition
+   * @param consumer
+   */
+  public void example6(KafkaConsumer<?,?> consumer) {
+
+    // consumer is processing read messages
+
+    // committing offset of the last read message
+    consumer.commit(done -> {
+
+      if (done.succeeded()) {
+        System.out.println("Last read message offset committed");
+      }
+    });
+  }
 }
