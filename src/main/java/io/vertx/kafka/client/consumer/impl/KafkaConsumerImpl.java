@@ -27,6 +27,7 @@ import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,6 +207,42 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public KafkaConsumer<K, V> partitionsAssignedHandler(Handler<Set<TopicPartition>> handler) {
     this.stream.partitionsAssignedHandler(Helper.adaptHandler(handler));
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> seek(TopicPartition topicPartition, long offset) {
+    this.stream.seek(Helper.to(topicPartition), offset);
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler) {
+    this.stream.seek(Helper.to(topicPartition), offset, completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions) {
+    this.stream.seekToBeginning(Helper.to(topicPartitions));
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    this.stream.seekToBeginning(Helper.to(topicPartitions), completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> seekToEnd(Collection<TopicPartition> topicPartitions) {
+    this.stream.seekToEnd(Helper.to(topicPartitions));
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    this.stream.seekToEnd(Helper.to(topicPartitions), completionHandler);
     return this;
   }
 

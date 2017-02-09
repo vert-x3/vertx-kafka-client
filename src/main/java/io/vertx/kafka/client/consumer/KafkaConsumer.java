@@ -27,6 +27,7 @@ import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,6 +129,28 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   @Fluent
   KafkaConsumer<K, V> partitionsAssignedHandler(Handler<Set<TopicPartition>> handler);
+
+  @Fluent
+  KafkaConsumer<K, V> seek(TopicPartition topicPartition, long offset);
+
+  @Fluent
+  KafkaConsumer<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler);
+
+  @Fluent
+  @GenIgnore
+  KafkaConsumer<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions);
+
+  @Fluent
+  @GenIgnore
+  KafkaConsumer<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+
+  @Fluent
+  @GenIgnore
+  KafkaConsumer<K, V> seekToEnd(Collection<TopicPartition> topicPartitions);
+
+  @Fluent
+  @GenIgnore
+  KafkaConsumer<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   void commit();
 
