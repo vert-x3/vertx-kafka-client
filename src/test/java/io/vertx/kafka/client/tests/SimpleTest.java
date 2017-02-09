@@ -1,5 +1,6 @@
 package io.vertx.kafka.client.tests;
 
+import examples.VertxKafkaClientExamples;
 import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;
 import io.vertx.core.Vertx;
@@ -187,15 +188,61 @@ public class SimpleTest {
     }
 */
 
-
-
-
+    Vertx vertx = Vertx.vertx();
 
     Properties props = new Properties();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    props.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
+    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    props.put(ConsumerConfig.CLIENT_ID_CONFIG, "my_client");
+
+
+    io.vertx.kafka.client.consumer.KafkaConsumer<String, String> consumer =
+      io.vertx.kafka.client.consumer.KafkaConsumer.create(vertx, props);
+
+    Map<String, String> map = new HashMap<>();
+    map.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    map.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+
+    io.vertx.kafka.client.producer.KafkaProducer<String, String> producer =
+      io.vertx.kafka.client.producer.KafkaProducer.create(vertx, map, String.class, String.class);
+
+    VertxKafkaClientExamples examples = new VertxKafkaClientExamples();
+
+    //examples.example1(Vertx.vertx());
+
+    //examples.example2(consumer);
+
+    //examples.example3(consumer);
+
+    //examples.example4(consumer);
+
+    //examples.example5(consumer);
+
+    //examples.example6(consumer);
+
+    //examples.example7(consumer);
+
+    //examples.example8(vertx, consumer);
+
+    //examples.example9(producer);
+
+    //examples.example10(producer);
+
+    //examples.example11(producer);
+
+    /*KafkaConsumer c = new KafkaConsumer(props);
+
+    c.subscribe(Collections.singleton("test"));
+
+    while (true) {
+
+      ConsumerRecords records = c.poll(1000);
+      records.toString();
+    }*/
 
     /*
     io.vertx.kafka.client.consumer.KafkaConsumer<String, String> c =
@@ -208,9 +255,9 @@ public class SimpleTest {
     });
     */
 
-    Map<String, String> map = new HashMap<>();
-    map.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    map.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+    //Map<String, String> map = new HashMap<>();
+    //map.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    //map.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
     //map.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     //map.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 

@@ -182,7 +182,7 @@
  * {@link examples.VertxKafkaClientExamples#example7}
  * ----
  *
- * === Pausing and resuming the read on topic
+ * === Pausing and resuming the read on topic partitions
  *
  * A consumer has the possibility to pause the read operation from a topic, in order to not receive other messages
  * (i.e. having more time to process the messages already read) and then resume the read for continuing to receive messages.
@@ -224,6 +224,18 @@
  * ----
  * {@link examples.VertxKafkaClientExamples#example11}
  * ----
+ *
+ * == Stream implementation and native Kafka objects
+ *
+ * Other than the polyglot version of the Kafka consumer and producer, this component provides a stream oriented
+ * implementation which handles native Kafka objects (and not the related Vert.x counterparts).
+ * The available interfaces are {@link io.vertx.kafka.client.consumer.KafkaReadStream} for reading topic partitions and
+ * {@link io.vertx.kafka.client.producer.KafkaWriteStream} for writing to topics. The extends the interfaces provided
+ * by Vert.x for handling stream so the {@link io.vertx.core.streams.ReadStream} and {@link io.vertx.core.streams.WriteStream}
+ * where the handled classes are the native ones from the Kafka client libraries like the
+ * {@link org.apache.kafka.clients.consumer.ConsumerRecord} and the {@link org.apache.kafka.clients.producer.ProducerRecord}.
+ * The way to interact with the above streams is quite similar to the polyglot version.
+ *
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")
