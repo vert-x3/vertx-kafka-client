@@ -146,6 +146,11 @@
  * ----
  * {@link examples.VertxKafkaClientExamples#example5}
  * ----
+ *
+ * The above example also shows that the {@link io.vertx.kafka.client.consumer.KafkaConsumer} interface provides one more
+ * method for getting information about all available topics with related partitions.
+ * This is the {@link io.vertx.kafka.client.consumer.KafkaConsumer#listTopics(io.vertx.core.Handler)} method which is not
+ * available in the {@link io.vertx.kafka.client.producer.KafkaProducer} interface.
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")

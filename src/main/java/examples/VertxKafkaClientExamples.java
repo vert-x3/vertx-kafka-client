@@ -161,6 +161,20 @@ public class VertxKafkaClientExamples {
    */
   public void example5(KafkaConsumer<?,?> consumer) {
 
+    // asking information about available topics and related partitions
+    consumer.listTopics(done -> {
+
+      if (done.succeeded()) {
+
+        done.result().forEach((topic, partitions) -> {
+
+          System.out.println("topic = " + topic);
+          System.out.println("partitions = " + partitions);
+        });
+      }
+    });
+
+    // asking partitions information about specific topic
     consumer.partitionsFor("test", done -> {
 
       if (done.succeeded()) {

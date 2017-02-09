@@ -200,6 +200,19 @@ interface provides the "partitionsFor" method for getting information about part
 
 [source,java]
 ----
+consumer.listTopics(done -> {
+
+  if (done.succeeded()) {
+
+    done.result().forEach((topic, partitions) -> {
+
+      System.out.println("topic = " + topic);
+      System.out.println("partitions = " + partitions);
+    });
+  }
+});
+
+// asking partitions information about specific topic
 consumer.partitionsFor("test", done -> {
 
   if (done.succeeded()) {
@@ -210,3 +223,8 @@ consumer.partitionsFor("test", done -> {
   }
 });
 ----
+
+The above example also shows that the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides one more
+method for getting information about all available topics with related partitions.
+This is the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#listTopics-io.vertx.core.Handler-[listTopics]` method which is not
+available in the `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` interface.
