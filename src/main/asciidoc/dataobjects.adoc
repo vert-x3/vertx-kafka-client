@@ -46,6 +46,28 @@ Set the rack for this node
 +++
 |===
 
+[[OffsetAndMetadata]]
+== OffsetAndMetadata
+
+++++
+ Provide additional metadata when an offset is committed
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[metadata]]`metadata`|`String`|
++++
+Set additional metadata for the offset committed
++++
+|[[offset]]`offset`|`Number (long)`|
++++
+Set the offset to commit
++++
+|===
+
 [[PartitionInfo]]
 == PartitionInfo
 

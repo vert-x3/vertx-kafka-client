@@ -191,6 +191,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public void paused(Handler<AsyncResult<Set<TopicPartition>>> handler) {
+
+    this.submitTask((consumer, future) -> {
+      Set<TopicPartition> result = consumer.paused();
+      if (future != null) {
+        future.complete(result);
+      }
+    }, handler);
+  }
+
+  @Override
   public KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions) {
     return this.resume(topicPartitions, null);
   }

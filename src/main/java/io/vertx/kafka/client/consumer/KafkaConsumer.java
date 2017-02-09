@@ -119,6 +119,9 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   @Fluent
+  KafkaConsumer<K, V> paused(Handler<AsyncResult<Set<TopicPartition>>> handler);
+
+  @Fluent
   KafkaConsumer<K, V> resume(Set<TopicPartition> topicPartitions);
 
   @Fluent
@@ -155,6 +158,8 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   void commit();
 
   void commit(Handler<AsyncResult<Void>> completionHandler);
+
+  void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
 
   @Fluent
   KafkaConsumer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);

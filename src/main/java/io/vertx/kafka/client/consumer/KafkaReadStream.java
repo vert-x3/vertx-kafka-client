@@ -76,6 +76,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
   KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
+  void paused(Handler<AsyncResult<Set<TopicPartition>>> handler);
+
   KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions);
 
   KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);

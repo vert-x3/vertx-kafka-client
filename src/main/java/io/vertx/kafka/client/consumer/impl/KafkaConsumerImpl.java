@@ -25,6 +25,7 @@ import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
+import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,6 +83,20 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
     this.stream.pause(Helper.to(topicPartitions), completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> paused(Handler<AsyncResult<Set<TopicPartition>>> handler) {
+
+    this.stream.paused(done -> {
+
+      if (done.succeeded()) {
+        handler.handle(Future.succeededFuture(Helper.from(done.result())));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
     return this;
   }
 
@@ -254,6 +269,18 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public void commit(Handler<AsyncResult<Void>> completionHandler) {
     this.stream.commit(completionHandler != null ? ar -> ar.map((Object) null) : null);
+  }
+
+  @Override
+  public void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler) {
+    this.stream.committed(Helper.to(topicPartition), done -> {
+
+      if (done.succeeded()) {
+        handler.handle(Future.succeededFuture(Helper.from(done.result())));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
   }
 
   @Override

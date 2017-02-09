@@ -17,6 +17,7 @@
 package io.vertx.kafka.client.common;
 
 import io.vertx.core.Handler;
+import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.RecordMetadata;
 
 import java.util.Collection;
@@ -70,5 +71,11 @@ public class Helper {
       .setPartition(metadata.partition())
       .setTimestamp(metadata.timestamp())
       .setTopic(metadata.topic());
+  }
+
+  public static OffsetAndMetadata from(org.apache.kafka.clients.consumer.OffsetAndMetadata offsetAndMetadata) {
+    return new OffsetAndMetadata()
+      .setOffset(offsetAndMetadata.offset())
+      .setMetadata(offsetAndMetadata.metadata());
   }
 }
