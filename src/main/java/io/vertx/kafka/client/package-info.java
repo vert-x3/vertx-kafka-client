@@ -114,15 +114,27 @@
  * {@link examples.VertxKafkaClientExamples#example2}
  * ----
  *
- * === Receiving messages with assigned partition
- *
- * Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
- * topic partition. The big difference is that without being part of a consumer group the overall application can't rely
- * on the re-balancing feature.
+ * After joining a consumer group for receiving messages, a consumer can decide to leave the consumer group in order to
+ * not get messages anymore. This is possible thanks to the {@link io.vertx.kafka.client.consumer.KafkaConsumer#unsubscribe(io.vertx.core.Handler)}
+ * method.
  *
  * [source,$lang]
  * ----
  * {@link examples.VertxKafkaClientExamples#example3}
+ * ----
+ *
+ * === Receiving messages with assigned partition
+ *
+ * Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
+ * topic partition. The big difference is that without being part of a consumer group the overall application can't rely
+ * on the re-balancing feature. The {@link io.vertx.kafka.client.consumer.KafkaConsumer} interface provides the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#assign(java.util.Set, io.vertx.core.Handler)} method in order to
+ * ask to be assigned specific partitions; using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#assignment(io.vertx.core.Handler)}
+ * method is also possible getting information about the current assigned partitions.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example4}
  * ----
  */
 @Document(fileName = "index.adoc")

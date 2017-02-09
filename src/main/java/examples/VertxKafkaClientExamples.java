@@ -77,6 +77,7 @@ public class VertxKafkaClientExamples {
     // registering handlers for assigned and revoked partitions
     consumer.partitionsAssignedHandler(topicPartitions -> {
 
+      System.out.println("Partitions assigned");
       topicPartitions.stream().forEach(topicPartition -> {
         System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
       });
@@ -84,13 +85,37 @@ public class VertxKafkaClientExamples {
 
     consumer.partitionsRevokedHandler(topicPartitions -> {
 
+      System.out.println("Partitions revoked");
       topicPartitions.stream().forEach(topicPartition -> {
         System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
       });
     });
 
     // subscribing to the topic
-    consumer.subscribe(Collections.singleton("test"));
+    consumer.subscribe(Collections.singleton("test"), done -> {
+
+      if (done.succeeded()) {
+        System.out.println("Consumer subscribed");
+      }
+    });
+  }
+
+  /**
+   * Example about how Kafka consumer can leave
+   * a previous joined consumer group
+   * @param consumer
+   */
+  public void example3(KafkaConsumer<?,?> consumer) {
+
+    // consumer is already member of a consumer group
+
+    // unsubscribing request
+    consumer.unsubscribe(done -> {
+
+      if (done.succeeded()) {
+        System.out.println("Consumer unsubscribed");
+      }
+    });
   }
 
   /**
@@ -98,7 +123,7 @@ public class VertxKafkaClientExamples {
    * from a topic requesting a specific partition for that
    * @param consumer
    */
-  public void example3(KafkaConsumer<?,?> consumer) {
+  public void example4(KafkaConsumer<?,?> consumer) {
 
     Set<TopicPartition> topicPartitions = new HashSet<>();
     topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
@@ -113,6 +138,16 @@ public class VertxKafkaClientExamples {
 
       if (done.succeeded()) {
         System.out.println("Partition assigned");
+
+        // requesting the assigned partitions
+        consumer.assignment(done1 -> {
+
+          if (done1.succeeded()) {
+            done1.result().stream().forEach(topicPartition -> {
+              System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
+            });
+          }
+        });
       }
     });
   }

@@ -117,6 +117,7 @@ consumer.handler(record -> {
 // registering handlers for assigned and revoked partitions
 consumer.partitionsAssignedHandler(topicPartitions -> {
 
+  System.out.println("Partitions assigned");
   topicPartitions.stream().forEach(topicPartition -> {
     System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
   });
@@ -124,20 +125,43 @@ consumer.partitionsAssignedHandler(topicPartitions -> {
 
 consumer.partitionsRevokedHandler(topicPartitions -> {
 
+  System.out.println("Partitions revoked");
   topicPartitions.stream().forEach(topicPartition -> {
     System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
   });
 });
 
 // subscribing to the topic
-consumer.subscribe(Collections.singleton("test"));
+consumer.subscribe(Collections.singleton("test"), done -> {
+
+  if (done.succeeded()) {
+    System.out.println("Consumer subscribed");
+  }
+});
+----
+
+After joining a consumer group for receiving messages, a consumer can decide to leave the consumer group in order to
+not get messages anymore. This is possible thanks to the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#unsubscribe-io.vertx.core.Handler-[unsubscribe]`
+method.
+
+[source,java]
+----
+consumer.unsubscribe(done -> {
+
+  if (done.succeeded()) {
+    System.out.println("Consumer unsubscribed");
+  }
+});
 ----
 
 === Receiving messages with assigned partition
 
 Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
 topic partition. The big difference is that without being part of a consumer group the overall application can't rely
-on the re-balancing feature.
+on the re-balancing feature. The `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assign-java.util.Set-io.vertx.core.Handler-[assign]` method in order to
+ask to be assigned specific partitions; using the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assignment-io.vertx.core.Handler-[assignment]`
+method is also possible getting information about the current assigned partitions.
 
 [source,java]
 ----
@@ -154,6 +178,16 @@ consumer.assign(topicPartitions, done -> {
 
   if (done.succeeded()) {
     System.out.println("Partition assigned");
+
+    // requesting the assigned partitions
+    consumer.assignment(done1 -> {
+
+      if (done1.succeeded()) {
+        done1.result().stream().forEach(topicPartition -> {
+          System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
+        });
+      }
+    });
   }
 });
 ----
