@@ -91,7 +91,7 @@
  * {@link io.vertx.kafka.client.producer.KafkaProducer#create(io.vertx.core.Vertx, java.util.Map, java.lang.Class, java.lang.Class)}
  * method.
  *
- * === Receiving messages within a consumer group
+ * === Receiving messages from a topic joining a consumer group
  *
  * In order to start receiving messages from Kafka topics, the consumer can use the
  * {@link io.vertx.kafka.client.consumer.KafkaConsumer#subscribe(java.util.Set, io.vertx.core.Handler)} method for subscribing
@@ -123,7 +123,7 @@
  * {@link examples.VertxKafkaClientExamples#example3}
  * ----
  *
- * === Receiving messages with assigned partition
+ * === Receiving messages from a topic requesting specific partitions
  *
  * Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
  * topic partition. The big difference is that without being part of a consumer group the overall application can't rely
@@ -135,6 +135,16 @@
  * [source,$lang]
  * ----
  * {@link examples.VertxKafkaClientExamples#example4}
+ * ----
+ *
+ * === Getting topic partitions information
+ *
+ * Both the {@link io.vertx.kafka.client.consumer.KafkaConsumer} and {@link io.vertx.kafka.client.producer.KafkaProducer}
+ * interface provides the "partitionsFor" method for getting information about partitions in a specified topic.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example5}
  * ----
  */
 @Document(fileName = "index.adoc")

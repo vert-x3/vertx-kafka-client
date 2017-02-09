@@ -143,10 +143,30 @@ public class VertxKafkaClientExamples {
         consumer.assignment(done1 -> {
 
           if (done1.succeeded()) {
+
             done1.result().stream().forEach(topicPartition -> {
               System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
             });
           }
+        });
+      }
+    });
+  }
+
+  /**
+   * Example about how it's possible to get information
+   * on partitions for a specified topic (valid for both
+   * Kafka consumer and producer instances)
+   * @param consumer
+   */
+  public void example5(KafkaConsumer<?,?> consumer) {
+
+    consumer.partitionsFor("test", done -> {
+
+      if (done.succeeded()) {
+
+        done.result().stream().forEach(partitionInfo -> {
+          System.out.println(partitionInfo);
         });
       }
     });

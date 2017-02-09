@@ -151,4 +151,16 @@ public class PartitionInfo {
     PartitionInfoConverter.toJson(this, json);
     return json;
   }
+
+  @Override
+  public String toString() {
+
+    return "PartitionInfo{" +
+            "topic=" + this.topic +
+            ", partition=" + this.partition +
+            ", inSyncReplicas=" + this.inSyncReplicas +
+            ", leader=" + this.leader +
+            ", replicas=" + this.replicas +
+            "}";
+  }
 }

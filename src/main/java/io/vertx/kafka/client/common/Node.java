@@ -200,4 +200,18 @@ public class Node {
 
     return jsonObject;
   }
+
+  @Override
+  public String toString() {
+
+    return "Node{" +
+            "id=" + this.id +
+            ", host=" + this.host +
+            ", hasRack=" + this.hasRack +
+            ", idString=" + this.idString +
+            ", isEmpty=" + this.isEmpty +
+            ", port=" + this.port +
+            ", rack=" + this.rack +
+            "}";
+  }
 }

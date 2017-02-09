@@ -98,4 +98,13 @@ public class TopicPartition {
   public JsonObject toJson() {
     return new JsonObject().put("topic", this.topic).put("partition", this.partition);
   }
+
+  @Override
+  public String toString() {
+
+    return "TopicPartition{" +
+      "topic=" + this.topic +
+      ", partition=" + this.partition +
+      "}";
+  }
 }

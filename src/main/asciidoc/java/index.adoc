@@ -90,7 +90,7 @@ deserializers are specified as parameters in the
 `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#create-io.vertx.core.Vertx-java.util.Map-java.lang.Class-java.lang.Class-[KafkaProducer.create]`
 method.
 
-=== Receiving messages within a consumer group
+=== Receiving messages from a topic joining a consumer group
 
 In order to start receiving messages from Kafka topics, the consumer can use the
 `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#subscribe-java.util.Set-io.vertx.core.Handler-[subscribe]` method for subscribing
@@ -154,7 +154,7 @@ consumer.unsubscribe(done -> {
 });
 ----
 
-=== Receiving messages with assigned partition
+=== Receiving messages from a topic requesting specific partitions
 
 Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
 topic partition. The big difference is that without being part of a consumer group the overall application can't rely
@@ -183,10 +183,29 @@ consumer.assign(topicPartitions, done -> {
     consumer.assignment(done1 -> {
 
       if (done1.succeeded()) {
+
         done1.result().stream().forEach(topicPartition -> {
           System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
         });
       }
+    });
+  }
+});
+----
+
+=== Getting topic partitions information
+
+Both the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]`
+interface provides the "partitionsFor" method for getting information about partitions in a specified topic.
+
+[source,java]
+----
+consumer.partitionsFor("test", done -> {
+
+  if (done.succeeded()) {
+
+    done.result().stream().forEach(partitionInfo -> {
+      System.out.println(partitionInfo);
     });
   }
 });
