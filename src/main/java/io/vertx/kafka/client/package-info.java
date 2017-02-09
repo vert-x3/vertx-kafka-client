@@ -167,6 +167,21 @@
  * {@link examples.VertxKafkaClientExamples#example6}
  * ----
  *
+ * === Seeking in a topic partition
+ *
+ * A great advantage of using Apache Kafka is that the messages are retained for a long period of time and the consumer can
+ * seek inside a topic partition for re-reading all or part of the messages and then coming back to the end of
+ * the partition. Using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#seek(io.vertx.kafka.client.common.TopicPartition, long, io.vertx.core.Handler)}
+ * method it's possible to change the offset for starting to read at specific position. If the consumer needs to re-read the stream
+ * from the beginning, there is the {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToBeginning(java.util.Collection, io.vertx.core.Handler)}
+ * method. Finally, in order to come back at the end of the partition, it's possible to use the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToEnd(java.util.Collection, io.vertx.core.Handler)} method.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example7}
+ * ----
+ *
  * === Sending messages to a topic
  *
  * The {@link io.vertx.kafka.client.producer.KafkaProducer} interface provides the
@@ -178,7 +193,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example7}
+ * {@link examples.VertxKafkaClientExamples#example8}
  * ----
  *
  * In order to specify the destination partition for a message, it's possible to specify the partition identifier explicitly
@@ -186,7 +201,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example8}
+ * {@link examples.VertxKafkaClientExamples#example9}
  * ----
  *
  * Using a key, the sender processes an hash on that in order to identify the destination partition; it
@@ -194,7 +209,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example9}
+ * {@link examples.VertxKafkaClientExamples#example10}
  * ----
  */
 @Document(fileName = "index.adoc")

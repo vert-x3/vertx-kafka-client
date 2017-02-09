@@ -206,11 +206,45 @@ public class VertxKafkaClientExamples {
   }
 
   /**
+   * Example about how Kafka consumer can seek in the partition
+   * changing the offset from which starting to read messages
+   * @param consumer
+   */
+  public void example7(KafkaConsumer<?,?> consumer) {
+
+    TopicPartition topicPartition = new TopicPartition().setTopic("test").setPartition(0);
+
+    // seeking to a specific offset
+    consumer.seek(topicPartition, 10, done -> {
+
+      if (done.succeeded()) {
+        System.out.println("Seeking done");
+      }
+    });
+
+    // seeking at the beginning of the partition
+    consumer.seekToBeginning(Collections.singleton(topicPartition), done -> {
+
+      if (done.succeeded()) {
+        System.out.println("Seeking done");
+      }
+    });
+
+    // seeking at the end of the partition
+    consumer.seekToEnd(Collections.singleton(topicPartition), done -> {
+
+      if (done.succeeded()) {
+        System.out.println("Seeking done");
+      }
+    });
+  }
+
+  /**
    * Example about how Kafka producer sends message to topic
    * partitions in a round robin fashion
    * @param producer
    */
-  public void example7(KafkaProducer<String,String> producer) {
+  public void example8(KafkaProducer<String,String> producer) {
 
     for (int i = 0; i < 5; i++) {
 
@@ -234,7 +268,7 @@ public class VertxKafkaClientExamples {
    * specified topic partition
    * @param producer
    */
-  public void example8(KafkaProducer<String,String> producer) {
+  public void example9(KafkaProducer<String,String> producer) {
 
     for (int i = 0; i < 10; i++) {
 
@@ -259,7 +293,7 @@ public class VertxKafkaClientExamples {
    * the destination partition
    * @param producer
    */
-  public void example9(KafkaProducer<String,String> producer) {
+  public void example10(KafkaProducer<String,String> producer) {
 
     for (int i = 0; i < 10; i++) {
 
