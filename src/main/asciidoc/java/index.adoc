@@ -67,6 +67,9 @@ Properties props = new Properties();
 props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
 props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+props.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
+props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
 KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, props);
 
@@ -86,3 +89,71 @@ instance for specifying Kafka nodes list to connect (just one) and the acknowled
 deserializers are specified as parameters in the
 `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#create-io.vertx.core.Vertx-java.util.Map-java.lang.Class-java.lang.Class-[KafkaProducer.create]`
 method.
+
+=== Receiving messages within a consumer group
+
+In order to start receiving messages from Kafka topics, the consumer can use the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#subscribe-java.util.Set-io.vertx.core.Handler-[subscribe]` method for subscribing
+to a set of topics being part of a consumer group (specified by the properties on creation) and being notified when the operation
+is completed. Before doing that, it's mandatory to register an handler for handling incoming messages using the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#handler-io.vertx.core.Handler-[handler]` otherwise an
+`link:../../apidocs/java/lang/IllegalStateException.html[IllegalStateException]` will be thrown.
+
+Using the consumer group way, the Kafka cluster assigns partitions to the consumer taking into account other connected
+consumers in the same consumer group, so that partitions can be spread across them. The Kafka cluster handles partitions re-balancing
+when a consumer leaves the group (so assigned partitions are free to be assigned to other consumers) or a new consumer
+joins the group (so it wants partitions to read from).
+The `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides a way for being notified
+about what are the partitions revoked and assigned by the Kafka cluster specifying related handlers through the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsRevokedHandler-io.vertx.core.Handler-[partitionsRevokedHandler]` and the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsAssignedHandler-io.vertx.core.Handler-[partitionsAssignedHandler]`.
+
+[source,java]
+----
+consumer.handler(record -> {
+  System.out.println(record.key() + " " + record.value());
+});
+
+// registering handlers for assigned and revoked partitions
+consumer.partitionsAssignedHandler(topicPartitions -> {
+
+  topicPartitions.stream().forEach(topicPartition -> {
+    System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
+  });
+});
+
+consumer.partitionsRevokedHandler(topicPartitions -> {
+
+  topicPartitions.stream().forEach(topicPartition -> {
+    System.out.println(topicPartition.getTopic() + " " + topicPartition.getPartition());
+  });
+});
+
+// subscribing to the topic
+consumer.subscribe(Collections.singleton("test"));
+----
+
+=== Receiving messages with assigned partition
+
+Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
+topic partition. The big difference is that without being part of a consumer group the overall application can't rely
+on the re-balancing feature.
+
+[source,java]
+----
+Set<TopicPartition> topicPartitions = new HashSet<>();
+topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
+
+// registering the handler for incoming messages
+consumer.handler(record -> {
+  System.out.println(record.key() + " " + record.value());
+});
+
+// requesting to be assigned the specific partition
+consumer.assign(topicPartitions, done -> {
+
+  if (done.succeeded()) {
+    System.out.println("Partition assigned");
+  }
+});
+----

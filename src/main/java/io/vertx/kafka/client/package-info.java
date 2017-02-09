@@ -90,6 +90,40 @@
  * deserializers are specified as parameters in the
  * {@link io.vertx.kafka.client.producer.KafkaProducer#create(io.vertx.core.Vertx, java.util.Map, java.lang.Class, java.lang.Class)}
  * method.
+ *
+ * === Receiving messages within a consumer group
+ *
+ * In order to start receiving messages from Kafka topics, the consumer can use the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#subscribe(java.util.Set, io.vertx.core.Handler)} method for subscribing
+ * to a set of topics being part of a consumer group (specified by the properties on creation) and being notified when the operation
+ * is completed. Before doing that, it's mandatory to register an handler for handling incoming messages using the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#handler(io.vertx.core.Handler)} otherwise an
+ * {@link java.lang.IllegalStateException} will be thrown.
+ *
+ * Using the consumer group way, the Kafka cluster assigns partitions to the consumer taking into account other connected
+ * consumers in the same consumer group, so that partitions can be spread across them. The Kafka cluster handles partitions re-balancing
+ * when a consumer leaves the group (so assigned partitions are free to be assigned to other consumers) or a new consumer
+ * joins the group (so it wants partitions to read from).
+ * The {@link io.vertx.kafka.client.consumer.KafkaConsumer} interface provides a way for being notified
+ * about what are the partitions revoked and assigned by the Kafka cluster specifying related handlers through the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#partitionsRevokedHandler(io.vertx.core.Handler)} and the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#partitionsAssignedHandler(io.vertx.core.Handler)}.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example2}
+ * ----
+ *
+ * === Receiving messages with assigned partition
+ *
+ * Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
+ * topic partition. The big difference is that without being part of a consumer group the overall application can't rely
+ * on the re-balancing feature.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example3}
+ * ----
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")
