@@ -21,6 +21,7 @@ import io.vertx.docgen.Source;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
+import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -202,5 +203,81 @@ public class VertxKafkaClientExamples {
         System.out.println("Last read message offset committed");
       }
     });
+  }
+
+  /**
+   * Example about how Kafka producer sends message to topic
+   * partitions in a round robin fashion
+   * @param producer
+   */
+  public void example7(KafkaProducer<String,String> producer) {
+
+    for (int i = 0; i < 5; i++) {
+
+      // only topic and message value are specified, round robin on destination partitions
+      KafkaProducerRecord<String, String> record =
+        KafkaProducerRecord.create("test", "message_" + i);
+
+      producer.write(record, recordMetadata -> {
+
+        System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.topic() +
+          ", partition=" + recordMetadata.partition() +
+          ", offset=" + recordMetadata.offset());
+
+      });
+    }
+
+  }
+
+  /**
+   * Example about how Kafka producer sends messages to a
+   * specified topic partition
+   * @param producer
+   */
+  public void example8(KafkaProducer<String,String> producer) {
+
+    for (int i = 0; i < 10; i++) {
+
+      // a destination partition is specified
+      KafkaProducerRecord<String, String> record =
+        KafkaProducerRecord.create("test", null, "message_" + i, 0);
+
+      producer.write(record, recordMetadata -> {
+
+        System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.topic() +
+          ", partition=" + recordMetadata.partition() +
+          ", offset=" + recordMetadata.offset());
+
+      });
+    }
+
+  }
+
+  /**
+   * Example about how Kafka producer sends messages
+   * specifying a key hashed internally for defining
+   * the destination partition
+   * @param producer
+   */
+  public void example9(KafkaProducer<String,String> producer) {
+
+    for (int i = 0; i < 10; i++) {
+
+      // i.e. defining different keys for odd and even messages
+      int key = i % 2;
+
+      // a key is specified, all messages with same key will be sent to the same partition
+      KafkaProducerRecord<String, String> record =
+        KafkaProducerRecord.create("test", String.valueOf(key), "message_" + i);
+
+      producer.write(record, recordMetadata -> {
+
+        System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.topic() +
+          ", partition=" + recordMetadata.partition() +
+          ", offset=" + recordMetadata.offset());
+
+      });
+    }
+
   }
 }

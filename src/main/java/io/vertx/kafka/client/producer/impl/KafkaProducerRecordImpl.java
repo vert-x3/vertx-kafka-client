@@ -29,10 +29,51 @@ public class KafkaProducerRecordImpl<K, V> implements KafkaProducerRecord<K, V> 
   /**
    * Constructor
    *
-   * @param record  Kafka producer record for backing information
+   * @param topic the topic this record is being sent to
+   * @param key the key (or null if no key is specified)
+   * @param value the value
+   * @param timestamp the timestamp of this record
+   * @param partition the partition to which the record will be sent (or null if no partition was specified)
    */
-  public KafkaProducerRecordImpl(ProducerRecord<K, V> record) {
-    this.record = record;
+  public KafkaProducerRecordImpl(String topic, K key, V value, Long timestamp, Integer partition) {
+
+    this.record = new ProducerRecord<>(topic, partition, timestamp, key, value);
+  }
+
+  /**
+   * Constructor
+   *
+   * @param topic the topic this record is being sent to
+   * @param key the key (or null if no key is specified)
+   * @param value the value
+   * @param partition the partition to which the record will be sent (or null if no partition was specified)
+   */
+  public KafkaProducerRecordImpl(String topic, K key, V value, Integer partition) {
+
+    this.record = new ProducerRecord<>(topic, partition, key, value);
+  }
+
+  /**
+   * Constructor
+   *
+   * @param topic the topic this record is being sent to
+   * @param key the key (or null if no key is specified)
+   * @param value the value
+   */
+  public KafkaProducerRecordImpl(String topic, K key, V value) {
+
+    this.record = new ProducerRecord<>(topic, key, value);
+  }
+
+  /**
+   * Constructor
+   *
+   * @param topic the topic this record is being sent to
+   * @param value the value
+   */
+  public KafkaProducerRecordImpl(String topic, V value) {
+
+    this.record = new ProducerRecord<>(topic, value);
   }
 
   @Override
@@ -46,7 +87,7 @@ public class KafkaProducerRecordImpl<K, V> implements KafkaProducerRecord<K, V> 
   }
 
   @Override
-  public long timestamp() {
+  public Long timestamp() {
     return this.record.timestamp();
   }
 
@@ -56,7 +97,7 @@ public class KafkaProducerRecordImpl<K, V> implements KafkaProducerRecord<K, V> 
   }
 
   @Override
-  public int partition() {
+  public Integer partition() {
     return this.record.partition();
   }
 

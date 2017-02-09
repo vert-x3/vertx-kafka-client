@@ -248,3 +248,75 @@ consumer.commit(done -> {
   }
 });
 ----
+
+=== Sending messages to a topic
+
+The `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` interface provides the
+`link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#write-io.vertx.kafka.client.producer.KafkaProducerRecord-io.vertx.core.Handler-[write]`
+method for sending messages (records) to a topic having the possibility to receive metadata about the messages sent like
+the topic itself, the destination partition and the assigned offset. The simpler way is sending a message specifying
+only the destination topic and the related value; in this case, without a key or a specific partition, the sender works
+in a round robin way sending messages across all the partitions of the topic.
+
+[source,java]
+----
+for (int i = 0; i < 5; i++) {
+
+  // only topic and message value are specified, round robin on destination partitions
+  KafkaProducerRecord<String, String> record =
+    KafkaProducerRecord.create("test", "message_" + i);
+
+  producer.write(record, recordMetadata -> {
+
+    System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.topic() +
+      ", partition=" + recordMetadata.partition() +
+      ", offset=" + recordMetadata.offset());
+
+  });
+}
+----
+
+In order to specify the destination partition for a message, it's possible to specify the partition identifier explicitly
+or a key for the message.
+
+[source,java]
+----
+for (int i = 0; i < 10; i++) {
+
+  // a destination partition is specified
+  KafkaProducerRecord<String, String> record =
+    KafkaProducerRecord.create("test", null, "message_" + i, 0);
+
+  producer.write(record, recordMetadata -> {
+
+    System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.topic() +
+      ", partition=" + recordMetadata.partition() +
+      ", offset=" + recordMetadata.offset());
+
+  });
+}
+----
+
+Using a key, the sender processes an hash on that in order to identify the destination partition; it
+guarantees that all messages with the same key are sent to the same partition in order.
+
+[source,java]
+----
+for (int i = 0; i < 10; i++) {
+
+  // i.e. defining different keys for odd and even messages
+  int key = i % 2;
+
+  // a key is specified, all messages with same key will be sent to the same partition
+  KafkaProducerRecord<String, String> record =
+    KafkaProducerRecord.create("test", String.valueOf(key), "message_" + i);
+
+  producer.write(record, recordMetadata -> {
+
+    System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.topic() +
+      ", partition=" + recordMetadata.partition() +
+      ", offset=" + recordMetadata.offset());
+
+  });
+}
+----

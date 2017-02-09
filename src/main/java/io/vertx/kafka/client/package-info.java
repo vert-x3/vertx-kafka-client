@@ -166,6 +166,36 @@
  * ----
  * {@link examples.VertxKafkaClientExamples#example6}
  * ----
+ *
+ * === Sending messages to a topic
+ *
+ * The {@link io.vertx.kafka.client.producer.KafkaProducer} interface provides the
+ * {@link io.vertx.kafka.client.producer.KafkaProducer#write(io.vertx.kafka.client.producer.KafkaProducerRecord, io.vertx.core.Handler)}
+ * method for sending messages (records) to a topic having the possibility to receive metadata about the messages sent like
+ * the topic itself, the destination partition and the assigned offset. The simpler way is sending a message specifying
+ * only the destination topic and the related value; in this case, without a key or a specific partition, the sender works
+ * in a round robin way sending messages across all the partitions of the topic.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example7}
+ * ----
+ *
+ * In order to specify the destination partition for a message, it's possible to specify the partition identifier explicitly
+ * or a key for the message.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example8}
+ * ----
+ *
+ * Using a key, the sender processes an hash on that in order to identify the destination partition; it
+ * guarantees that all messages with the same key are sent to the same partition in order.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example9}
+ * ----
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")
