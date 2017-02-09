@@ -182,6 +182,19 @@
  * {@link examples.VertxKafkaClientExamples#example7}
  * ----
  *
+ * === Pausing and resuming the read on topic
+ *
+ * A consumer has the possibility to pause the read operation from a topic, in order to not receive other messages
+ * (i.e. having more time to process the messages already read) and then resume the read for continuing to receive messages.
+ * In order to do that, the {@link io.vertx.kafka.client.consumer.KafkaConsumer} interface provides the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#pause(java.util.Set, io.vertx.core.Handler)} method and the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#resume(java.util.Set, io.vertx.core.Handler)} method.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example8}
+ * ----
+ *
  * === Sending messages to a topic
  *
  * The {@link io.vertx.kafka.client.producer.KafkaProducer} interface provides the
@@ -193,7 +206,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example8}
+ * {@link examples.VertxKafkaClientExamples#example9}
  * ----
  *
  * In order to specify the destination partition for a message, it's possible to specify the partition identifier explicitly
@@ -201,7 +214,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example9}
+ * {@link examples.VertxKafkaClientExamples#example10}
  * ----
  *
  * Using a key, the sender processes an hash on that in order to identify the destination partition; it
@@ -209,7 +222,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example10}
+ * {@link examples.VertxKafkaClientExamples#example11}
  * ----
  */
 @Document(fileName = "index.adoc")

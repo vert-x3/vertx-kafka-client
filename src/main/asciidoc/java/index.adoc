@@ -111,7 +111,8 @@ about what are the partitions revoked and assigned by the Kafka cluster specifyi
 [source,java]
 ----
 consumer.handler(record -> {
-  System.out.println(record.key() + " " + record.value());
+  System.out.println("key=" + record.key() + ",value=" + record.value() +
+    ",partition=" + record.partition() + ",offset=" + record.offset());
 });
 
 // registering handlers for assigned and revoked partitions
@@ -170,7 +171,8 @@ topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
 
 // registering the handler for incoming messages
 consumer.handler(record -> {
-  System.out.println(record.key() + " " + record.value());
+  System.out.println("key=" + record.key() + ",value=" + record.value() +
+    ",partition=" + record.partition() + ",offset=" + record.offset());
 });
 
 // requesting to be assigned the specific partition
@@ -284,6 +286,60 @@ consumer.seekToEnd(Collections.singleton(topicPartition), done -> {
 
   if (done.succeeded()) {
     System.out.println("Seeking done");
+  }
+});
+----
+
+=== Pausing and resuming the read on topic
+
+A consumer has the possibility to pause the read operation from a topic, in order to not receive other messages
+(i.e. having more time to process the messages already read) and then resume the read for continuing to receive messages.
+In order to do that, the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#pause-java.util.Set-io.vertx.core.Handler-[pause]` method and the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#resume-java.util.Set-io.vertx.core.Handler-[resume]` method.
+
+[source,java]
+----
+Set<TopicPartition> topicPartitions = new HashSet<>();
+topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
+
+// registering the handler for incoming messages
+consumer.handler(record -> {
+  System.out.println("key=" + record.key() + ",value=" + record.value() +
+    ",partition=" + record.partition() + ",offset=" + record.offset());
+
+  // i.e. pause/resume on partition 0, after reading message up to offset 5
+  if ((record.partition() == 0) && (record.offset() == 5)) {
+
+    // pausing read operation
+    consumer.pause(topicPartitions, done -> {
+
+      if (done.succeeded()) {
+
+        System.out.println("Paused");
+        // resuming read operation after a specific time
+        vertx.setTimer(5000, t -> {
+
+          // resuming read operation
+          consumer.resume(topicPartitions, done1 -> {
+
+            if (done.succeeded()) {
+              System.out.println("Resumed");
+            }
+          });
+
+        });
+
+      }
+    });
+  }
+});
+
+// subscribing to the topic
+consumer.subscribe(Collections.singleton("test"), done -> {
+
+  if (done.succeeded()) {
+    System.out.println("Consumer subscribed");
   }
 });
 ----

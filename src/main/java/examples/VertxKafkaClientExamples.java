@@ -72,7 +72,8 @@ public class VertxKafkaClientExamples {
 
     // registering the handler for incoming messages
     consumer.handler(record -> {
-      System.out.println(record.key() + " " + record.value());
+      System.out.println("key=" + record.key() + ",value=" + record.value() +
+        ",partition=" + record.partition() + ",offset=" + record.offset());
     });
 
     // registering handlers for assigned and revoked partitions
@@ -131,7 +132,8 @@ public class VertxKafkaClientExamples {
 
     // registering the handler for incoming messages
     consumer.handler(record -> {
-      System.out.println(record.key() + " " + record.value());
+      System.out.println("key=" + record.key() + ",value=" + record.value() +
+        ",partition=" + record.partition() + ",offset=" + record.offset());
     });
 
     // requesting to be assigned the specific partition
@@ -240,11 +242,63 @@ public class VertxKafkaClientExamples {
   }
 
   /**
+   * Example about how Kafka consumer can pause reading from a topic partition
+   * and then resume read operation for continuing to get messages
+   * @param vertx
+   * @param consumer
+   */
+  public void example8(Vertx vertx, KafkaConsumer<?,?> consumer) {
+
+    Set<TopicPartition> topicPartitions = new HashSet<>();
+    topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
+
+    // registering the handler for incoming messages
+    consumer.handler(record -> {
+      System.out.println("key=" + record.key() + ",value=" + record.value() +
+        ",partition=" + record.partition() + ",offset=" + record.offset());
+
+      // i.e. pause/resume on partition 0, after reading message up to offset 5
+      if ((record.partition() == 0) && (record.offset() == 5)) {
+
+        // pausing read operation
+        consumer.pause(topicPartitions, done -> {
+
+          if (done.succeeded()) {
+
+            System.out.println("Paused");
+            // resuming read operation after a specific time
+            vertx.setTimer(5000, t -> {
+
+              // resuming read operation
+              consumer.resume(topicPartitions, done1 -> {
+
+                if (done.succeeded()) {
+                  System.out.println("Resumed");
+                }
+              });
+
+            });
+
+          }
+        });
+      }
+    });
+
+    // subscribing to the topic
+    consumer.subscribe(Collections.singleton("test"), done -> {
+
+      if (done.succeeded()) {
+        System.out.println("Consumer subscribed");
+      }
+    });
+  }
+
+  /**
    * Example about how Kafka producer sends message to topic
    * partitions in a round robin fashion
    * @param producer
    */
-  public void example8(KafkaProducer<String,String> producer) {
+  public void example9(KafkaProducer<String,String> producer) {
 
     for (int i = 0; i < 5; i++) {
 
@@ -268,7 +322,7 @@ public class VertxKafkaClientExamples {
    * specified topic partition
    * @param producer
    */
-  public void example9(KafkaProducer<String,String> producer) {
+  public void example10(KafkaProducer<String,String> producer) {
 
     for (int i = 0; i < 10; i++) {
 
@@ -293,7 +347,7 @@ public class VertxKafkaClientExamples {
    * the destination partition
    * @param producer
    */
-  public void example10(KafkaProducer<String,String> producer) {
+  public void example11(KafkaProducer<String,String> producer) {
 
     for (int i = 0; i < 10; i++) {
 
