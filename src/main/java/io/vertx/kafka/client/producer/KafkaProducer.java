@@ -37,22 +37,54 @@ import java.util.Properties;
 @VertxGen
 public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, V>> {
 
+  /**
+   * Create a new KafkaProducer instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka producer configuration
+   * @return  an instance of the KafkaProducer
+   */
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Map<String, String> config) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, new HashMap<>(config));
     return new KafkaProducerImpl<>(stream);
   }
 
+  /**
+   * Create a new KafkaProducer instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka producer configuration
+   * @param keyType class type for the key serialization
+   * @param valueType class type for the value serialization
+   * @return  an instance of the KafkaProducer
+   */
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Map<String, String> config, Class<K> keyType, Class<V> valueType) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, new HashMap<>(config), keyType, valueType);
     return new KafkaProducerImpl<>(stream);
   }
 
+  /**
+   * Create a new KafkaProducer instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka producer configuration
+   * @return  an instance of the KafkaProducer
+   */
   @GenIgnore
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Properties config) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, config);
     return new KafkaProducerImpl<>(stream);
   }
 
+  /**
+   * Create a new KafkaProducer instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka producer configuration
+   * @param keyType class type for the key serialization
+   * @param valueType class type for the value serialization
+   * @return  an instance of the KafkaProducer
+   */
   @GenIgnore
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, config, keyType, valueType);
@@ -84,19 +116,51 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @Override
   KafkaProducer<K, V> drainHandler(Handler<Void> handler);
 
+  /**
+   * Asynchronously write a record to a topic
+   *
+   * @param record  record to write
+   * @param handler handler called on operation completed
+   * @return  current KafkaWriteStream instance
+   */
   @Fluent
-  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord, Handler<RecordMetadata> handler);
+  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<RecordMetadata> handler);
 
+  /**
+   * Get the partition metadata for the give topic.
+   *
+   * @param topic topic partition for which getting partitions info
+   * @param handler handler called on operation completed
+   * @return  current KafkaProducer instance
+   */
   @Fluent
   KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
+  /**
+   * Invoking this method makes all buffered records immediately available to write
+   *
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaProducer instance
+   */
   @Fluent
   KafkaProducer<K, V> flush(Handler<Void> completionHandler);
 
+  /**
+   * Close the producer
+   */
   void close();
 
+  /**
+   * Close the producer
+   *
+   * @param timeout timeout to wait for closing
+   * @param completionHandler handler called on operation completed
+   */
   void close(long timeout, Handler<Void> completionHandler);
 
+  /**
+   * @return  underlying {@link KafkaWriteStream} instance
+   */
   @GenIgnore
   KafkaWriteStream<K, V> asStream();
 }

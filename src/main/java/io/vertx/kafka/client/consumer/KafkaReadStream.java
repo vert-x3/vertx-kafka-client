@@ -46,90 +46,308 @@ import java.util.Set;
  */
 public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> {
 
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka consumer configuration
+   * @return  an instance of the KafkaReadStream
+   */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config) {
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
   }
 
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka consumer configuration
+   * @param keyType class type for the key deserialization
+   * @param valueType class type for the value deserialization
+   * @return  an instance of the KafkaReadStream
+   */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
     Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
     Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka consumer configuration
+   * @return  an instance of the KafkaReadStream
+   */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config) {
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
   }
 
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka consumer configuration
+   * @param keyType class type for the key deserialization
+   * @param valueType class type for the value deserialization
+   * @return  an instance of the KafkaReadStream
+   */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
     Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
     Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param consumer  native Kafka consumer instance
+   * @return  an instance of the KafkaReadStream
+   */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Consumer<K, V> consumer) {
     return new KafkaReadStreamImpl<>(vertx.getOrCreateContext(), consumer);
   }
 
+  /**
+   * Get the last committed offset for the given partition (whether the commit happened by this process or another).
+   *
+   * @param topicPartition  topic partition for getting last committed offset
+   * @param handler handler called on operation completed
+   */
   void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
 
+  /**
+   * Suspend fetching from the requested partitions.
+   *
+   * @param topicPartitions topic partition from which suspend fetching
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions);
 
+  /**
+   * Suspend fetching from the requested partitions.
+   *
+   * @param topicPartitions topic partition from which suspend fetching
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
+  /**
+   * Get the set of partitions that were previously paused by a call to pause(Collection).
+   *
+   * @param handler handler called on operation completed
+   */
   void paused(Handler<AsyncResult<Set<TopicPartition>>> handler);
 
+  /**
+   * Resume specified partitions which have been paused with pause.
+   *
+   * @param topicPartitions topic partition from which resume fetching
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions);
 
+  /**
+   * Resume specified partitions which have been paused with pause.
+   *
+   * @param topicPartitions topic partition from which resume fetching
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
+  /**
+   * Seek to the last offset for each of the given partitions.
+   *
+   * @param topicPartitions topic partition for which seek
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions);
 
+  /**
+   * Seek to the last offset for each of the given partitions.
+   *
+   * @param topicPartitions topic partition for which seek
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
+  /**
+   * Seek to the first offset for each of the given partitions.
+   *
+   * @param topicPartitions topic partition for which seek
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions);
 
+  /**
+   * Seek to the first offset for each of the given partitions.
+   *
+   * @param topicPartitions topic partition for which seek
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
+  /**
+   * Overrides the fetch offsets that the consumer will use on the next poll.
+   *
+   * @param topicPartition  topic partition for which seek
+   * @param offset  offset to seek inside the topic partition
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset);
 
+  /**
+   * Overrides the fetch offsets that the consumer will use on the next poll.
+   *
+   * @param topicPartition  topic partition for which seek
+   * @param offset  offset to seek inside the topic partition
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler);
 
+  /**
+   * Set the handler called when topic partitions are revoked to the consumer
+   *
+   * @param handler handler called on revoked topic partitions
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Collection<TopicPartition>> handler);
 
+  /**
+   * Set the handler called when topic partitions are assigned to the consumer
+   *
+   * @param handler handler called on assigned topic partitions
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> partitionsAssignedHandler(Handler<Collection<TopicPartition>> handler);
 
+  /**
+   * Subscribe to the given list of topics to get dynamically assigned partitions.
+   *
+   * @param topics  topics to subscribe to
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> subscribe(Set<String> topics);
 
+  /**
+   * Subscribe to the given list of topics to get dynamically assigned partitions.
+   *
+   * @param topics  topics to subscribe to
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler);
 
+  /**
+   * Unsubscribe from topics currently subscribed with subscribe.
+   *
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> unsubscribe();
 
+  /**
+   * Unsubscribe from topics currently subscribed with subscribe.
+   *
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> unsubscribe(Handler<AsyncResult<Void>> completionHandler);
 
+  /**
+   * Get the current subscription.
+   *
+   * @param handler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> subscription(Handler<AsyncResult<Set<String>>> handler);
 
+  /**
+   * Manually assign a list of partition to this consumer.
+   *
+   * @param partitions  partitions which want assigned
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions);
 
+  /**
+   * Manually assign a list of partition to this consumer.
+   *
+   * @param partitions  partitions which want assigned
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
 
+  /**
+   * Get the set of partitions currently assigned to this consumer.
+   *
+   * @param handler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> assignment(Handler<AsyncResult<Set<TopicPartition>>> handler);
 
+  /**
+   * Get metadata about partitions for all topics that the user is authorized to view.
+   *
+   * @param handler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> listTopics(Handler<AsyncResult<Map<String,List<PartitionInfo>>>> handler);
 
+  /**
+   * Commit current offsets for all the subscribed list of topics and partition.
+   */
   void commit();
 
+  /**
+   * Commit current offsets for all the subscribed list of topics and partition.
+   *
+   * @param completionHandler handler called on operation completed
+   */
   void commit(Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
 
+  /**
+   * Commit the specified offsets for the specified list of topics and partitions to Kafka.
+   *
+   * @param offsets offsets list to commit
+   */
   void commit(Map<TopicPartition, OffsetAndMetadata> offsets);
 
+  /**
+   * Commit the specified offsets for the specified list of topics and partitions to Kafka.
+   *
+   * @param offsets offsets list to commit
+   * @param completionHandler handler called on operation completed
+   */
   void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
 
+  /**
+   * Get metadata about the partitions for a given topic.
+   *
+   * @param topic topic partition for which getting partitions info
+   * @param handler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
   KafkaReadStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
+  /**
+   * Close the stream
+   */
   default void close() {
     close(null);
   }
 
+  /**
+   * Close the stream
+   *
+   * @param completionHandler handler called on operation completed
+   */
   void close(Handler<Void> completionHandler);
 
 }

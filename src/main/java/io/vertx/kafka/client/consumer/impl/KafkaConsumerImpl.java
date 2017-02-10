@@ -87,7 +87,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> paused(Handler<AsyncResult<Set<TopicPartition>>> handler) {
+  public void paused(Handler<AsyncResult<Set<TopicPartition>>> handler) {
 
     this.stream.paused(done -> {
 
@@ -97,7 +97,6 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
         handler.handle(Future.failedFuture(done.cause()));
       }
     });
-    return this;
   }
 
   @Override
