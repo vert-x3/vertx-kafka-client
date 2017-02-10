@@ -368,4 +368,18 @@ public class VertxKafkaClientExamples {
     }
 
   }
+
+  /**
+   * Example about how Kafka client (producer or consumer)
+   * can handle errors and exception during communication
+   * with the Kafka cluster
+   * @param consumer
+   */
+  public void example12(KafkaConsumer<?,?> consumer) {
+
+    // setting handler for errors
+    consumer.exceptionHandler(e -> {
+      System.out.println("Error = " + e.getMessage());
+    });
+  }
 }

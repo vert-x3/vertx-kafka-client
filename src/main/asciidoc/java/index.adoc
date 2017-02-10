@@ -416,6 +416,19 @@ for (int i = 0; i < 10; i++) {
 }
 ----
 
+=== Handling exceptions and errors
+
+In order to handle potential errors and exceptions during the communication between a Kafka client (consumer or producer)
+and the Kafka cluster, both `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]`
+interface provide the "exceptionHandler" method for setting an handler called when an error happens (i.e. timeout).
+
+[source,java]
+----
+consumer.exceptionHandler(e -> {
+  System.out.println("Error = " + e.getMessage());
+});
+----
+
 == Stream implementation and native Kafka objects
 
 Other than the polyglot version of the Kafka consumer and producer, this component provides a stream oriented

@@ -225,6 +225,17 @@
  * {@link examples.VertxKafkaClientExamples#example11}
  * ----
  *
+ * === Handling exceptions and errors
+ *
+ * In order to handle potential errors and exceptions during the communication between a Kafka client (consumer or producer)
+ * and the Kafka cluster, both {@link io.vertx.kafka.client.consumer.KafkaConsumer} and {@link io.vertx.kafka.client.producer.KafkaProducer}
+ * interface provide the "exceptionHandler" method for setting an handler called when an error happens (i.e. timeout).
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example12}
+ * ----
+ *
  * == Stream implementation and native Kafka objects
  *
  * Other than the polyglot version of the Kafka consumer and producer, this component provides a stream oriented

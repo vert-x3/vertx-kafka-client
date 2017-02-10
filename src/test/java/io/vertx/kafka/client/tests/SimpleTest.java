@@ -234,6 +234,8 @@ public class SimpleTest {
 
     //examples.example11(producer);
 
+    //examples.example12(consumer);
+
     /*KafkaConsumer c = new KafkaConsumer(props);
 
     c.subscribe(Collections.singleton("test"));
