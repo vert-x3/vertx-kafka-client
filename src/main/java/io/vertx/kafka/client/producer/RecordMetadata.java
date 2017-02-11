@@ -89,7 +89,7 @@ public class RecordMetadata {
   /**
    * @return  the offset of the record in the topic/partition.
    */
-  public long offset() {
+  public long getOffset() {
     return this.offset;
   }
 
@@ -107,7 +107,7 @@ public class RecordMetadata {
   /**
    * @return  the partition the record was sent to
    */
-  public int partition() {
+  public int getPartition() {
     return this.partition;
   }
 
@@ -125,7 +125,7 @@ public class RecordMetadata {
   /**
    * @return  the timestamp of the record in the topic/partition
    */
-  public long timestamp() {
+  public long getTimestamp() {
     return this.timestamp;
   }
 
@@ -143,7 +143,7 @@ public class RecordMetadata {
   /**
    * @return  the topic the record was appended to
    */
-  public String topic() {
+  public String getTopic() {
     return this.topic;
   }
 
