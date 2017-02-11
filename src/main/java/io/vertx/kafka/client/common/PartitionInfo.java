@@ -41,6 +41,23 @@ public class PartitionInfo {
   }
 
   /**
+   * Constructor
+   *
+   * @param inSyncReplicas  the subset of the replicas that are in sync
+   * @param leader  the node id of the node currently acting as a leader
+   * @param partition the partition id
+   * @param replicas  the complete set of replicas for this partition
+   * @param topic the topic name
+   */
+  public PartitionInfo(List<Node> inSyncReplicas, Node leader, int partition, List<Node> replicas, String topic) {
+    this.inSyncReplicas = inSyncReplicas;
+    this.leader = leader;
+    this.partition = partition;
+    this.replicas = replicas;
+    this.topic = topic;
+  }
+
+  /**
    * Constructor (from JSON representation)
    *
    * @param json  JSON representation

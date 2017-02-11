@@ -35,6 +35,17 @@ public class TopicPartition {
   }
 
   /**
+   * Constructor
+   *
+   * @param topic the topic name
+   * @param partition the partition number
+   */
+  public TopicPartition(String topic, int partition) {
+    this.topic = topic;
+    this.partition = partition;
+  }
+
+  /**
    * Constructor (from JSON representation)
    *
    * @param json  JSON representation

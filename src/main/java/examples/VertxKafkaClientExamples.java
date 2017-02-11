@@ -128,7 +128,7 @@ public class VertxKafkaClientExamples {
   public void example4(KafkaConsumer<?,?> consumer) {
 
     Set<TopicPartition> topicPartitions = new HashSet<>();
-    topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
+    topicPartitions.add(new TopicPartition("test", 0));
 
     // registering the handler for incoming messages
     consumer.handler(record -> {
@@ -214,7 +214,7 @@ public class VertxKafkaClientExamples {
    */
   public void example7(KafkaConsumer<?,?> consumer) {
 
-    TopicPartition topicPartition = new TopicPartition().setTopic("test").setPartition(0);
+    TopicPartition topicPartition = new TopicPartition("test", 0);
 
     // seeking to a specific offset
     consumer.seek(topicPartition, 10, done -> {
@@ -250,7 +250,7 @@ public class VertxKafkaClientExamples {
   public void example8(Vertx vertx, KafkaConsumer<?,?> consumer) {
 
     Set<TopicPartition> topicPartitions = new HashSet<>();
-    topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
+    topicPartitions.add(new TopicPartition("test", 0));
 
     // registering the handler for incoming messages
     consumer.handler(record -> {

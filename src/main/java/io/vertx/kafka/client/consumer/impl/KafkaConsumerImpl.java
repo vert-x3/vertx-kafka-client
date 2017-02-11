@@ -300,8 +300,8 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
         Map<TopicPartition, OffsetAndMetadata> result = new HashMap<>();
 
         done.result().forEach(((topicPartition, offsetAndMetadata) -> {
-          result.put(new TopicPartition().setTopic(topicPartition.topic()).setPartition(topicPartition.partition()),
-            new OffsetAndMetadata().setOffset(offsetAndMetadata.offset()).setMetadata(offsetAndMetadata.metadata()));
+          result.put(new TopicPartition(topicPartition.topic(), topicPartition.partition()),
+            new OffsetAndMetadata(offsetAndMetadata.offset(), offsetAndMetadata.metadata()));
         }));
 
         completionHandler.handle(Future.succeededFuture(result));

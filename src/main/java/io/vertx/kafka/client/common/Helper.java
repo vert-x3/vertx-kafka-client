@@ -38,7 +38,7 @@ public class Helper {
   }
 
   public static TopicPartition from(org.apache.kafka.common.TopicPartition topicPartition) {
-    return new TopicPartition().setTopic(topicPartition.topic()).setPartition(topicPartition.partition());
+    return new TopicPartition(topicPartition.topic(), topicPartition.partition());
   }
 
   public static Set<TopicPartition> from(Collection<org.apache.kafka.common.TopicPartition> topicPartitions) {
@@ -54,29 +54,17 @@ public class Helper {
   }
 
   public static Node from(org.apache.kafka.common.Node node) {
-    return new Node()
-      .setHasRack(node.hasRack())
-      .setHost(node.host())
-      .setId(node.id())
-      .setIdString(node.idString())
-      .setIsEmpty(node.isEmpty())
-      .setPort(node.port())
-      .setRack(node.rack());
+    return new Node(node.hasRack(), node.host(), node.id(), node.idString(),
+      node.isEmpty(), node.port(), node.rack());
   }
 
   public static RecordMetadata from(org.apache.kafka.clients.producer.RecordMetadata metadata) {
-    return new RecordMetadata()
-      .setChecksum(metadata.checksum())
-      .setOffset(metadata.offset())
-      .setPartition(metadata.partition())
-      .setTimestamp(metadata.timestamp())
-      .setTopic(metadata.topic());
+    return new RecordMetadata(metadata.checksum(), metadata.offset(),
+      metadata.partition(), metadata.timestamp(), metadata.topic());
   }
 
   public static OffsetAndMetadata from(org.apache.kafka.clients.consumer.OffsetAndMetadata offsetAndMetadata) {
-    return new OffsetAndMetadata()
-      .setOffset(offsetAndMetadata.offset())
-      .setMetadata(offsetAndMetadata.metadata());
+    return new OffsetAndMetadata(offsetAndMetadata.offset(), offsetAndMetadata.metadata());
   }
 
   public static org.apache.kafka.clients.consumer.OffsetAndMetadata to(OffsetAndMetadata offsetAndMetadata) {

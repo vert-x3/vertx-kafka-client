@@ -41,6 +41,27 @@ public class Node {
   }
 
   /**
+   * Constructor
+   *
+   * @param hasRack true if this node has a defined rack
+   * @param host  the host name for this node
+   * @param id  the node id of this node
+   * @param idString  String representation of the node id
+   * @param isEmpty if this node is empty, which may be the case if noNode() is used as a placeholder in a response payload with an error
+   * @param port  the port for this node
+   * @param rack  the rack for this node
+   */
+  public Node(boolean hasRack, String host, int id, String idString, boolean isEmpty, int port, String rack) {
+    this.hasRack = hasRack;
+    this.host = host;
+    this.id = id;
+    this.idString = idString;
+    this.isEmpty = isEmpty;
+    this.port = port;
+    this.rack = rack;
+  }
+
+  /**
    * Constructor (from JSON representation)
    *
    * @param json  JSON representation

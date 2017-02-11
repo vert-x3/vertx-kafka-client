@@ -39,6 +39,23 @@ public class RecordMetadata {
   }
 
   /**
+   * Constructor
+   *
+   * @param checksum  checksum (CRC32) of the record
+   * @param offset  the offset of the record in the topic/partition.
+   * @param partition the partition the record was sent to
+   * @param timestamp the timestamp of the record in the topic/partition
+   * @param topic the topic the record was appended to
+   */
+  public RecordMetadata(long checksum, long offset, int partition, long timestamp, String topic) {
+    this.checksum = checksum;
+    this.offset = offset;
+    this.partition = partition;
+    this.timestamp = timestamp;
+    this.topic = topic;
+  }
+
+  /**
    * Constructor (from JSON representation)
    *
    * @param json  JSON representation

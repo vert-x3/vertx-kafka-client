@@ -35,6 +35,17 @@ public class OffsetAndMetadata {
   }
 
   /**
+   * Constructor
+   *
+   * @param offset  offset to commit
+   * @param metadata  additional metadata with the offset committed
+   */
+  public OffsetAndMetadata(long offset, String metadata) {
+    this.offset = offset;
+    this.metadata = metadata;
+  }
+
+  /**
    * Constructor (from JSON representation)
    *
    * @param json  JSON representation

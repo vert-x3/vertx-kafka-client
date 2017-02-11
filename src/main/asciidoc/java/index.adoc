@@ -167,7 +167,7 @@ method is also possible getting information about the current assigned partition
 [source,java]
 ----
 Set<TopicPartition> topicPartitions = new HashSet<>();
-topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
+topicPartitions.add(new TopicPartition("test", 0));
 
 // registering the handler for incoming messages
 consumer.handler(record -> {
@@ -263,7 +263,7 @@ method. Finally, in order to come back at the end of the partition, it's possibl
 
 [source,java]
 ----
-TopicPartition topicPartition = new TopicPartition().setTopic("test").setPartition(0);
+TopicPartition topicPartition = new TopicPartition("test", 0);
 
 // seeking to a specific offset
 consumer.seek(topicPartition, 10, done -> {
@@ -301,7 +301,7 @@ In order to do that, the `link:../../apidocs/io/vertx/kafka/client/consumer/Kafk
 [source,java]
 ----
 Set<TopicPartition> topicPartitions = new HashSet<>();
-topicPartitions.add(new TopicPartition().setTopic("test").setPartition(0));
+topicPartitions.add(new TopicPartition("test", 0));
 
 // registering the handler for incoming messages
 consumer.handler(record -> {
