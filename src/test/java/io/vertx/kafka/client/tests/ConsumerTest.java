@@ -18,15 +18,16 @@ package io.vertx.kafka.client.tests;
 
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
-import org.apache.kafka.clients.consumer.Consumer;
+
+import java.util.Properties;
 
 /**
- * Tests using the consumer with worker thread implementation with mock consumer
+ * Consumer tests
  */
-public class WorkerThreadConsumerMockTest extends ConsumerMockTestBase {
+public class ConsumerTest extends ConsumerTestBase {
 
   @Override
-  <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Consumer<K, V> consumer) {
-    return KafkaReadStream.create(vertx, consumer);
+  <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Properties config) {
+    return KafkaReadStream.create(vertx, config);
   }
 }
