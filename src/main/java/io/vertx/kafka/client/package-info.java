@@ -173,9 +173,9 @@
  * seek inside a topic partition for re-reading all or part of the messages and then coming back to the end of
  * the partition. Using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#seek(io.vertx.kafka.client.common.TopicPartition, long, io.vertx.core.Handler)}
  * method it's possible to change the offset for starting to read at specific position. If the consumer needs to re-read the stream
- * from the beginning, there is the {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToBeginning(java.util.Collection, io.vertx.core.Handler)}
+ * from the beginning, there is the {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToBeginning(java.util.Set, io.vertx.core.Handler)}
  * method. Finally, in order to come back at the end of the partition, it's possible to use the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToEnd(java.util.Collection, io.vertx.core.Handler)} method.
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToEnd(java.util.Set, io.vertx.core.Handler)} method.
  *
  * [source,$lang]
  * ----

@@ -283,7 +283,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions) {
+  public KafkaConsumer<K, V> seekToBeginning(Set<TopicPartition> topicPartitions) {
     this.stream.seekToBeginning(Helper.to(topicPartitions));
     return this;
   }
@@ -294,7 +294,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+  public KafkaConsumer<K, V> seekToBeginning(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
     this.stream.seekToBeginning(Helper.to(topicPartitions), completionHandler);
     return this;
   }
@@ -305,7 +305,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> seekToEnd(Collection<TopicPartition> topicPartitions) {
+  public KafkaConsumer<K, V> seekToEnd(Set<TopicPartition> topicPartitions) {
     this.stream.seekToEnd(Helper.to(topicPartitions));
     return this;
   }
@@ -316,7 +316,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+  public KafkaConsumer<K, V> seekToEnd(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
     this.stream.seekToEnd(Helper.to(topicPartitions), completionHandler);
     return this;
   }

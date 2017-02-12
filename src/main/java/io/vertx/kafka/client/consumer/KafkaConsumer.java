@@ -27,7 +27,6 @@ import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -276,7 +275,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
-   * Get the set of partitions that were previously paused by a call to pause(Collection).
+   * Get the set of partitions that were previously paused by a call to pause(Set).
    *
    * @param handler handler called on operation completed
    */
@@ -326,8 +325,8 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param handler handler called on revoked topic partitions
    * @return  current KafkaConsumer instance
    */
-  @GenIgnore
   @Fluent
+  @GenIgnore
   KafkaConsumer<K, V> partitionsRevokedHandler(Handler<Set<TopicPartition>> handler);
 
   /**
@@ -336,8 +335,8 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param handler handler called on assigned topic partitions
    * @return  current KafkaConsumer instance
    */
-  @GenIgnore
   @Fluent
+  @GenIgnore
   KafkaConsumer<K, V> partitionsAssignedHandler(Handler<Set<TopicPartition>> handler);
 
   /**
@@ -368,7 +367,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
   KafkaConsumer<K, V> seekToBeginning(TopicPartition topicPartition);
 
   /**
@@ -378,8 +376,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
-  KafkaConsumer<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions);
+  KafkaConsumer<K, V> seekToBeginning(Set<TopicPartition> topicPartitions);
 
   /**
    * Seek to the first offset for each of the given partition.
@@ -389,7 +386,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
   KafkaConsumer<K, V> seekToBeginning(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -400,8 +396,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
-  KafkaConsumer<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+  KafkaConsumer<K, V> seekToBeginning(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Seek to the last offset for each of the given partition.
@@ -410,7 +405,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
   KafkaConsumer<K, V> seekToEnd(TopicPartition topicPartition);
 
   /**
@@ -420,8 +414,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
-  KafkaConsumer<K, V> seekToEnd(Collection<TopicPartition> topicPartitions);
+  KafkaConsumer<K, V> seekToEnd(Set<TopicPartition> topicPartitions);
 
   /**
    * Seek to the last offset for each of the given partition.
@@ -431,7 +424,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
   KafkaConsumer<K, V> seekToEnd(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -442,8 +434,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
-  KafkaConsumer<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+  KafkaConsumer<K, V> seekToEnd(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Commit current offsets for all the subscribed list of topics and partition.

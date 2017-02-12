@@ -39,7 +39,6 @@ public interface KafkaProducerRecord<K, V> {
    * @param <V> value type
    * @return  Vert.x producer record
    */
-  @GenIgnore
   static <K, V> KafkaProducerRecord<K, V> create(String topic, K key, V value, Long timestamp, Integer partition) {
 
     return new KafkaProducerRecordImpl<>(topic, key, value, timestamp, partition);
@@ -72,7 +71,6 @@ public interface KafkaProducerRecord<K, V> {
    * @param <V> value type
    * @return  Vert.x producer record
    */
-  @GenIgnore
   static <K, V> KafkaProducerRecord<K, V> create(String topic, K key, V value) {
 
     return new KafkaProducerRecordImpl<>(topic, key, value);
@@ -87,7 +85,6 @@ public interface KafkaProducerRecord<K, V> {
    * @param <V> value type
    * @return  Vert.x producer record
    */
-  @GenIgnore
   static <K, V> KafkaProducerRecord<K, V> create(String topic, V value) {
 
     return new KafkaProducerRecordImpl<>(topic, value);
