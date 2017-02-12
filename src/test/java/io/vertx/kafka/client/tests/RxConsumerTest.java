@@ -5,16 +5,13 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.rxjava.core.Vertx;
 import io.vertx.rxjava.kafka.client.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,8 +47,7 @@ public class RxConsumerTest extends KafkaClusterTestBase {
       new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch.awaitSuccess(20000);
     Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
-    Map<String ,String> map = new HashMap<>();
-    config.forEach((k, v) -> map.put("" + k, "" + v));
+    Map<String ,String> map = mapConfig(config);
     consumer = KafkaConsumer.create(vertx, map, String.class, String.class);
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);

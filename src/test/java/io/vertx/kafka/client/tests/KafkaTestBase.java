@@ -24,6 +24,9 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -53,6 +56,12 @@ public class KafkaTestBase {
     if (consumer != null) {
       KafkaTestBase.close(ctx, consumer::close);
     }
+  }
+
+  static Map<String, String> mapConfig(Properties cfg) {
+    Map<String ,String> map = new HashMap<>();
+    cfg.forEach((k, v) -> map.put("" + k, "" + v));
+    return map;
   }
 
 
