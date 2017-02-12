@@ -16,7 +16,9 @@
 
 package io.vertx.kafka.client.tests;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
@@ -31,23 +33,25 @@ import java.util.function.Consumer;
  */
 public class KafkaTestBase {
 
-  static void close(TestContext ctx, KafkaWriteStream<?, ?> producer) {
+  static void close(TestContext ctx, Consumer<Handler<Void>> producer) {
     if (producer != null) {
       Async closeAsync = ctx.async();
-      producer.close(2000, v -> {
+      producer.accept(v -> {
         closeAsync.complete();
       });
       closeAsync.awaitSuccess(10000);
     }
   }
 
+  static void close(TestContext ctx, KafkaWriteStream<?, ?> producer) {
+    if (producer != null) {
+      close(ctx, handler -> producer.close(2000L, handler));
+    }
+  }
+
   static void close(TestContext ctx, KafkaReadStream<?, ?> consumer) {
     if (consumer != null) {
-      Async close = ctx.async();
-      consumer.close(v -> {
-        close.complete();
-      });
-      close.awaitSuccess(10000);
+      KafkaTestBase.close(ctx, consumer::close);
     }
   }
 
