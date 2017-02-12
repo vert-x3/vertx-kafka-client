@@ -326,7 +326,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
   KafkaConsumer<K, V> partitionsRevokedHandler(Handler<Set<TopicPartition>> handler);
 
   /**
@@ -336,7 +335,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
-  @GenIgnore
   KafkaConsumer<K, V> partitionsAssignedHandler(Handler<Set<TopicPartition>> handler);
 
   /**

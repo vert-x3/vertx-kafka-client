@@ -123,7 +123,6 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @param handler handler called on operation completed
    * @return  current KafkaWriteStream instance
    */
-  @GenIgnore
   @Fluent
   KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<RecordMetadata> handler);
 
