@@ -16,11 +16,14 @@
 
 /**
  * = Vert.x Kafka client
+ * :toc: left
  *
  * This component provides a Kafka client for reading and sending messages from/to an link:https://kafka.apache.org/[Apache Kafka] cluster.
- * From the consumer point of view, its API provides a bunch of methods for subscribing to a topic partition receiving
- * messages asynchronously or reading them as a stream (even with the possibility to pause the stream itself).
- * As producer, its API provides methods for sending message to a topic partition like writing on a stream.
+ *
+ * As consumer, the API provides methods for subscribing to a topic partition receiving
+ * messages asynchronously or reading them as a stream (even with the possibility to pause/resume the stream).
+ *
+ * As producer, the API provides methods for sending message to a topic partition like writing on a stream.
  *
  * WARNING: this module has the tech preview status, this means the API can change between versions.
  *
@@ -61,37 +64,49 @@
  * compile io.vertx:vertx-kafka-client:3.4.0-SNAPSHOT
  * ----
  *
- * == Getting Started
+ * == Creating Kafka clients
  *
- * === Creating Kafka clients
+ * Creating consumers and sproducer is quite similar and on how it works using the native Kafka client library.
  *
- * The creation of both clients, consumer and producer, is quite similar and it's strictly related on how it works using
- * the native Kafka client library. They need to be configured with a bunch of properties as described in the official
+ * They need to be configured with a bunch of properties as described in the official
  * Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
  * for the link:https://kafka.apache.org/documentation/#producerconfigs[producer].
- * In order to do that, a {@link java.util.Properties} instance can be filled with such properties passing it to one of the
+ *
+ * To achieve that, a {@link java.util.Properties} instance can be configured with such properties passing it to one of the
  * static creation methods exposed by {@link io.vertx.kafka.client.consumer.KafkaConsumer} and
- * {@link io.vertx.kafka.client.producer.KafkaProducer} interfaces. Another way is filling a {@link java.util.Map} instance
- * instead of the {@link java.util.Properties} one.
- * More advanced creation methods allow to specify the class type for the key and the value used for sending messages
- * or provided by received messages; this is a way for setting the key and value serializers/deserializers instead of
- * using the related properties for that.
+ * {@link io.vertx.kafka.client.producer.KafkaProducer}
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example1}
+ * {@link examples.VertxKafkaClientExamples#example1_0}
  * ----
  *
- * In the above example, a {@link io.vertx.kafka.client.consumer.KafkaConsumer} instance is created using a {@link java.util.Properties}
- * instance in order to specify the Kafka nodes list to connect (just one) and the deserializers to use for getting key
- * and value from each received message.
- * The {@link io.vertx.kafka.client.producer.KafkaProducer} instance is created in a different way using a {@link java.util.Map}
- * instance for specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value
- * deserializers are specified as parameters in the
- * {@link io.vertx.kafka.client.producer.KafkaProducer#create(io.vertx.core.Vertx, java.util.Map, java.lang.Class, java.lang.Class)}
- * method.
+ * In the above example, a {@link io.vertx.kafka.client.consumer.KafkaConsumer} instance is created using
+ * a {@link java.util.Properties} instance in order to specify the Kafka nodes list to connect (just one) and
+ * the deserializers to use for getting key and value from each received message.
  *
- * === Receiving messages from a topic joining a consumer group
+ * Another way is to use a {@link java.util.Map} instance instead of the {@link java.util.Properties} which is available
+ * only for the Java / Groovy / Kotlin
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example1_1}
+ * ----
+ *
+ * More advanced creation methods allow to specify the class type for the key and the value used for sending messages
+ * or provided by received messages; this is a way for setting the key and value serializers/deserializers instead of
+ * using the related properties for that
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#example1_2}
+ * ----
+ *
+ * Here the {@link io.vertx.kafka.client.producer.KafkaProducer} instance is created in using a {@link java.util.Map} for
+ * specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value deserializers are
+ * specified as parameters of {@link io.vertx.kafka.client.producer.KafkaProducer#create(io.vertx.core.Vertx, java.util.Map, java.lang.Class, java.lang.Class)}.
+ *
+ * == Receiving messages from a topic joining a consumer group
  *
  * In order to start receiving messages from Kafka topics, the consumer can use the
  * {@link io.vertx.kafka.client.consumer.KafkaConsumer#subscribe(java.util.Set, io.vertx.core.Handler)} method for subscribing
@@ -123,7 +138,7 @@
  * {@link examples.VertxKafkaClientExamples#example3}
  * ----
  *
- * === Receiving messages from a topic requesting specific partitions
+ * == Receiving messages from a topic requesting specific partitions
  *
  * Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
  * topic partition. The big difference is that without being part of a consumer group the overall application can't rely
@@ -152,7 +167,7 @@
  * This is the {@link io.vertx.kafka.client.consumer.KafkaConsumer#listTopics(io.vertx.core.Handler)} method which is not
  * available in the {@link io.vertx.kafka.client.producer.KafkaProducer} interface.
  *
- * === Committing offset manually
+ * == Committing offset manually
  *
  * In Apache Kafka, one of the main features is that the consumer is in charge to handle the offset of the last read message.
  * This is executed by the commit operation that can be executed automatically every time a bunch of messages are read
@@ -167,7 +182,7 @@
  * {@link examples.VertxKafkaClientExamples#example6}
  * ----
  *
- * === Seeking in a topic partition
+ * == Seeking in a topic partition
  *
  * A great advantage of using Apache Kafka is that the messages are retained for a long period of time and the consumer can
  * seek inside a topic partition for re-reading all or part of the messages and then coming back to the end of
@@ -182,7 +197,7 @@
  * {@link examples.VertxKafkaClientExamples#example7}
  * ----
  *
- * === Pausing and resuming the read on topic partitions
+ * == Pausing and resuming the read on topic partitions
  *
  * A consumer has the possibility to pause the read operation from a topic, in order to not receive other messages
  * (i.e. having more time to process the messages already read) and then resume the read for continuing to receive messages.
@@ -195,7 +210,7 @@
  * {@link examples.VertxKafkaClientExamples#example8}
  * ----
  *
- * === Sending messages to a topic
+ * == Sending messages to a topic
  *
  * The {@link io.vertx.kafka.client.producer.KafkaProducer} interface provides the
  * {@link io.vertx.kafka.client.producer.KafkaProducer#write(io.vertx.kafka.client.producer.KafkaProducerRecord, io.vertx.core.Handler)}
@@ -225,7 +240,7 @@
  * {@link examples.VertxKafkaClientExamples#example11}
  * ----
  *
- * === Handling exceptions and errors
+ * == Handling exceptions and errors
  *
  * In order to handle potential errors and exceptions during the communication between a Kafka client (consumer or producer)
  * and the Kafka cluster, both {@link io.vertx.kafka.client.consumer.KafkaConsumer} and {@link io.vertx.kafka.client.producer.KafkaProducer}

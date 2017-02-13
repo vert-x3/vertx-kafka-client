@@ -43,27 +43,53 @@ public class VertxKafkaClientExamples {
    * Example about Kafka consumer and producer creation
    * @param vertx
    */
-  public void example1(Vertx vertx) {
+  public void example1_0(Vertx vertx) {
 
-    // creating the consumer using properties
-    Properties props = new Properties();
-    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
-    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    // creating the consumer using properties config
+    Properties config = new Properties();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.deserializer", StringDeserializer.class);
+    config.put("value.deserializer", StringDeserializer.class);
+    config.put("group.id", "my_group");
+    config.put("auto.offset.reset", "earliest");
+    config.put("enable.auto.commit", "false");
 
-    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, props);
+    // use consumer for interacting with Apache Kafka
+    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+  }
+
+  /**
+   * Example about Kafka consumer and producer creation
+   * @param vertx
+   */
+  public void example1_1(Vertx vertx) {
+
+    // creating the consumer using map config
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put("value.deserializer", "org.apache.kafka.common.serialization.StringSerializer");
+    config.put("group.id", "my_group");
+    config.put("auto.offset.reset", "earliest");
+    config.put("enable.auto.commit", "false");
+
+    // use consumer for interacting with Apache Kafka
+    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+  }
+
+  /**
+   * Example about Kafka consumer and producer creation
+   * @param vertx
+   */
+  public void example1_2(Vertx vertx) {
 
     // creating the producer using map and class types for key and value serializers/deserializers
     Map<String, String> map = new HashMap<>();
-    map.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    map.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+    map.put("bootstrap.servers", "localhost:9092");
+    map.put("acks", "1");
 
+    // use producer for interacting with Apache Kafka
     KafkaProducer<String, String> producer = KafkaProducer.create(vertx, map, String.class, String.class);
-
-    // using consumer and producer for interacting with Apache Kafka
   }
 
   /**
