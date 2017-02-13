@@ -17,6 +17,7 @@
 /**
  * = Vert.x Kafka client
  * :toc: left
+ * :lang: $lang
  *
  * This component provides a Kafka client for reading and sending messages from/to an link:https://kafka.apache.org/[Apache Kafka] cluster.
  *
@@ -308,6 +309,7 @@
  * {@link examples.VertxKafkaClientExamples#example12}
  * ----
  *
+ * ifeval::[{lang} == java || {lang} == groovy || {lang} == kotlin]
  * == RxJava API
  *
  * The Kafka client provides an Rxified version of the original API.
@@ -316,6 +318,7 @@
  * ----
  * {@link examples.RxExamples#consumer(io.vertx.rxjava.kafka.client.consumer.KafkaConsumer)}
  * ----
+ * endif::[]
  *
  * == Stream implementation and native Kafka objects
  *

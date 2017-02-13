@@ -1,5 +1,6 @@
 = Vert.x Kafka client
 :toc: left
+:lang: java
 
 This component provides a Kafka client for reading and sending messages from/to an link:https://kafka.apache.org/[Apache Kafka] cluster.
 
@@ -545,6 +546,7 @@ consumer.exceptionHandler(e -> {
 });
 ----
 
+ifeval::[{lang} == java || {lang} == groovy || {lang} == kotlin]
 == RxJava API
 
 The Kafka client provides an Rxified version of the original API.
@@ -564,6 +566,7 @@ observable
 
 });
 ----
+endif::[]
 
 == Stream implementation and native Kafka objects
 
