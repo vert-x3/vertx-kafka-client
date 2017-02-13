@@ -16,19 +16,17 @@
 
 package io.vertx.kafka.client.tests;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+import org.apache.kafka.clients.producer.Producer;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -65,15 +63,15 @@ public class KafkaTestBase {
   }
 
 
-  static <K, V> KafkaWriteStream<K, V> producer(Consumer<Future<KafkaWriteStream<K, V>>> builder) throws Exception {
-    CompletableFuture<KafkaWriteStream<K, V>> fut = new CompletableFuture<>();
-    builder.accept(Future.<KafkaWriteStream<K, V>>future().setHandler(ar -> {
-      if (ar.succeeded()) {
-        fut.complete(ar.result());
-      } else {
-        fut.completeExceptionally(ar.cause());
-      }
-    }));
-    return fut.get(10, TimeUnit.SECONDS);
+  static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Properties config) throws Exception {
+    return KafkaWriteStream.create(vertx, config);
+  }
+
+  static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
+    return KafkaWriteStream.create(vertx, config, keyType, valueType);
+  }
+
+  static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Producer<K, V> producer) {
+    return KafkaWriteStream.create(vertx, producer);
   }
 }

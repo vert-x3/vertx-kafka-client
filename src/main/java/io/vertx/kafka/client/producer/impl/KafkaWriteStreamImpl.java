@@ -60,47 +60,6 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
   }
 
-  public static <K, V> void create(Vertx vertx, Properties config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config)), handler);
-  }
-
-  public static <K, V> void create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    Serializer<K> keySerializer = KafkaCodecs.serializer(keyType);
-    Serializer<V> valueSerializer = KafkaCodecs.serializer(valueType);
-    connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer)), handler);
-  }
-
-  public static <K, V> void create(Vertx vertx, Map<String, Object> config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config)), handler);
-  }
-
-  public static <K, V> void create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    Serializer<K> keySerializer = KafkaCodecs.serializer(keyType);
-    Serializer<V> valueSerializer = KafkaCodecs.serializer(valueType);
-    connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer)), handler);
-  }
-
-  public static <K, V> void create(Vertx vertx, Producer<K, V> producer, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    connect(new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), producer), handler);
-  }
-
-  private static <K, V> void connect(KafkaWriteStreamImpl<K, V> producer, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    AtomicBoolean done = new AtomicBoolean();
-    Context ctx = producer.context;
-    ctx.owner().setTimer(2000, id -> {
-      if (done.compareAndSet(false, true)) {
-        handler.handle(Future.failedFuture("Kafka connect timeout"));
-      }
-    });
-    ctx.executeBlocking(future -> {
-      // This force to connect to Kafka - which can hang
-      producer.producer.partitionsFor("the_topic");
-      if (done.compareAndSet(false, true)) {
-        future.complete(producer);
-      }
-    }, handler);
-  }
-
   private long maxSize = DEFAULT_MAX_SIZE;
   private long size;
   private final Producer<K, V> producer;
@@ -108,7 +67,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   private Handler<Throwable> exceptionHandler;
   private final Context context;
 
-  private KafkaWriteStreamImpl(Context context, Producer<K, V> producer) {
+  public KafkaWriteStreamImpl(Context context, Producer<K, V> producer) {
     this.producer = producer;
     this.context = context;
   }
@@ -143,10 +102,10 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             if (this.exceptionHandler != null) {
               Handler<Throwable> exceptionHandler = this.exceptionHandler;
               this.context.runOnContext(v -> exceptionHandler.handle(err));
+            }
 
-              if (handler != null) {
-                handler.handle(Future.failedFuture(err));
-              }
+            if (handler != null) {
+              handler.handle(Future.failedFuture(err));
             }
 
           // no error, record written

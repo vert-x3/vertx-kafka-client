@@ -92,7 +92,7 @@ public class CodecsTest extends KafkaClusterTestBase {
   private <K, V> void testCodec(TestContext ctx, Class<K> keyType, Class<V> valueType, Function<Integer, K> keyConv, Function<Integer, V> valueConv) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
     Properties producerConfig = kafkaCluster.useTo().getProducerProperties("the_producer");
-    KafkaWriteStream<K, V> writeStream = producer(fut -> KafkaWriteStream.create(Vertx.vertx(), producerConfig, keyType, valueType, fut.completer()));
+    KafkaWriteStream<K, V> writeStream = producer(Vertx.vertx(), producerConfig, keyType, valueType);
     producer = writeStream;
     writeStream.exceptionHandler(ctx::fail);
     int numMessages = 100000;

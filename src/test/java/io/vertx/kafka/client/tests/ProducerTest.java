@@ -59,7 +59,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    producer = producer(fut -> KafkaWriteStream.create(Vertx.vertx(), config, fut.completer()));
+    producer = producer(Vertx.vertx(), config);
     producer.exceptionHandler(ctx::fail);
     int numMessages = 100000;
     for (int i = 0;i < numMessages;i++) {
@@ -86,7 +86,10 @@ public class ProducerTest extends KafkaClusterTestBase {
     props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    KafkaWriteStream.create(Vertx.vertx(), props, ctx.asyncAssertFailure());
+    props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
+
+    producer = producer(Vertx.vertx(), props);
+    producer.write(new ProducerRecord<>("the_topic", 0, "key", "value"), ctx.asyncAssertFailure());
   }
 
   @Test
@@ -96,6 +99,9 @@ public class ProducerTest extends KafkaClusterTestBase {
     props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    KafkaWriteStream.create(Vertx.vertx(), props, ctx.asyncAssertFailure());
+    props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
+
+    producer = producer(Vertx.vertx(), props);
+    producer.write(new ProducerRecord<>("the_topic", 0, "key", "value"), ctx.asyncAssertFailure());
   }
 }

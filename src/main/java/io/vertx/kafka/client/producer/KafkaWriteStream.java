@@ -92,63 +92,10 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * Create a new KafkaWriteStream instance
    *
    * @param vertx Vert.x instance to use
-   * @param config  Kafka producer configuration
-   * @param handler handler called on operation completed
-   * @return  an instance of the KafkaWriteStream
-   */
-  static <K, V> void create(Vertx vertx, Properties config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    KafkaWriteStreamImpl.create(vertx, config, handler);
-  }
-
-  /**
-   * Create a new KafkaWriteStream instance
-   *
-   * @param vertx Vert.x instance to use
-   * @param config  Kafka producer configuration
-   * @param keyType class type for the key serialization
-   * @param valueType class type for the value serialization
-   * @param handler handler called on operation completed
-   * @return  an instance of the KafkaWriteStream
-   */
-  static <K, V> void create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    KafkaWriteStreamImpl.create(vertx, config, keyType, valueType, handler);
-  }
-
-  /**
-   * Create a new KafkaWriteStream instance
-   *
-   * @param vertx Vert.x instance to use
-   * @param config  Kafka producer configuration
-   * @param handler handler called on operation completed
-   * @return  an instance of the KafkaWriteStream
-   */
-  static <K, V> void create(Vertx vertx, Map<String, Object> config, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    KafkaWriteStreamImpl.create(vertx, config, handler);
-  }
-
-  /**
-   * Create a new KafkaWriteStream instance
-   *
-   * @param vertx Vert.x instance to use
-   * @param config  Kafka producer configuration
-   * @param keyType class type for the key serialization
-   * @param valueType class type for the value serialization
-   * @param handler handler called on operation completed
-   * @return  an instance of the KafkaWriteStream
-   */
-  static <K, V> void create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    KafkaWriteStreamImpl.create(vertx, config, keyType, valueType, handler);
-  }
-
-  /**
-   * Create a new KafkaWriteStream instance
-   *
-   * @param vertx Vert.x instance to use
    * @param producer  native Kafka producer instance
-   * @param handler handler called on operation completed
    */
-  static <K, V> void create(Vertx vertx, Producer<K, V> producer, Handler<AsyncResult<KafkaWriteStream<K, V>>> handler) {
-    KafkaWriteStreamImpl.create(vertx, producer, handler);
+  static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Producer<K, V> producer) {
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), producer);
   }
 
   /**
