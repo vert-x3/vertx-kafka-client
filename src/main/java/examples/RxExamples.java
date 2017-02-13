@@ -37,8 +37,6 @@ public class RxExamples {
 
       // Obtained an average
 
-    }, error -> {
-
     });
   }
 }
