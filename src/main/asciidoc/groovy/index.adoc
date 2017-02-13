@@ -605,6 +605,35 @@ consumer.exceptionHandler({ e ->
 
 ----
 
+== RxJava API
+
+The Kafka client provides an Rxified version of the original API.
+
+[source,groovy]
+----
+@Source
+public class RxExamples {
+
+  public void consumer(KafkaConsumer<String, Long> consumer) {
+
+    Observable<KafkaConsumerRecord<String, Long>> observable = consumer.toObservable();
+
+    observable
+      .map(record -> record.value())
+      .buffer(256)
+      .map(
+      list -> list.stream().mapToDouble(n -> n).average()
+    ).subscribe(val -> {
+
+      // Obtained an average
+
+    }, error -> {
+
+    });
+  }
+}
+----
+
 == Stream implementation and native Kafka objects
 
 When you want to operate on native Kafka records you can use a stream oriented

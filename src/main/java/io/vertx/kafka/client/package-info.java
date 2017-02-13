@@ -308,6 +308,15 @@
  * {@link examples.VertxKafkaClientExamples#example12}
  * ----
  *
+ * == RxJava API
+ *
+ * The Kafka client provides an Rxified version of the original API.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.RxExamples}
+ * ----
+ *
  * == Stream implementation and native Kafka objects
  *
  * When you want to operate on native Kafka records you can use a stream oriented
@@ -320,6 +329,7 @@
  * stream of {@link org.apache.kafka.clients.producer.ProducerRecord}.
  *
  * The API exposed by these interfaces is mostly the same than the polyglot version.
+ *
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")
