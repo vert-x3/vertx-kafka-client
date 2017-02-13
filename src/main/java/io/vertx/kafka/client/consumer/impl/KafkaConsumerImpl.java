@@ -83,7 +83,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> pause(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler) {
-    return pause(Collections.singleton(topicPartition), completionHandler);
+    return this.pause(Collections.singleton(topicPartition), completionHandler);
   }
 
   @Override
@@ -107,7 +107,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> resume(TopicPartition topicPartition) {
-    return resume(Collections.singleton(topicPartition));
+    return this.resume(Collections.singleton(topicPartition));
   }
 
   @Override
@@ -117,7 +117,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> resume(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler) {
-    return resume(Collections.singleton(topicPartition), completionHandler);
+    return this.resume(Collections.singleton(topicPartition), completionHandler);
   }
 
   @Override
@@ -134,7 +134,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> subscribe(String topic) {
-    return subscribe(Collections.singleton(topic));
+    return this.subscribe(Collections.singleton(topic));
   }
 
   @Override
@@ -145,7 +145,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> subscribe(String topic, Handler<AsyncResult<Void>> completionHandler) {
-    return subscribe(Collections.singleton(topic), completionHandler);
+    return this.subscribe(Collections.singleton(topic), completionHandler);
   }
 
   @Override
@@ -156,7 +156,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> assign(TopicPartition topicPartition) {
-    return assign(Collections.singleton(topicPartition));
+    return this.assign(Collections.singleton(topicPartition));
   }
 
   @Override
@@ -167,7 +167,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> assign(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler) {
-    return assign(Collections.singleton(topicPartition), completionHandler);
+    return this.assign(Collections.singleton(topicPartition), completionHandler);
   }
 
   @Override
@@ -250,7 +250,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> pause(TopicPartition topicPartition) {
-    return pause(Collections.singleton(topicPartition));
+    return this.pause(Collections.singleton(topicPartition));
   }
 
   @Override
@@ -279,7 +279,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> seekToBeginning(TopicPartition topicPartition) {
-    return seekToBeginning(Collections.singleton(topicPartition));
+    return this.seekToBeginning(Collections.singleton(topicPartition));
   }
 
   @Override
@@ -290,7 +290,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> seekToBeginning(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler) {
-    return seekToBeginning(Collections.singleton(topicPartition), completionHandler);
+    return this.seekToBeginning(Collections.singleton(topicPartition), completionHandler);
   }
 
   @Override
@@ -301,7 +301,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> seekToEnd(TopicPartition topicPartition) {
-    return seekToEnd(Collections.singleton(topicPartition));
+    return this.seekToEnd(Collections.singleton(topicPartition));
   }
 
   @Override
@@ -312,7 +312,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> seekToEnd(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler) {
-    return seekToEnd(Collections.singleton(topicPartition), completionHandler);
+    return this.seekToEnd(Collections.singleton(topicPartition), completionHandler);
   }
 
   @Override
