@@ -279,14 +279,12 @@ public class VertxKafkaClientExamples {
             vertx.setTimer(5000, t -> {
 
               // resuming read operation
-/*
               consumer.resume(topicPartitions, done1 -> {
 
                 if (done1.succeeded()) {
                   System.out.println("Resumed");
                 }
               });
-*/
 
             });
 
