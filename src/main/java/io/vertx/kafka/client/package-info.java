@@ -152,7 +152,7 @@
  * {@link examples.VertxKafkaClientExamples#example4}
  * ----
  *
- * === Getting topic partitions information
+ * == Getting topic partitions information
  *
  * Both the {@link io.vertx.kafka.client.consumer.KafkaConsumer} and {@link io.vertx.kafka.client.producer.KafkaProducer}
  * interface provides the "partitionsFor" method for getting information about partitions in a specified topic.

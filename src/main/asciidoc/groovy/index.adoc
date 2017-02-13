@@ -207,7 +207,7 @@ method is also possible getting information about the current assigned partition
 Code not translatable
 ----
 
-=== Getting topic partitions information
+== Getting topic partitions information
 
 Both the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]`
 interface provides the "partitionsFor" method for getting information about partitions in a specified topic.
