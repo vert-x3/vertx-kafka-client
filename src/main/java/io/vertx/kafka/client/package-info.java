@@ -238,13 +238,14 @@
  * {@link examples.VertxKafkaClientExamples#exampleSeekToEnd}
  * ----
  *
- * == Pausing and resuming the read on topic partitions
+ * == Message flow control
  *
- * A consumer has the possibility to pause the read operation from a topic, in order to not receive other messages
- * (i.e. having more time to process the messages already read) and then resume the read for continuing to receive messages.
- * In order to do that, the {@link io.vertx.kafka.client.consumer.KafkaConsumer} interface provides the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#pause(java.util.Set, io.vertx.core.Handler)} method and the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#resume(java.util.Set, io.vertx.core.Handler)} method.
+ * A consumer can control the incoming message flow and pause/resume the read operation from a topic, e.g it
+ * can pause the message flow when it needs more time to process the actual messages and then resume
+ * to continue message processing.
+ *
+ * To achieve that you can use {@link io.vertx.kafka.client.consumer.KafkaConsumer#pause} and
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#resume}
  *
  * [source,$lang]
  * ----
@@ -253,28 +254,33 @@
  *
  * == Sending messages to a topic
  *
- * The {@link io.vertx.kafka.client.producer.KafkaProducer} interface provides the
- * {@link io.vertx.kafka.client.producer.KafkaProducer#write(io.vertx.kafka.client.producer.KafkaProducerRecord, io.vertx.core.Handler)}
- * method for sending messages (records) to a topic having the possibility to receive metadata about the messages sent like
- * the topic itself, the destination partition and the assigned offset. The simpler way is sending a message specifying
- * only the destination topic and the related value; in this case, without a key or a specific partition, the sender works
- * in a round robin way sending messages across all the partitions of the topic.
+ * You can use  {@link io.vertx.kafka.client.producer.KafkaProducer#write} to send messages (records) to a topic.
+ *
+ * The simplest way to send a message is to specify only the destination topic and the related value, omitting its key
+ * or partition, in this case the messages are sent in a round robin fashion across all the partitions of the topic.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleWrite}
+ * ----
+ *
+ * You can receive message sent metadata like its topic, its destination partition and its assigned offset.
  *
  * [source,$lang]
  * ----
  * {@link examples.VertxKafkaClientExamples#example9}
  * ----
  *
- * In order to specify the destination partition for a message, it's possible to specify the partition identifier explicitly
- * or a key for the message.
+ * When you need to assign a partition to a message, you can specify its partition identifier
+ * or its key
  *
  * [source,$lang]
  * ----
  * {@link examples.VertxKafkaClientExamples#example10}
  * ----
  *
- * Using a key, the sender processes an hash on that in order to identify the destination partition; it
- * guarantees that all messages with the same key are sent to the same partition in order.
+ * Since the producers identifies the destination using key hashing, you can use that to guarantee that all
+ * messages with the same key are sent to the same partition and retain the order.
  *
  * [source,$lang]
  * ----
@@ -291,11 +297,11 @@
  * {@link examples.VertxKafkaClientExamples#exampleProducerPartitionsFor}
  * ----
  *
- * == Handling exceptions and errors
+ * == Handling errors
  *
- * In order to handle potential errors and exceptions during the communication between a Kafka client (consumer or producer)
- * and the Kafka cluster, both {@link io.vertx.kafka.client.consumer.KafkaConsumer} and {@link io.vertx.kafka.client.producer.KafkaProducer}
- * interface provide the "exceptionHandler" method for setting an handler called when an error happens (i.e. timeout).
+ * Errors handling (e.g timeout) between a Kafka client (consumer or producer) and the Kafka cluster is done using
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#exceptionHandler} or
+ * {@link io.vertx.kafka.client.producer.KafkaProducer#exceptionHandler}
  *
  * [source,$lang]
  * ----
@@ -304,15 +310,16 @@
  *
  * == Stream implementation and native Kafka objects
  *
- * Other than the polyglot version of the Kafka consumer and producer, this component provides a stream oriented
- * implementation which handles native Kafka objects (and not the related Vert.x counterparts).
- * The available interfaces are {@link io.vertx.kafka.client.consumer.KafkaReadStream} for reading topic partitions and
- * {@link io.vertx.kafka.client.producer.KafkaWriteStream} for writing to topics. The extends the interfaces provided
- * by Vert.x for handling stream so the {@link io.vertx.core.streams.ReadStream} and {@link io.vertx.core.streams.WriteStream}
- * where the handled classes are the native ones from the Kafka client libraries like the
- * {@link org.apache.kafka.clients.consumer.ConsumerRecord} and the {@link org.apache.kafka.clients.producer.ProducerRecord}.
- * The way to interact with the above streams is quite similar to the polyglot version.
+ * When you want to operate on native Kafka records you can use a stream oriented
+ * implementation which handles native Kafka objects.
  *
+ * The {@link io.vertx.kafka.client.consumer.KafkaReadStream} shall be used for reading topic partitions, it is
+ * a read stream of {@link org.apache.kafka.clients.consumer.ConsumerRecord} objects.
+ *
+ * The {@link io.vertx.kafka.client.producer.KafkaWriteStream} shall be used for writing to topics, it is a write
+ * stream of {@link org.apache.kafka.clients.producer.ProducerRecord}.
+ *
+ * The API exposed by these interfaces is mostly the same than the polyglot version.
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")

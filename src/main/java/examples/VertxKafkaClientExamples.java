@@ -373,10 +373,9 @@ public class VertxKafkaClientExamples {
    */
   public void example8(Vertx vertx, KafkaConsumer<String, String> consumer) {
 
-    Set<TopicPartition> topicPartitions = new HashSet<>();
-    topicPartitions.add(new TopicPartition()
+    TopicPartition topicPartition = new TopicPartition()
       .setTopic("test")
-      .setPartition(0));
+      .setPartition(0);
 
     // registering the handler for incoming messages
     consumer.handler(record -> {
@@ -386,37 +385,35 @@ public class VertxKafkaClientExamples {
       // i.e. pause/resume on partition 0, after reading message up to offset 5
       if ((record.partition() == 0) && (record.offset() == 5)) {
 
-        // pausing read operation
-        consumer.pause(topicPartitions, done -> {
+        // pause the read operations
+        consumer.pause(topicPartition, ar -> {
 
-          if (done.succeeded()) {
+          if (ar.succeeded()) {
 
             System.out.println("Paused");
-            // resuming read operation after a specific time
-            vertx.setTimer(5000, t -> {
 
-              // resuming read operation
-              consumer.resume(topicPartitions, done1 -> {
+            // resume read operation after a specific time
+            vertx.setTimer(5000, timeId -> {
 
-                if (done1.succeeded()) {
-                  System.out.println("Resumed");
-                }
-              });
-
+              // resumi read operations
+              consumer.resume(topicPartition);
             });
-
           }
         });
       }
     });
+  }
 
-    // subscribing to the topic
-    consumer.subscribe(Collections.singleton("test"), done -> {
+  public void exampleWrite(KafkaProducer<String, String> producer) {
 
-      if (done.succeeded()) {
-        System.out.println("Consumer subscribed");
-      }
-    });
+    for (int i = 0; i < 5; i++) {
+
+      // only topic and message value are specified, round robin on destination partitions
+      KafkaProducerRecord<String, String> record =
+        KafkaProducerRecord.create("test", "message_" + i);
+
+      producer.write(record);
+    }
   }
 
   /**
@@ -460,19 +457,8 @@ public class VertxKafkaClientExamples {
       KafkaProducerRecord<String, String> record =
         KafkaProducerRecord.create("test", null, "message_" + i, 0);
 
-      producer.write(record, done -> {
-
-        if (done.succeeded()) {
-
-          RecordMetadata recordMetadata = done.result();
-          System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.getTopic() +
-            ", partition=" + recordMetadata.getPartition() +
-            ", offset=" + recordMetadata.getOffset());
-        }
-
-      });
+      producer.write(record);
     }
-
   }
 
   /**
@@ -492,19 +478,8 @@ public class VertxKafkaClientExamples {
       KafkaProducerRecord<String, String> record =
         KafkaProducerRecord.create("test", String.valueOf(key), "message_" + i);
 
-      producer.write(record, done -> {
-
-        if (done.succeeded()) {
-
-          RecordMetadata recordMetadata = done.result();
-          System.out.println("Message " + record.value() + " written on topic=" + record.value() +
-            ", partition=" + record.value() +
-            ", offset=" + recordMetadata.getOffset());
-        }
-
-      });
+      producer.write(record);
     }
-
   }
 
   /**
