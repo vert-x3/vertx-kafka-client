@@ -144,7 +144,9 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
               Handler<Throwable> exceptionHandler = this.exceptionHandler;
               this.context.runOnContext(v -> exceptionHandler.handle(err));
 
-              handler.handle(Future.failedFuture(err));
+              if (handler != null) {
+                handler.handle(Future.failedFuture(err));
+              }
             }
 
           // no error, record written
