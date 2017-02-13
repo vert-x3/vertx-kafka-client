@@ -633,8 +633,7 @@ consumer.exception_handler() { |e|
 
 ----
 
-ifdef::java,groovy,kotlin[]
-
+ifdef::java[]
 == RxJava API
 
 The Kafka client provides an Rxified version of the original API.
@@ -643,7 +642,9 @@ The Kafka client provides an Rxified version of the original API.
 ----
 Code not translatable
 ----
+endif::[]
 
+ifdef::java,groovy,kotlin[]
 == Stream implementation and native Kafka objects
 
 When you want to operate on native Kafka records you can use a stream oriented
@@ -656,5 +657,4 @@ The `link:unavailable[KafkaWriteStream]` shall be used for writing to topics, it
 stream of `link:unavailable[ProducerRecord]`.
 
 The API exposed by these interfaces is mostly the same than the polyglot version.
-
 endif::[]

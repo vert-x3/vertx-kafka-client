@@ -318,8 +318,7 @@
  * {@link examples.VertxKafkaClientExamples#example12}
  * ----
  *
- * ifdef::java,groovy,kotlin[]
- *
+ * ifdef::java[]
  * == RxJava API
  *
  * The Kafka client provides an Rxified version of the original API.
@@ -328,7 +327,9 @@
  * ----
  * {@link examples.RxExamples#consumer(io.vertx.rxjava.kafka.client.consumer.KafkaConsumer)}
  * ----
+ * endif::[]
  *
+ * ifdef::java,groovy,kotlin[]
  * == Stream implementation and native Kafka objects
  *
  * When you want to operate on native Kafka records you can use a stream oriented
@@ -341,7 +342,6 @@
  * stream of {@link org.apache.kafka.clients.producer.ProducerRecord}.
  *
  * The API exposed by these interfaces is mostly the same than the polyglot version.
- *
  * endif::[]
  */
 @Document(fileName = "index.adoc")
