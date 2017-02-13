@@ -314,7 +314,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.RxExamples}
+ * {@link examples.RxExamples#consumer(io.vertx.rxjava.kafka.client.consumer.KafkaConsumer)}
  * ----
  *
  * == Stream implementation and native Kafka objects
