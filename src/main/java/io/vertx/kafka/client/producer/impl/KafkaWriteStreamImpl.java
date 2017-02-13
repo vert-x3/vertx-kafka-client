@@ -105,7 +105,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             }
 
             if (handler != null) {
-              handler.handle(Future.failedFuture(err));
+              this.context.runOnContext(v -> handler.handle(Future.failedFuture(err)));
             }
 
           // no error, record written
@@ -114,7 +114,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             this.size -= len;
 
             if (handler != null) {
-              handler.handle(Future.succeededFuture(metadata));
+              this.context.runOnContext(v -> handler.handle(Future.succeededFuture(metadata)));
             }
 
             long lowWaterMark = this.maxSize / 2;
