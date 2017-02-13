@@ -176,20 +176,23 @@
  * Calling {@link io.vertx.kafka.client.consumer.KafkaConsumer#assignment(io.vertx.core.Handler)} provides
  * the list of the current assigned partitions.
  *
- * == Getting topic partitions information
+ * == Getting topic partition information
  *
- * Both the {@link io.vertx.kafka.client.consumer.KafkaConsumer} and {@link io.vertx.kafka.client.producer.KafkaProducer}
- * interface provides the "partitionsFor" method for getting information about partitions in a specified topic.
+ * You can call the {@link io.vertx.kafka.client.consumer.KafkaConsumer#partitionsFor} to get information about
+ * partitions for a specified topic
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example5}
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerPartitionsFor}
  * ----
  *
- * The above example also shows that the {@link io.vertx.kafka.client.consumer.KafkaConsumer} interface provides one more
- * method for getting information about all available topics with related partitions.
- * This is the {@link io.vertx.kafka.client.consumer.KafkaConsumer#listTopics(io.vertx.core.Handler)} method which is not
- * available in the {@link io.vertx.kafka.client.producer.KafkaProducer} interface.
+ * In addition {@link io.vertx.kafka.client.consumer.KafkaConsumer#listTopics} provides all available topics
+ * with related partitions
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerListTopics}
+ * ----
  *
  * == Committing offset manually
  *
@@ -262,6 +265,16 @@
  * [source,$lang]
  * ----
  * {@link examples.VertxKafkaClientExamples#example11}
+ * ----
+ *
+ * == Getting topic partition information
+ *
+ * You can call the {@link io.vertx.kafka.client.producer.KafkaProducer#partitionsFor} to get information about
+ * partitions for a specified topic:
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleProducerPartitionsFor}
  * ----
  *
  * == Handling exceptions and errors

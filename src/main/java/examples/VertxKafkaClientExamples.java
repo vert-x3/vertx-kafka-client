@@ -252,27 +252,44 @@ public class VertxKafkaClientExamples {
    * Kafka consumer and producer instances)
    * @param consumer
    */
-  public void example5(KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerPartitionsFor(KafkaConsumer<String, String> consumer) {
+
+    // asking partitions information about specific topic
+    consumer.partitionsFor("test", ar -> {
+
+      if (ar.succeeded()) {
+
+        for (PartitionInfo partitionInfo : ar.result()) {
+          System.out.println(partitionInfo);
+        }
+      }
+    });
+  }
+
+  public void exampleConsumerListTopics(KafkaConsumer<String, String> consumer) {
 
     // asking information about available topics and related partitions
-    consumer.listTopics(done -> {
+    consumer.listTopics(ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
 
-        Map<String, List<PartitionInfo>> map = done.result();
+        Map<String, List<PartitionInfo>> map = ar.result();
         map.forEach((topic, partitions) -> {
           System.out.println("topic = " + topic);
           System.out.println("partitions = " + map.get(topic));
         });
       }
     });
+  }
+
+  public void exampleProducerPartitionsFor(KafkaProducer<String, String> producer) {
 
     // asking partitions information about specific topic
-    consumer.partitionsFor("test", done -> {
+    producer.partitionsFor("test", ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
 
-        for (PartitionInfo partitionInfo : done.result()) {
+        for (PartitionInfo partitionInfo : ar.result()) {
           System.out.println(partitionInfo);
         }
       }

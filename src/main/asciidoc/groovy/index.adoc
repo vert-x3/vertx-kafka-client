@@ -309,33 +309,20 @@ consumer.assign(topicPartitions, { done ->
 Calling `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assignment-io.vertx.core.Handler-[assignment]` provides
 the list of the current assigned partitions.
 
-== Getting topic partitions information
+== Getting topic partition information
 
-Both the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]`
-interface provides the "partitionsFor" method for getting information about partitions in a specified topic.
+You can call the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsFor-java.lang.String-io.vertx.core.Handler-[partitionsFor]` to get information about
+partitions for a specified topic
 
 [source,groovy]
 ----
 
-// asking information about available topics and related partitions
-consumer.listTopics({ done ->
-
-  if (done.succeeded()) {
-
-    def map = done.result()
-    map.each { topic, partitions ->
-      println("topic = ${topic}")
-      println("partitions = ${map[topic]}")
-    }
-  }
-})
-
 // asking partitions information about specific topic
-consumer.partitionsFor("test", { done ->
+consumer.partitionsFor("test", { ar ->
 
-  if (done.succeeded()) {
+  if (ar.succeeded()) {
 
-    done.result().each { partitionInfo ->
+    ar.result().each { partitionInfo ->
       println(partitionInfo)
     }
   }
@@ -343,10 +330,26 @@ consumer.partitionsFor("test", { done ->
 
 ----
 
-The above example also shows that the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides one more
-method for getting information about all available topics with related partitions.
-This is the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#listTopics-io.vertx.core.Handler-[listTopics]` method which is not
-available in the `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` interface.
+In addition `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#listTopics-io.vertx.core.Handler-[listTopics]` provides all available topics
+with related partitions
+
+[source,groovy]
+----
+
+// asking information about available topics and related partitions
+consumer.listTopics({ ar ->
+
+  if (ar.succeeded()) {
+
+    def map = ar.result()
+    map.each { topic, partitions ->
+      println("topic = ${topic}")
+      println("partitions = ${map[topic]}")
+    }
+  }
+})
+
+----
 
 == Committing offset manually
 
@@ -556,6 +559,27 @@ guarantees that all messages with the same key are sent to the same partition in
   })
 }
 
+
+----
+
+== Getting topic partition information
+
+You can call the `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#partitionsFor-java.lang.String-io.vertx.core.Handler-[partitionsFor]` to get information about
+partitions for a specified topic:
+
+[source,groovy]
+----
+
+// asking partitions information about specific topic
+producer.partitionsFor("test", { ar ->
+
+  if (ar.succeeded()) {
+
+    ar.result().each { partitionInfo ->
+      println(partitionInfo)
+    }
+  }
+})
 
 ----
 
