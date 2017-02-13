@@ -23,6 +23,7 @@ import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
+import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -316,11 +317,15 @@ public class VertxKafkaClientExamples {
       KafkaProducerRecord<String, String> record =
         KafkaProducerRecord.create("test", "message_" + i);
 
-      producer.write(record, recordMetadata -> {
+      producer.write(record, done -> {
 
-        System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.getTopic() +
-          ", partition=" + recordMetadata.getPartition() +
-          ", offset=" + recordMetadata.getOffset());
+        if (done.succeeded()) {
+
+          RecordMetadata recordMetadata = done.result();
+          System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.getTopic() +
+            ", partition=" + recordMetadata.getPartition() +
+            ", offset=" + recordMetadata.getOffset());
+        }
 
       });
     }
@@ -340,11 +345,15 @@ public class VertxKafkaClientExamples {
       KafkaProducerRecord<String, String> record =
         KafkaProducerRecord.create("test", null, "message_" + i, 0);
 
-      producer.write(record, recordMetadata -> {
+      producer.write(record, done -> {
 
-        System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.getTopic() +
-          ", partition=" + recordMetadata.getPartition() +
-          ", offset=" + recordMetadata.getOffset());
+        if (done.succeeded()) {
+
+          RecordMetadata recordMetadata = done.result();
+          System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.getTopic() +
+            ", partition=" + recordMetadata.getPartition() +
+            ", offset=" + recordMetadata.getOffset());
+        }
 
       });
     }
@@ -368,11 +377,15 @@ public class VertxKafkaClientExamples {
       KafkaProducerRecord<String, String> record =
         KafkaProducerRecord.create("test", String.valueOf(key), "message_" + i);
 
-      producer.write(record, recordMetadata -> {
+      producer.write(record, done -> {
 
-        System.out.println("Message " + record.value() + " written on topic=" + record.value() +
-          ", partition=" + record.value() +
-          ", offset=" + recordMetadata.getOffset());
+        if (done.succeeded()) {
+
+          RecordMetadata recordMetadata = done.result();
+          System.out.println("Message " + record.value() + " written on topic=" + record.value() +
+            ", partition=" + record.value() +
+            ", offset=" + recordMetadata.getOffset());
+        }
 
       });
     }

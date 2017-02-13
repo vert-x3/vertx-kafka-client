@@ -124,7 +124,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public synchronized KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record, Handler<RecordMetadata> handler) {
+  public synchronized KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
 
     int len = this.len(record.value());
     this.size += len;
@@ -143,6 +143,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             if (this.exceptionHandler != null) {
               Handler<Throwable> exceptionHandler = this.exceptionHandler;
               this.context.runOnContext(v -> exceptionHandler.handle(err));
+
+              handler.handle(Future.failedFuture(err));
             }
 
           // no error, record written
@@ -151,7 +153,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             this.size -= len;
 
             if (handler != null) {
-              handler.handle(metadata);
+              handler.handle(Future.succeededFuture(metadata));
             }
 
             long lowWaterMark = this.maxSize / 2;

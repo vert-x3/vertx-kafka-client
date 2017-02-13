@@ -124,7 +124,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return  current KafkaWriteStream instance
    */
   @Fluent
-  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<RecordMetadata> handler);
+  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler);
 
   /**
    * Get the partition metadata for the give topic.

@@ -17,7 +17,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
+ * Rx based consumer tests
  */
 public class RxConsumerTest extends KafkaClusterTestBase {
 

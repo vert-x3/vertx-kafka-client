@@ -366,9 +366,13 @@ in a round robin way sending messages across all the partitions of the topic.
   // only topic and message value are specified, round robin on destination partitions
   def record = KafkaProducerRecord.create("test", "message_${i}")
 
-  producer.write(record, { recordMetadata ->
+  producer.write(record, { done ->
 
-    println("Message ${record.value()} written on topic=${recordMetadata.topic}, partition=${recordMetadata.partition}, offset=${recordMetadata.offset}")
+    if (done.succeeded()) {
+
+      def recordMetadata = done.result()
+      println("Message ${record.value()} written on topic=${recordMetadata.topic}, partition=${recordMetadata.partition}, offset=${recordMetadata.offset}")
+    }
 
   })
 }
@@ -387,9 +391,13 @@ or a key for the message.
   // a destination partition is specified
   def record = KafkaProducerRecord.create("test", null, "message_${i}", 0)
 
-  producer.write(record, { recordMetadata ->
+  producer.write(record, { done ->
 
-    println("Message ${record.value()} written on topic=${recordMetadata.topic}, partition=${recordMetadata.partition}, offset=${recordMetadata.offset}")
+    if (done.succeeded()) {
+
+      def recordMetadata = done.result()
+      println("Message ${record.value()} written on topic=${recordMetadata.topic}, partition=${recordMetadata.partition}, offset=${recordMetadata.offset}")
+    }
 
   })
 }
@@ -411,9 +419,13 @@ guarantees that all messages with the same key are sent to the same partition in
   // a key is specified, all messages with same key will be sent to the same partition
   def record = KafkaProducerRecord.create("test", java.lang.String.valueOf(key), "message_${i}")
 
-  producer.write(record, { recordMetadata ->
+  producer.write(record, { done ->
 
-    println("Message ${record.value()} written on topic=${record.value()}, partition=${record.value()}, offset=${recordMetadata.offset}")
+    if (done.succeeded()) {
+
+      def recordMetadata = done.result()
+      println("Message ${record.value()} written on topic=${record.value()}, partition=${record.value()}, offset=${recordMetadata.offset}")
+    }
 
   })
 }
