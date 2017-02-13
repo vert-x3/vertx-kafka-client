@@ -238,25 +238,25 @@ consumer.unsubscribe(ar -> {
 
 == Receiving messages from a topic requesting specific partitions
 
-Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
-topic partition. The big difference is that without being part of a consumer group the overall application can't rely
-on the re-balancing feature. The `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assign-java.util.Set-io.vertx.core.Handler-[assign]` method in order to
-ask to be assigned specific partitions; using the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assignment-io.vertx.core.Handler-[assignment]`
-method is also possible getting information about the current assigned partitions.
+Besides being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
+topic partition. When the consumer is not part part of a consumer group the overall application cannot
+rely on the re-balancing feature.
+
+You can use `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assign-java.util.Set-io.vertx.core.Handler-[assign]`
+in order to ask for specific partitions.
 
 [source,java]
 ----
-Set<TopicPartition> topicPartitions = new HashSet<>();
-topicPartitions.add(new TopicPartition("test", 0)
-  .setTopic("test")
-  .setPartition(0));
-
-// registering the handler for incoming messages
 consumer.handler(record -> {
   System.out.println("key=" + record.key() + ",value=" + record.value() +
     ",partition=" + record.partition() + ",offset=" + record.offset());
 });
+
+//
+Set<TopicPartition> topicPartitions = new HashSet<>();
+topicPartitions.add(new TopicPartition()
+  .setTopic("test")
+  .setPartition(0));
 
 // requesting to be assigned the specific partition
 consumer.assign(topicPartitions, done -> {
@@ -277,6 +277,9 @@ consumer.assign(topicPartitions, done -> {
   }
 });
 ----
+
+Calling `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assignment-io.vertx.core.Handler-[assignment]` provides
+the list of the current assigned partitions.
 
 == Getting topic partitions information
 

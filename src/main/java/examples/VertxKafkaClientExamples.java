@@ -94,7 +94,7 @@ public class VertxKafkaClientExamples {
 
   public void exampleSubscribe(KafkaConsumer<String, String> consumer) {
 
-    // registering the handler for incoming messages
+    // register the handler for incoming messages
     consumer.handler(record -> {
       System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
         ",partition=" + record.partition() + ",offset=" + record.offset());
@@ -113,7 +113,7 @@ public class VertxKafkaClientExamples {
 
   public void exampleSubscribeWithResult(KafkaConsumer<String, String> consumer) {
 
-    // registering the handler for incoming messages
+    // register the handler for incoming messages
     consumer.handler(record -> {
       System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
         ",partition=" + record.partition() + ",offset=" + record.offset());
@@ -149,7 +149,7 @@ public class VertxKafkaClientExamples {
    */
   public void example2(KafkaConsumer<String, String> consumer) {
 
-    // registering the handler for incoming messages
+    // register the handler for incoming messages
     consumer.handler(record -> {
       System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
         ",partition=" + record.partition() + ",offset=" + record.offset());
@@ -214,16 +214,17 @@ public class VertxKafkaClientExamples {
    */
   public void example4(KafkaConsumer<String, String> consumer) {
 
-    Set<TopicPartition> topicPartitions = new HashSet<>();
-    topicPartitions.add(new TopicPartition("test", 0)
-      .setTopic("test")
-      .setPartition(0));
-
-    // registering the handler for incoming messages
+    // register the handler for incoming messages
     consumer.handler(record -> {
       System.out.println("key=" + record.key() + ",value=" + record.value() +
         ",partition=" + record.partition() + ",offset=" + record.offset());
     });
+
+    //
+    Set<TopicPartition> topicPartitions = new HashSet<>();
+    topicPartitions.add(new TopicPartition()
+      .setTopic("test")
+      .setPartition(0));
 
     // requesting to be assigned the specific partition
     consumer.assign(topicPartitions, done -> {

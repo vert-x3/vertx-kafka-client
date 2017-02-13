@@ -161,17 +161,20 @@
  *
  * == Receiving messages from a topic requesting specific partitions
  *
- * Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
- * topic partition. The big difference is that without being part of a consumer group the overall application can't rely
- * on the re-balancing feature. The {@link io.vertx.kafka.client.consumer.KafkaConsumer} interface provides the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#assign(java.util.Set, io.vertx.core.Handler)} method in order to
- * ask to be assigned specific partitions; using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#assignment(io.vertx.core.Handler)}
- * method is also possible getting information about the current assigned partitions.
+ * Besides being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
+ * topic partition. When the consumer is not part part of a consumer group the overall application cannot
+ * rely on the re-balancing feature.
+ *
+ * You can use {@link io.vertx.kafka.client.consumer.KafkaConsumer#assign(java.util.Set, io.vertx.core.Handler)}
+ * in order to ask for specific partitions.
  *
  * [source,$lang]
  * ----
  * {@link examples.VertxKafkaClientExamples#example4}
  * ----
+ *
+ * Calling {@link io.vertx.kafka.client.consumer.KafkaConsumer#assignment(io.vertx.core.Handler)} provides
+ * the list of the current assigned partitions.
  *
  * == Getting topic partitions information
  *
