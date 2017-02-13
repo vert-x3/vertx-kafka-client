@@ -88,6 +88,16 @@
       <artifactId>vertx-lang-js</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-ruby</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-kotlin</artifactId>
+      <optional>true</optional>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.kafka</groupId>

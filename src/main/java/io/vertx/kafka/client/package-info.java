@@ -319,7 +319,7 @@
  * ----
  *
  * ifdef::java,groovy,kotlin[]
- * 
+ *
  * == RxJava API
  *
  * The Kafka client provides an Rxified version of the original API.
