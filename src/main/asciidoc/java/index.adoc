@@ -115,25 +115,78 @@ specified as parameters of `link:../../apidocs/io/vertx/kafka/client/producer/Ka
 == Receiving messages from a topic joining a consumer group
 
 In order to start receiving messages from Kafka topics, the consumer can use the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#subscribe-java.util.Set-io.vertx.core.Handler-[subscribe]` method for subscribing
-to a set of topics being part of a consumer group (specified by the properties on creation) and being notified when the operation
-is completed. Before doing that, it's mandatory to register an handler for handling incoming messages using the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#handler-io.vertx.core.Handler-[handler]` otherwise an
-`link:../../apidocs/java/lang/IllegalStateException.html[IllegalStateException]` will be thrown.
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#subscribe-java.util.Set-[subscribe]` method for
+subscribing to a set of topics being part of a consumer group (specified by the properties on creation).
+
+You need to register an handler for handling incoming messages using the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#handler-io.vertx.core.Handler-[handler]`
+
+[source,java]
+----
+consumer.handler(record -> {
+  System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
+    ",partition=" + record.partition() + ",offset=" + record.offset());
+});
+
+// subscribe to several topics
+Set<String> topics = new HashSet<>();
+topics.add("topic1");
+topics.add("topic2");
+topics.add("topic3");
+consumer.subscribe(topics);
+
+// or just subscribe to a single topic
+consumer.subscribe("a-single-topic");
+----
+
+An handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
+is completed.
+
+[source,java]
+----
+consumer.handler(record -> {
+  System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
+    ",partition=" + record.partition() + ",offset=" + record.offset());
+});
+
+// subscribe to several topics
+Set<String> topics = new HashSet<>();
+topics.add("topic1");
+topics.add("topic2");
+topics.add("topic3");
+consumer.subscribe(topics, ar -> {
+  if (ar.succeeded()) {
+    System.out.println("subscribed");
+  } else {
+    System.out.println("Could not subscribe " + ar.cause().getMessage());
+  }
+});
+
+// or just subscribe to a single topic
+consumer.subscribe("a-single-topic", ar -> {
+  if (ar.succeeded()) {
+    System.out.println("subscribed");
+  } else {
+    System.out.println("Could not subscribe " + ar.cause().getMessage());
+  }
+});
+----
 
 Using the consumer group way, the Kafka cluster assigns partitions to the consumer taking into account other connected
-consumers in the same consumer group, so that partitions can be spread across them. The Kafka cluster handles partitions re-balancing
-when a consumer leaves the group (so assigned partitions are free to be assigned to other consumers) or a new consumer
-joins the group (so it wants partitions to read from).
-The `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides a way for being notified
-about what are the partitions revoked and assigned by the Kafka cluster specifying related handlers through the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsRevokedHandler-io.vertx.core.Handler-[partitionsRevokedHandler]` and the
+consumers in the same consumer group, so that partitions can be spread across them.
+
+The Kafka cluster handles partitions re-balancing when a consumer leaves the group (so assigned partitions are free
+to be assigned to other consumers) or a new consumer joins the group (so it wants partitions to read from).
+
+You can register handlers on a `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` to be notified
+of the partitions revocations and assignments by the Kafka cluster using
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsRevokedHandler-io.vertx.core.Handler-[partitionsRevokedHandler]` and
 `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsAssignedHandler-io.vertx.core.Handler-[partitionsAssignedHandler]`.
 
 [source,java]
 ----
 consumer.handler(record -> {
-  System.out.println("key=" + record.key() + ",value=" + record.value() +
+  System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
     ",partition=" + record.partition() + ",offset=" + record.offset());
 });
 
@@ -154,24 +207,30 @@ consumer.partitionsRevokedHandler(topicPartitions -> {
   }
 });
 
-// subscribing to the topic
-consumer.subscribe("test", done -> {
+// subscribes to the topic
+consumer.subscribe("test", ar -> {
 
-  if (done.succeeded()) {
+  if (ar.succeeded()) {
     System.out.println("Consumer subscribed");
   }
 });
 ----
 
 After joining a consumer group for receiving messages, a consumer can decide to leave the consumer group in order to
-not get messages anymore. This is possible thanks to the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#unsubscribe-io.vertx.core.Handler-[unsubscribe]`
-method.
+not get messages anymore using `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#unsubscribe--[unsubscribe]`
 
 [source,java]
 ----
-consumer.unsubscribe(done -> {
+consumer.unsubscribe();
+----
 
-  if (done.succeeded()) {
+You can add an handler to be notified of the result
+
+[source,java]
+----
+consumer.unsubscribe(ar -> {
+
+  if (ar.succeeded()) {
     System.out.println("Consumer unsubscribed");
   }
 });

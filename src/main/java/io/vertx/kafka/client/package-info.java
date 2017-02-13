@@ -109,19 +109,34 @@
  * == Receiving messages from a topic joining a consumer group
  *
  * In order to start receiving messages from Kafka topics, the consumer can use the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#subscribe(java.util.Set, io.vertx.core.Handler)} method for subscribing
- * to a set of topics being part of a consumer group (specified by the properties on creation) and being notified when the operation
- * is completed. Before doing that, it's mandatory to register an handler for handling incoming messages using the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#handler(io.vertx.core.Handler)} otherwise an
- * {@link java.lang.IllegalStateException} will be thrown.
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#subscribe(java.util.Set)} method for
+ * subscribing to a set of topics being part of a consumer group (specified by the properties on creation).
+ *
+ * You need to register an handler for handling incoming messages using the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#handler(io.vertx.core.Handler)}
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleSubscribe(io.vertx.kafka.client.consumer.KafkaConsumer)}
+ * ----
+ *
+ * An handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
+ * is completed.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleSubscribeWithResult(io.vertx.kafka.client.consumer.KafkaConsumer)}
+ * ----
  *
  * Using the consumer group way, the Kafka cluster assigns partitions to the consumer taking into account other connected
- * consumers in the same consumer group, so that partitions can be spread across them. The Kafka cluster handles partitions re-balancing
- * when a consumer leaves the group (so assigned partitions are free to be assigned to other consumers) or a new consumer
- * joins the group (so it wants partitions to read from).
- * The {@link io.vertx.kafka.client.consumer.KafkaConsumer} interface provides a way for being notified
- * about what are the partitions revoked and assigned by the Kafka cluster specifying related handlers through the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#partitionsRevokedHandler(io.vertx.core.Handler)} and the
+ * consumers in the same consumer group, so that partitions can be spread across them.
+ *
+ * The Kafka cluster handles partitions re-balancing when a consumer leaves the group (so assigned partitions are free
+ * to be assigned to other consumers) or a new consumer joins the group (so it wants partitions to read from).
+ *
+ * You can register handlers on a {@link io.vertx.kafka.client.consumer.KafkaConsumer} to be notified
+ * of the partitions revocations and assignments by the Kafka cluster using
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#partitionsRevokedHandler(io.vertx.core.Handler)} and
  * {@link io.vertx.kafka.client.consumer.KafkaConsumer#partitionsAssignedHandler(io.vertx.core.Handler)}.
  *
  * [source,$lang]
@@ -130,12 +145,18 @@
  * ----
  *
  * After joining a consumer group for receiving messages, a consumer can decide to leave the consumer group in order to
- * not get messages anymore. This is possible thanks to the {@link io.vertx.kafka.client.consumer.KafkaConsumer#unsubscribe(io.vertx.core.Handler)}
- * method.
+ * not get messages anymore using {@link io.vertx.kafka.client.consumer.KafkaConsumer#unsubscribe()}
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example3}
+ * {@link examples.VertxKafkaClientExamples#exampleUnsubscribe}
+ * ----
+ *
+ * You can add an handler to be notified of the result
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleUnsubscribeWithCallback}
  * ----
  *
  * == Receiving messages from a topic requesting specific partitions

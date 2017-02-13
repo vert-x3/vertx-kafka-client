@@ -92,6 +92,56 @@ public class VertxKafkaClientExamples {
     KafkaProducer<String, String> producer = KafkaProducer.create(vertx, map, String.class, String.class);
   }
 
+  public void exampleSubscribe(KafkaConsumer<String, String> consumer) {
+
+    // registering the handler for incoming messages
+    consumer.handler(record -> {
+      System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
+        ",partition=" + record.partition() + ",offset=" + record.offset());
+    });
+
+    // subscribe to several topics
+    Set<String> topics = new HashSet<>();
+    topics.add("topic1");
+    topics.add("topic2");
+    topics.add("topic3");
+    consumer.subscribe(topics);
+
+    // or just subscribe to a single topic
+    consumer.subscribe("a-single-topic");
+  }
+
+  public void exampleSubscribeWithResult(KafkaConsumer<String, String> consumer) {
+
+    // registering the handler for incoming messages
+    consumer.handler(record -> {
+      System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
+        ",partition=" + record.partition() + ",offset=" + record.offset());
+    });
+
+    // subscribe to several topics
+    Set<String> topics = new HashSet<>();
+    topics.add("topic1");
+    topics.add("topic2");
+    topics.add("topic3");
+    consumer.subscribe(topics, ar -> {
+      if (ar.succeeded()) {
+        System.out.println("subscribed");
+      } else {
+        System.out.println("Could not subscribe " + ar.cause().getMessage());
+      }
+    });
+
+    // or just subscribe to a single topic
+    consumer.subscribe("a-single-topic", ar -> {
+      if (ar.succeeded()) {
+        System.out.println("subscribed");
+      } else {
+        System.out.println("Could not subscribe " + ar.cause().getMessage());
+      }
+    });
+  }
+
   /**
    * Example about how Kafka consumer receives messages
    * from a topic being part of a consumer group
@@ -101,7 +151,7 @@ public class VertxKafkaClientExamples {
 
     // registering the handler for incoming messages
     consumer.handler(record -> {
-      System.out.println("key=" + record.key() + ",value=" + record.value() +
+      System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
         ",partition=" + record.partition() + ",offset=" + record.offset());
     });
 
@@ -122,13 +172,21 @@ public class VertxKafkaClientExamples {
       }
     });
 
-    // subscribing to the topic
-    consumer.subscribe("test", done -> {
+    // subscribes to the topic
+    consumer.subscribe("test", ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
         System.out.println("Consumer subscribed");
       }
     });
+  }
+
+  public void exampleUnsubscribe(KafkaConsumer<String, String> consumer) {
+
+    // consumer is already member of a consumer group
+
+    // unsubscribing request
+    consumer.unsubscribe();
   }
 
   /**
@@ -136,14 +194,14 @@ public class VertxKafkaClientExamples {
    * a previous joined consumer group
    * @param consumer
    */
-  public void example3(KafkaConsumer<String, String> consumer) {
+  public void exampleUnsubscribeWithCallback(KafkaConsumer<String, String> consumer) {
 
     // consumer is already member of a consumer group
 
     // unsubscribing request
-    consumer.unsubscribe(done -> {
+    consumer.unsubscribe(ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
         System.out.println("Consumer unsubscribed");
       }
     });
