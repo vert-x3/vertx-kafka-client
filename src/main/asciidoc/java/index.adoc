@@ -1,6 +1,7 @@
 = Vert.x Kafka client
 :toc: left
 :lang: java
+:java: java
 
 This component provides a Kafka client for reading and sending messages from/to an link:https://kafka.apache.org/[Apache Kafka] cluster.
 
@@ -56,9 +57,44 @@ They need to be configured with a bunch of properties as described in the offici
 Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
 for the link:https://kafka.apache.org/documentation/#producerconfigs[producer].
 
-To achieve that, a `link:../../apidocs/java/util/Properties.html[Properties]` instance can be configured with such properties passing it to one of the
+To achieve that, a map can be configured with such properties passing it to one of the
 static creation methods exposed by `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and
 `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]`
+
+[source,java]
+----
+Map<String, String> config = new HashMap<>();
+config.put("bootstrap.servers", "localhost:9092");
+config.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+config.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+config.put("group.id", "my_group");
+config.put("auto.offset.reset", "earliest");
+config.put("enable.auto.commit", "false");
+
+// use consumer for interacting with Apache Kafka
+KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+----
+
+In the above example, a `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` instance is created using
+a map instance in order to specify the Kafka nodes list to connect (just one) and
+the deserializers to use for getting key and value from each received message.
+
+Likewise a producer can be created
+
+[source,java]
+----
+Map<String, String> config = new HashMap<>();
+config.put("bootstrap.servers", "localhost:9092");
+config.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+config.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+config.put("acks", "1");
+
+// use producer for interacting with Apache Kafka
+KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config);
+----
+
+ifdef::java,groovy,kotlin[]
+Another way is to use a `link:../../apidocs/java/util/Properties.html[Properties]` instance instead of the map.
 
 [source,java]
 ----
@@ -74,44 +110,24 @@ config.put("enable.auto.commit", "false");
 KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
 ----
 
-In the above example, a `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` instance is created using
-a `link:../../apidocs/java/util/Properties.html[Properties]` instance in order to specify the Kafka nodes list to connect (just one) and
-the deserializers to use for getting key and value from each received message.
-
-Another way is to use a `link:../../apidocs/java/util/Map.html[Map]` instance instead of the `link:../../apidocs/java/util/Properties.html[Properties]` which is available
-only for the Java / Groovy / Kotlin
-
-[source,java]
-----
-Map<String, String> config = new HashMap<>();
-config.put("bootstrap.servers", "localhost:9092");
-config.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-config.put("value.deserializer", "org.apache.kafka.common.serialization.StringSerializer");
-config.put("group.id", "my_group");
-config.put("auto.offset.reset", "earliest");
-config.put("enable.auto.commit", "false");
-
-// use consumer for interacting with Apache Kafka
-KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
-----
-
 More advanced creation methods allow to specify the class type for the key and the value used for sending messages
 or provided by received messages; this is a way for setting the key and value serializers/deserializers instead of
 using the related properties for that
 
 [source,java]
 ----
-Map<String, String> map = new HashMap<>();
-map.put("bootstrap.servers", "localhost:9092");
-map.put("acks", "1");
+Properties config = new Properties();
+config.put("bootstrap.servers", "localhost:9092");
+config.put("acks", "1");
 
 // use producer for interacting with Apache Kafka
-KafkaProducer<String, String> producer = KafkaProducer.create(vertx, map, String.class, String.class);
+KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config, String.class, String.class);
 ----
 
-Here the `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` instance is created in using a `link:../../apidocs/java/util/Map.html[Map]` for
+Here the `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` instance is created in using a `link:../../apidocs/java/util/Properties.html[Properties]` for
 specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value deserializers are
-specified as parameters of `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#create-io.vertx.core.Vertx-java.util.Map-java.lang.Class-java.lang.Class-[KafkaProducer.create]`.
+specified as parameters of `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#create-io.vertx.core.Vertx-java.util.Properties-java.lang.Class-java.lang.Class-[KafkaProducer.create]`.
+endif::[]
 
 == Receiving messages from a topic joining a consumer group
 
@@ -546,7 +562,8 @@ consumer.exceptionHandler(e -> {
 });
 ----
 
-ifeval::[{lang} == java || {lang} == groovy || {lang} == kotlin]
+ifdef::java,groovy,kotlin[]
+
 == RxJava API
 
 The Kafka client provides an Rxified version of the original API.
@@ -566,7 +583,6 @@ observable
 
 });
 ----
-endif::[]
 
 == Stream implementation and native Kafka objects
 
@@ -580,3 +596,5 @@ The `link:../../apidocs/io/vertx/kafka/client/producer/KafkaWriteStream.html[Kaf
 stream of `link:../../apidocs/org/apache/kafka/clients/producer/ProducerRecord.html[ProducerRecord]`.
 
 The API exposed by these interfaces is mostly the same than the polyglot version.
+
+endif::[]

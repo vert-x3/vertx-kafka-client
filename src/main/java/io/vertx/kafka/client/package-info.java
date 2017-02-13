@@ -18,6 +18,7 @@
  * = Vert.x Kafka client
  * :toc: left
  * :lang: $lang
+ * :$lang: $lang
  *
  * This component provides a Kafka client for reading and sending messages from/to an link:https://kafka.apache.org/[Apache Kafka] cluster.
  *
@@ -73,25 +74,32 @@
  * Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
  * for the link:https://kafka.apache.org/documentation/#producerconfigs[producer].
  *
- * To achieve that, a {@link java.util.Properties} instance can be configured with such properties passing it to one of the
+ * To achieve that, a map can be configured with such properties passing it to one of the
  * static creation methods exposed by {@link io.vertx.kafka.client.consumer.KafkaConsumer} and
  * {@link io.vertx.kafka.client.producer.KafkaProducer}
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example1_0}
+ * {@link examples.VertxKafkaClientExamples#exampleCreateConsumer}
  * ----
  *
  * In the above example, a {@link io.vertx.kafka.client.consumer.KafkaConsumer} instance is created using
- * a {@link java.util.Properties} instance in order to specify the Kafka nodes list to connect (just one) and
+ * a map instance in order to specify the Kafka nodes list to connect (just one) and
  * the deserializers to use for getting key and value from each received message.
  *
- * Another way is to use a {@link java.util.Map} instance instead of the {@link java.util.Properties} which is available
- * only for the Java / Groovy / Kotlin
+ * Likewise a producer can be created
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example1_1}
+ * {@link examples.VertxKafkaClientExamples#createProducer}
+ * ----
+ *
+ * ifdef::java,groovy,kotlin[]
+ * Another way is to use a {@link java.util.Properties} instance instead of the map.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#createConsumerJava}
  * ----
  *
  * More advanced creation methods allow to specify the class type for the key and the value used for sending messages
@@ -100,12 +108,13 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example1_2}
+ * {@link examples.VertxKafkaClientExamples#createProducerJava}
  * ----
  *
- * Here the {@link io.vertx.kafka.client.producer.KafkaProducer} instance is created in using a {@link java.util.Map} for
+ * Here the {@link io.vertx.kafka.client.producer.KafkaProducer} instance is created in using a {@link java.util.Properties} for
  * specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value deserializers are
- * specified as parameters of {@link io.vertx.kafka.client.producer.KafkaProducer#create(io.vertx.core.Vertx, java.util.Map, java.lang.Class, java.lang.Class)}.
+ * specified as parameters of {@link io.vertx.kafka.client.producer.KafkaProducer#create(io.vertx.core.Vertx, java.util.Properties, java.lang.Class, java.lang.Class)}.
+ * endif::[]
  *
  * == Receiving messages from a topic joining a consumer group
  *
@@ -309,7 +318,8 @@
  * {@link examples.VertxKafkaClientExamples#example12}
  * ----
  *
- * ifeval::[{lang} == java || {lang} == groovy || {lang} == kotlin]
+ * ifdef::java,groovy,kotlin[]
+ * 
  * == RxJava API
  *
  * The Kafka client provides an Rxified version of the original API.
@@ -318,7 +328,6 @@
  * ----
  * {@link examples.RxExamples#consumer(io.vertx.rxjava.kafka.client.consumer.KafkaConsumer)}
  * ----
- * endif::[]
  *
  * == Stream implementation and native Kafka objects
  *
@@ -333,6 +342,7 @@
  *
  * The API exposed by these interfaces is mostly the same than the polyglot version.
  *
+ * endif::[]
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-kafka-client", groupPackage = "io.vertx")

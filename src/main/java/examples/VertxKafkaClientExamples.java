@@ -43,7 +43,7 @@ public class VertxKafkaClientExamples {
    * Example about Kafka consumer and producer creation
    * @param vertx
    */
-  public void example1_0(Vertx vertx) {
+  public void createConsumerJava(Vertx vertx) {
 
     // creating the consumer using properties config
     Properties config = new Properties();
@@ -62,13 +62,13 @@ public class VertxKafkaClientExamples {
    * Example about Kafka consumer and producer creation
    * @param vertx
    */
-  public void example1_1(Vertx vertx) {
+  public void exampleCreateConsumer(Vertx vertx) {
 
     // creating the consumer using map config
     Map<String, String> config = new HashMap<>();
     config.put("bootstrap.servers", "localhost:9092");
     config.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-    config.put("value.deserializer", "org.apache.kafka.common.serialization.StringSerializer");
+    config.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
     config.put("group.id", "my_group");
     config.put("auto.offset.reset", "earliest");
     config.put("enable.auto.commit", "false");
@@ -77,19 +77,32 @@ public class VertxKafkaClientExamples {
     KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
   }
 
+  public void createProducer(Vertx vertx) {
+
+    // creating the producer using map and class types for key and value serializers/deserializers
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    config.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    config.put("acks", "1");
+
+    // use producer for interacting with Apache Kafka
+    KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config);
+  }
+
   /**
    * Example about Kafka consumer and producer creation
    * @param vertx
    */
-  public void example1_2(Vertx vertx) {
+  public void createProducerJava(Vertx vertx) {
 
     // creating the producer using map and class types for key and value serializers/deserializers
-    Map<String, String> map = new HashMap<>();
-    map.put("bootstrap.servers", "localhost:9092");
-    map.put("acks", "1");
+    Properties config = new Properties();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("acks", "1");
 
     // use producer for interacting with Apache Kafka
-    KafkaProducer<String, String> producer = KafkaProducer.create(vertx, map, String.class, String.class);
+    KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config, String.class, String.class);
   }
 
   public void exampleSubscribe(KafkaConsumer<String, String> consumer) {
