@@ -351,15 +351,17 @@ consumer.listTopics({ ar ->
 
 ----
 
-== Committing offset manually
+== Manual offset commit
 
-In Apache Kafka, one of the main features is that the consumer is in charge to handle the offset of the last read message.
-This is executed by the commit operation that can be executed automatically every time a bunch of messages are read
-from a topic partition; in this case the "enable.auto.commit" configuration parameter needs to be set to "true" in
-the properties bag for the consumer creation.
-The other way is using the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#commit-io.vertx.core.Handler-[commit]` method
-in order to do that manually (it's useful for having an "at least once" delivery to be sure that the read messages
-are processed before committing the offset).
+In Apache Kafka the consumer is in charge to handle the offset of the last read message.
+
+This is executed by the commit operation executed automatically every time a bunch of messages are read
+from a topic partition. The configuration parameter `enable.auto.commit` must be set to `true` when the
+consumer is created.
+
+Manual offset commit, can be achieved with `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#commit-io.vertx.core.Handler-[commit]`.
+It can be used to achieve _at least once_ delivery to be sure that the read messages are processed before committing
+the offset.
 
 [source,groovy]
 ----
@@ -367,9 +369,9 @@ are processed before committing the offset).
 // consumer is processing read messages
 
 // committing offset of the last read message
-consumer.commit({ done ->
+consumer.commit({ ar ->
 
-  if (done.succeeded()) {
+  if (ar.succeeded()) {
     println("Last read message offset committed")
   }
 })

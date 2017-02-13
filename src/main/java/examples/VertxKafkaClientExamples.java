@@ -306,9 +306,9 @@ public class VertxKafkaClientExamples {
     // consumer is processing read messages
 
     // committing offset of the last read message
-    consumer.commit(done -> {
+    consumer.commit(ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
         System.out.println("Last read message offset committed");
       }
     });
