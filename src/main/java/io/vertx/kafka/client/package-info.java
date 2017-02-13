@@ -213,17 +213,29 @@
  *
  * == Seeking in a topic partition
  *
- * A great advantage of using Apache Kafka is that the messages are retained for a long period of time and the consumer can
- * seek inside a topic partition for re-reading all or part of the messages and then coming back to the end of
- * the partition. Using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#seek(io.vertx.kafka.client.common.TopicPartition, long, io.vertx.core.Handler)}
- * method it's possible to change the offset for starting to read at specific position. If the consumer needs to re-read the stream
- * from the beginning, there is the {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToBeginning(java.util.Set, io.vertx.core.Handler)}
- * method. Finally, in order to come back at the end of the partition, it's possible to use the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToEnd(java.util.Set, io.vertx.core.Handler)} method.
+ * Apache Kafka can retain messages for a long period of time and the consumer can seek inside a topic partition
+ * and obtain arbitraty access to the messages.
+ *
+ * You can use {@link io.vertx.kafka.client.consumer.KafkaConsumer#seek} to change the offset for reading at a specific
+ * position
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example7}
+ * {@link examples.VertxKafkaClientExamples#exampleSeek}
+ * ----
+ *
+ * When the consumer needs to re-read the stream from the beginning, it can use {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToBeginning}
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleSeekToBeginning}
+ * ----
+ *
+ * Finally {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToEnd} can be used to come back at the end of the partition
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleSeekToEnd}
  * ----
  *
  * == Pausing and resuming the read on topic partitions

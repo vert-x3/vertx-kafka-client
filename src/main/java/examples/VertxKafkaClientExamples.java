@@ -314,18 +314,13 @@ public class VertxKafkaClientExamples {
     });
   }
 
-  /**
-   * Example about how Kafka consumer can seek in the partition
-   * changing the offset from which starting to read messages
-   * @param consumer
-   */
-  public void example7(KafkaConsumer<String, String> consumer) {
+  public void exampleSeek(KafkaConsumer<String, String> consumer) {
 
     TopicPartition topicPartition = new TopicPartition()
       .setTopic("test")
       .setPartition(0);
 
-    // seeking to a specific offset
+    // seek to a specific offset
     consumer.seek(topicPartition, 10, done -> {
 
       if (done.succeeded()) {
@@ -333,15 +328,35 @@ public class VertxKafkaClientExamples {
       }
     });
 
-    // seeking at the beginning of the partition
+  }
+
+  public void exampleSeekToBeginning(KafkaConsumer<String, String> consumer) {
+
+    TopicPartition topicPartition = new TopicPartition()
+      .setTopic("test")
+      .setPartition(0);
+
+    // seek to the beginning of the partition
     consumer.seekToBeginning(Collections.singleton(topicPartition), done -> {
 
       if (done.succeeded()) {
         System.out.println("Seeking done");
       }
     });
+  }
 
-    // seeking at the end of the partition
+  /**
+   * Example about how Kafka consumer can seek in the partition
+   * changing the offset from which starting to read messages
+   * @param consumer
+   */
+  public void exampleSeekToEnd(KafkaConsumer<String, String> consumer) {
+
+    TopicPartition topicPartition = new TopicPartition()
+      .setTopic("test")
+      .setPartition(0);
+
+    // seek to the end of the partition
     consumer.seekToEnd(Collections.singleton(topicPartition), done -> {
 
       if (done.succeeded()) {
