@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package io.vertx.kafka.client.common;
+package io.vertx.kafka.client.common.impl;
 
 import io.vertx.core.Handler;
+import io.vertx.kafka.client.common.Node;
+import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.RecordMetadata;
 
@@ -30,6 +32,9 @@ import java.util.stream.Collectors;
  * Helper class for mapping native and Vert.x Kafka objects
  */
 public class Helper {
+
+  private Helper() {
+  }
 
   public static <T> Set<T> toSet(Collection<T> collection) {
     if (collection instanceof Set) {

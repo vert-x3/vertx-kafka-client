@@ -20,7 +20,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.kafka.client.common.Helper;
+import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;

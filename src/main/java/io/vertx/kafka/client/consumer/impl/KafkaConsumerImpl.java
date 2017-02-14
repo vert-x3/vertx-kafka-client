@@ -19,7 +19,7 @@ package io.vertx.kafka.client.consumer.impl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.kafka.client.common.Helper;
+import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
