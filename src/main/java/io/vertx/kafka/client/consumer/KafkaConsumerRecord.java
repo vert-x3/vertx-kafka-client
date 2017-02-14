@@ -1,21 +1,75 @@
+/*
+ * Copyright 2016 Red Hat Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.vertx.kafka.client.consumer;
 
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.record.TimestampType;
 
 /**
- * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
+ * Vert.x Kafka consumer record
  */
 @VertxGen
-public interface KafkaConsumerRecord {
+public interface KafkaConsumerRecord<K, V> {
 
+  /**
+   * @return  the topic this record is received from
+   */
   String topic();
+
+  /**
+   * @return  the partition from which this record is received
+   */
   int partition();
+
+  /**
+   * @return  the position of this record in the corresponding Kafka partition.
+   */
   long offset();
+
+  /**
+   * @return  the timestamp of this record
+   */
   long timestamp();
+
+  /**
+   * @return  the timestamp type of this record
+   */
   TimestampType timestampType();
+
+  /**
+   * @return  the checksum (CRC32) of the record.
+   */
   long checksum();
-  <K> K key();
-  <V> V value();
-  
+
+  /**
+   * @return  the key (or null if no key is specified)
+   */
+  K key();
+
+  /**
+   * @return  the value
+   */
+  V value();
+
+  /**
+   * @return  the native Kafka consumer record with backed information
+   */
+  @GenIgnore
+  ConsumerRecord record();
 }
