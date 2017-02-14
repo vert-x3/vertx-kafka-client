@@ -1,10 +1,14 @@
 = Vert.x Kafka client
+:toc: left
+:lang: java
+:java: java
 
 This component provides a Kafka client for reading and sending messages from/to an link:https://kafka.apache.org/[Apache Kafka] cluster.
 
-From the consumer point of view, its API provides a bunch of methods for subscribing to a topic partition receiving
-messages asynchronously or reading them as a stream (even with the possibility to pause the stream itself).
-As producer, its API provides methods for sending message to a topic partition like writing on a stream.
+As consumer, the API provides methods for subscribing to a topic partition receiving
+messages asynchronously or reading them as a stream (even with the possibility to pause/resume the stream).
+
+As producer, the API provides methods for sending message to a topic partition like writing on a stream.
 
 WARNING: this module has the tech preview status, this means the API can change between versions.
 
@@ -45,73 +49,161 @@ maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
 compile io.vertx:vertx-kafka-client:3.4.0-SNAPSHOT
 ----
 
-== Getting Started
+== Creating Kafka clients
 
-=== Creating Kafka clients
+Creating consumers and sproducer is quite similar and on how it works using the native Kafka client library.
 
-The creation of both clients, consumer and producer, is quite similar and it's strictly related on how it works using
-the native Kafka client library. They need to be configured with a bunch of properties as described in the official
+They need to be configured with a bunch of properties as described in the official
 Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
 for the link:https://kafka.apache.org/documentation/#producerconfigs[producer].
-In order to do that, a `link:../../apidocs/java/util/Properties.html[Properties]` instance can be filled with such properties passing it to one of the
+
+To achieve that, a map can be configured with such properties passing it to one of the
 static creation methods exposed by `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and
-`link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` interfaces. Another way is filling a `link:../../apidocs/java/util/Map.html[Map]` instance
-instead of the `link:../../apidocs/java/util/Properties.html[Properties]` one.
-More advanced creation methods allow to specify the class type for the key and the value used for sending messages
-or provided by received messages; this is a way for setting the key and value serializers/deserializers instead of
-using the related properties for that.
+`link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]`
 
 [source,java]
 ----
-Properties props = new Properties();
-props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-props.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
-props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+Map<String, String> config = new HashMap<>();
+config.put("bootstrap.servers", "localhost:9092");
+config.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+config.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+config.put("group.id", "my_group");
+config.put("auto.offset.reset", "earliest");
+config.put("enable.auto.commit", "false");
 
-KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, props);
-
-// creating the producer using map and class types for key and value serializers/deserializers
-Map<String, String> map = new HashMap<>();
-map.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-map.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
-
-KafkaProducer<String, String> producer = KafkaProducer.create(vertx, map, String.class, String.class);
+// use consumer for interacting with Apache Kafka
+KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
 ----
 
-In the above example, a `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` instance is created using a `link:../../apidocs/java/util/Properties.html[Properties]`
-instance in order to specify the Kafka nodes list to connect (just one) and the deserializers to use for getting key
-and value from each received message.
-The `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` instance is created in a different way using a `link:../../apidocs/java/util/Map.html[Map]`
-instance for specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value
-deserializers are specified as parameters in the
-`link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#create-io.vertx.core.Vertx-java.util.Map-java.lang.Class-java.lang.Class-[KafkaProducer.create]`
-method.
+In the above example, a `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` instance is created using
+a map instance in order to specify the Kafka nodes list to connect (just one) and
+the deserializers to use for getting key and value from each received message.
 
-=== Receiving messages from a topic joining a consumer group
+Likewise a producer can be created
+
+[source,java]
+----
+Map<String, String> config = new HashMap<>();
+config.put("bootstrap.servers", "localhost:9092");
+config.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+config.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+config.put("acks", "1");
+
+// use producer for interacting with Apache Kafka
+KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config);
+----
+
+ifdef::java,groovy,kotlin[]
+Another way is to use a `link:../../apidocs/java/util/Properties.html[Properties]` instance instead of the map.
+
+[source,java]
+----
+Properties config = new Properties();
+config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+config.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
+config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+
+// use consumer for interacting with Apache Kafka
+KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+----
+
+More advanced creation methods allow to specify the class type for the key and the value used for sending messages
+or provided by received messages; this is a way for setting the key and value serializers/deserializers instead of
+using the related properties for that
+
+[source,java]
+----
+Properties config = new Properties();
+config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+config.put(ProducerConfig.ACKS_CONFIG, "1");
+
+// use producer for interacting with Apache Kafka
+KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config, String.class, String.class);
+----
+
+Here the `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` instance is created in using a `link:../../apidocs/java/util/Properties.html[Properties]` for
+specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value deserializers are
+specified as parameters of `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#create-io.vertx.core.Vertx-java.util.Properties-java.lang.Class-java.lang.Class-[KafkaProducer.create]`.
+endif::[]
+
+== Receiving messages from a topic joining a consumer group
 
 In order to start receiving messages from Kafka topics, the consumer can use the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#subscribe-java.util.Set-io.vertx.core.Handler-[subscribe]` method for subscribing
-to a set of topics being part of a consumer group (specified by the properties on creation) and being notified when the operation
-is completed. Before doing that, it's mandatory to register an handler for handling incoming messages using the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#handler-io.vertx.core.Handler-[handler]` otherwise an
-`link:../../apidocs/java/lang/IllegalStateException.html[IllegalStateException]` will be thrown.
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#subscribe-java.util.Set-[subscribe]` method for
+subscribing to a set of topics being part of a consumer group (specified by the properties on creation).
+
+You need to register an handler for handling incoming messages using the
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#handler-io.vertx.core.Handler-[handler]`
+
+[source,java]
+----
+consumer.handler(record -> {
+  System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
+    ",partition=" + record.partition() + ",offset=" + record.offset());
+});
+
+// subscribe to several topics
+Set<String> topics = new HashSet<>();
+topics.add("topic1");
+topics.add("topic2");
+topics.add("topic3");
+consumer.subscribe(topics);
+
+// or just subscribe to a single topic
+consumer.subscribe("a-single-topic");
+----
+
+An handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
+is completed.
+
+[source,java]
+----
+consumer.handler(record -> {
+  System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
+    ",partition=" + record.partition() + ",offset=" + record.offset());
+});
+
+// subscribe to several topics
+Set<String> topics = new HashSet<>();
+topics.add("topic1");
+topics.add("topic2");
+topics.add("topic3");
+consumer.subscribe(topics, ar -> {
+  if (ar.succeeded()) {
+    System.out.println("subscribed");
+  } else {
+    System.out.println("Could not subscribe " + ar.cause().getMessage());
+  }
+});
+
+// or just subscribe to a single topic
+consumer.subscribe("a-single-topic", ar -> {
+  if (ar.succeeded()) {
+    System.out.println("subscribed");
+  } else {
+    System.out.println("Could not subscribe " + ar.cause().getMessage());
+  }
+});
+----
 
 Using the consumer group way, the Kafka cluster assigns partitions to the consumer taking into account other connected
-consumers in the same consumer group, so that partitions can be spread across them. The Kafka cluster handles partitions re-balancing
-when a consumer leaves the group (so assigned partitions are free to be assigned to other consumers) or a new consumer
-joins the group (so it wants partitions to read from).
-The `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides a way for being notified
-about what are the partitions revoked and assigned by the Kafka cluster specifying related handlers through the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsRevokedHandler-io.vertx.core.Handler-[partitionsRevokedHandler]` and the
+consumers in the same consumer group, so that partitions can be spread across them.
+
+The Kafka cluster handles partitions re-balancing when a consumer leaves the group (so assigned partitions are free
+to be assigned to other consumers) or a new consumer joins the group (so it wants partitions to read from).
+
+You can register handlers on a `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` to be notified
+of the partitions revocations and assignments by the Kafka cluster using
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsRevokedHandler-io.vertx.core.Handler-[partitionsRevokedHandler]` and
 `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsAssignedHandler-io.vertx.core.Handler-[partitionsAssignedHandler]`.
 
 [source,java]
 ----
 consumer.handler(record -> {
-  System.out.println("key=" + record.key() + ",value=" + record.value() +
+  System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
     ",partition=" + record.partition() + ",offset=" + record.offset());
 });
 
@@ -132,50 +224,56 @@ consumer.partitionsRevokedHandler(topicPartitions -> {
   }
 });
 
-// subscribing to the topic
-consumer.subscribe("test", done -> {
+// subscribes to the topic
+consumer.subscribe("test", ar -> {
 
-  if (done.succeeded()) {
+  if (ar.succeeded()) {
     System.out.println("Consumer subscribed");
   }
 });
 ----
 
 After joining a consumer group for receiving messages, a consumer can decide to leave the consumer group in order to
-not get messages anymore. This is possible thanks to the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#unsubscribe-io.vertx.core.Handler-[unsubscribe]`
-method.
+not get messages anymore using `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#unsubscribe--[unsubscribe]`
 
 [source,java]
 ----
-consumer.unsubscribe(done -> {
+consumer.unsubscribe();
+----
 
-  if (done.succeeded()) {
+You can add an handler to be notified of the result
+
+[source,java]
+----
+consumer.unsubscribe(ar -> {
+
+  if (ar.succeeded()) {
     System.out.println("Consumer unsubscribed");
   }
 });
 ----
 
-=== Receiving messages from a topic requesting specific partitions
+== Receiving messages from a topic requesting specific partitions
 
-Other than being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
-topic partition. The big difference is that without being part of a consumer group the overall application can't rely
-on the re-balancing feature. The `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assign-java.util.Set-io.vertx.core.Handler-[assign]` method in order to
-ask to be assigned specific partitions; using the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assignment-io.vertx.core.Handler-[assignment]`
-method is also possible getting information about the current assigned partitions.
+Besides being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
+topic partition. When the consumer is not part part of a consumer group the overall application cannot
+rely on the re-balancing feature.
+
+You can use `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assign-java.util.Set-io.vertx.core.Handler-[assign]`
+in order to ask for specific partitions.
 
 [source,java]
 ----
-Set<TopicPartition> topicPartitions = new HashSet<>();
-topicPartitions.add(new TopicPartition("test", 0)
-  .setTopic("test")
-  .setPartition(0));
-
-// registering the handler for incoming messages
 consumer.handler(record -> {
   System.out.println("key=" + record.key() + ",value=" + record.value() +
     ",partition=" + record.partition() + ",offset=" + record.offset());
 });
+
+//
+Set<TopicPartition> topicPartitions = new HashSet<>();
+topicPartitions.add(new TopicPartition()
+  .setTopic("test")
+  .setPartition(0));
 
 // requesting to be assigned the specific partition
 consumer.assign(topicPartitions, done -> {
@@ -197,71 +295,74 @@ consumer.assign(topicPartitions, done -> {
 });
 ----
 
-=== Getting topic partitions information
+Calling `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#assignment-io.vertx.core.Handler-[assignment]` provides
+the list of the current assigned partitions.
 
-Both the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]`
-interface provides the "partitionsFor" method for getting information about partitions in a specified topic.
+== Getting topic partition information
+
+You can call the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#partitionsFor-java.lang.String-io.vertx.core.Handler-[partitionsFor]` to get information about
+partitions for a specified topic
 
 [source,java]
 ----
-consumer.listTopics(done -> {
+consumer.partitionsFor("test", ar -> {
 
-  if (done.succeeded()) {
+  if (ar.succeeded()) {
 
-    Map<String, List<PartitionInfo>> map = done.result();
-    map.forEach((topic, partitions) -> {
-      System.out.println("topic = " + topic);
-      System.out.println("partitions = " + map.get(topic));
-    });
-  }
-});
-
-// asking partitions information about specific topic
-consumer.partitionsFor("test", done -> {
-
-  if (done.succeeded()) {
-
-    for (PartitionInfo partitionInfo : done.result()) {
+    for (PartitionInfo partitionInfo : ar.result()) {
       System.out.println(partitionInfo);
     }
   }
 });
 ----
 
-The above example also shows that the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides one more
-method for getting information about all available topics with related partitions.
-This is the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#listTopics-io.vertx.core.Handler-[listTopics]` method which is not
-available in the `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` interface.
-
-=== Committing offset manually
-
-In Apache Kafka, one of the main features is that the consumer is in charge to handle the offset of the last read message.
-This is executed by the commit operation that can be executed automatically every time a bunch of messages are read
-from a topic partition; in this case the "enable.auto.commit" configuration parameter needs to be set to "true" in
-the properties bag for the consumer creation.
-The other way is using the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#commit-io.vertx.core.Handler-[commit]` method
-in order to do that manually (it's useful for having an "at least once" delivery to be sure that the read messages
-are processed before committing the offset).
+In addition `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#listTopics-io.vertx.core.Handler-[listTopics]` provides all available topics
+with related partitions
 
 [source,java]
 ----
-consumer.commit(done -> {
+consumer.listTopics(ar -> {
 
-  if (done.succeeded()) {
+  if (ar.succeeded()) {
+
+    Map<String, List<PartitionInfo>> map = ar.result();
+    map.forEach((topic, partitions) -> {
+      System.out.println("topic = " + topic);
+      System.out.println("partitions = " + map.get(topic));
+    });
+  }
+});
+----
+
+== Manual offset commit
+
+In Apache Kafka the consumer is in charge to handle the offset of the last read message.
+
+This is executed by the commit operation executed automatically every time a bunch of messages are read
+from a topic partition. The configuration parameter `enable.auto.commit` must be set to `true` when the
+consumer is created.
+
+Manual offset commit, can be achieved with `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#commit-io.vertx.core.Handler-[commit]`.
+It can be used to achieve _at least once_ delivery to be sure that the read messages are processed before committing
+the offset.
+
+[source,java]
+----
+consumer.commit(ar -> {
+
+  if (ar.succeeded()) {
     System.out.println("Last read message offset committed");
   }
 });
 ----
 
-=== Seeking in a topic partition
+== Seeking in a topic partition
 
-A great advantage of using Apache Kafka is that the messages are retained for a long period of time and the consumer can
-seek inside a topic partition for re-reading all or part of the messages and then coming back to the end of
-the partition. Using the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#seek-io.vertx.kafka.client.common.TopicPartition-long-io.vertx.core.Handler-[seek]`
-method it's possible to change the offset for starting to read at specific position. If the consumer needs to re-read the stream
-from the beginning, there is the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#seekToBeginning-java.util.Set-io.vertx.core.Handler-[seekToBeginning]`
-method. Finally, in order to come back at the end of the partition, it's possible to use the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#seekToEnd-java.util.Set-io.vertx.core.Handler-[seekToEnd]` method.
+Apache Kafka can retain messages for a long period of time and the consumer can seek inside a topic partition
+and obtain arbitraty access to the messages.
+
+You can use `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#seek-io.vertx.kafka.client.common.TopicPartition-long-[seek]` to change the offset for reading at a specific
+position
 
 [source,java]
 ----
@@ -269,23 +370,41 @@ TopicPartition topicPartition = new TopicPartition()
   .setTopic("test")
   .setPartition(0);
 
-// seeking to a specific offset
+// seek to a specific offset
 consumer.seek(topicPartition, 10, done -> {
 
   if (done.succeeded()) {
     System.out.println("Seeking done");
   }
 });
+----
 
-// seeking at the beginning of the partition
+When the consumer needs to re-read the stream from the beginning, it can use `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#seekToBeginning-io.vertx.kafka.client.common.TopicPartition-[seekToBeginning]`
+
+[source,java]
+----
+TopicPartition topicPartition = new TopicPartition()
+  .setTopic("test")
+  .setPartition(0);
+
+// seek to the beginning of the partition
 consumer.seekToBeginning(Collections.singleton(topicPartition), done -> {
 
   if (done.succeeded()) {
     System.out.println("Seeking done");
   }
 });
+----
 
-// seeking at the end of the partition
+Finally `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#seekToEnd-io.vertx.kafka.client.common.TopicPartition-[seekToEnd]` can be used to come back at the end of the partition
+
+[source,java]
+----
+TopicPartition topicPartition = new TopicPartition()
+  .setTopic("test")
+  .setPartition(0);
+
+// seek to the end of the partition
 consumer.seekToEnd(Collections.singleton(topicPartition), done -> {
 
   if (done.succeeded()) {
@@ -294,20 +413,20 @@ consumer.seekToEnd(Collections.singleton(topicPartition), done -> {
 });
 ----
 
-=== Pausing and resuming the read on topic partitions
+== Message flow control
 
-A consumer has the possibility to pause the read operation from a topic, in order to not receive other messages
-(i.e. having more time to process the messages already read) and then resume the read for continuing to receive messages.
-In order to do that, the `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` interface provides the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#pause-java.util.Set-io.vertx.core.Handler-[pause]` method and the
-`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#resume-java.util.Set-io.vertx.core.Handler-[resume]` method.
+A consumer can control the incoming message flow and pause/resume the read operation from a topic, e.g it
+can pause the message flow when it needs more time to process the actual messages and then resume
+to continue message processing.
+
+To achieve that you can use `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#pause--[pause]` and
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#resume--[resume]`
 
 [source,java]
 ----
-Set<TopicPartition> topicPartitions = new HashSet<>();
-topicPartitions.add(new TopicPartition()
+TopicPartition topicPartition = new TopicPartition()
   .setTopic("test")
-  .setPartition(0));
+  .setPartition(0);
 
 // registering the handler for incoming messages
 consumer.handler(record -> {
@@ -317,47 +436,45 @@ consumer.handler(record -> {
   // i.e. pause/resume on partition 0, after reading message up to offset 5
   if ((record.partition() == 0) && (record.offset() == 5)) {
 
-    // pausing read operation
-    consumer.pause(topicPartitions, done -> {
+    // pause the read operations
+    consumer.pause(topicPartition, ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
 
         System.out.println("Paused");
-        // resuming read operation after a specific time
-        vertx.setTimer(5000, t -> {
 
-          // resuming read operation
-          consumer.resume(topicPartitions, done1 -> {
+        // resume read operation after a specific time
+        vertx.setTimer(5000, timeId -> {
 
-            if (done1.succeeded()) {
-              System.out.println("Resumed");
-            }
-          });
-
+          // resumi read operations
+          consumer.resume(topicPartition);
         });
-
       }
     });
   }
 });
-
-// subscribing to the topic
-consumer.subscribe(Collections.singleton("test"), done -> {
-
-  if (done.succeeded()) {
-    System.out.println("Consumer subscribed");
-  }
-});
 ----
 
-=== Sending messages to a topic
+== Sending messages to a topic
 
-The `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]` interface provides the
-`link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#write-io.vertx.kafka.client.producer.KafkaProducerRecord-io.vertx.core.Handler-[write]`
-method for sending messages (records) to a topic having the possibility to receive metadata about the messages sent like
-the topic itself, the destination partition and the assigned offset. The simpler way is sending a message specifying
-only the destination topic and the related value; in this case, without a key or a specific partition, the sender works
-in a round robin way sending messages across all the partitions of the topic.
+You can use  `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#write-io.vertx.kafka.client.producer.KafkaProducerRecord-[write]` to send messages (records) to a topic.
+
+The simplest way to send a message is to specify only the destination topic and the related value, omitting its key
+or partition, in this case the messages are sent in a round robin fashion across all the partitions of the topic.
+
+[source,java]
+----
+for (int i = 0; i < 5; i++) {
+
+  // only topic and message value are specified, round robin on destination partitions
+  KafkaProducerRecord<String, String> record =
+    KafkaProducerRecord.create("test", "message_" + i);
+
+  producer.write(record);
+}
+----
+
+You can receive message sent metadata like its topic, its destination partition and its assigned offset.
 
 [source,java]
 ----
@@ -381,8 +498,8 @@ for (int i = 0; i < 5; i++) {
 }
 ----
 
-In order to specify the destination partition for a message, it's possible to specify the partition identifier explicitly
-or a key for the message.
+When you need to assign a partition to a message, you can specify its partition identifier
+or its key
 
 [source,java]
 ----
@@ -392,22 +509,12 @@ for (int i = 0; i < 10; i++) {
   KafkaProducerRecord<String, String> record =
     KafkaProducerRecord.create("test", null, "message_" + i, 0);
 
-  producer.write(record, done -> {
-
-    if (done.succeeded()) {
-
-      RecordMetadata recordMetadata = done.result();
-      System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.getTopic() +
-        ", partition=" + recordMetadata.getPartition() +
-        ", offset=" + recordMetadata.getOffset());
-    }
-
-  });
+  producer.write(record);
 }
 ----
 
-Using a key, the sender processes an hash on that in order to identify the destination partition; it
-guarantees that all messages with the same key are sent to the same partition in order.
+Since the producers identifies the destination using key hashing, you can use that to guarantee that all
+messages with the same key are sent to the same partition and retain the order.
 
 [source,java]
 ----
@@ -420,25 +527,33 @@ for (int i = 0; i < 10; i++) {
   KafkaProducerRecord<String, String> record =
     KafkaProducerRecord.create("test", String.valueOf(key), "message_" + i);
 
-  producer.write(record, done -> {
-
-    if (done.succeeded()) {
-
-      RecordMetadata recordMetadata = done.result();
-      System.out.println("Message " + record.value() + " written on topic=" + record.value() +
-        ", partition=" + record.value() +
-        ", offset=" + recordMetadata.getOffset());
-    }
-
-  });
+  producer.write(record);
 }
 ----
 
-=== Handling exceptions and errors
+== Getting topic partition information
 
-In order to handle potential errors and exceptions during the communication between a Kafka client (consumer or producer)
-and the Kafka cluster, both `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html[KafkaConsumer]` and `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html[KafkaProducer]`
-interface provide the "exceptionHandler" method for setting an handler called when an error happens (i.e. timeout).
+You can call the `link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#partitionsFor-java.lang.String-io.vertx.core.Handler-[partitionsFor]` to get information about
+partitions for a specified topic:
+
+[source,java]
+----
+producer.partitionsFor("test", ar -> {
+
+  if (ar.succeeded()) {
+
+    for (PartitionInfo partitionInfo : ar.result()) {
+      System.out.println(partitionInfo);
+    }
+  }
+});
+----
+
+== Handling errors
+
+Errors handling (e.g timeout) between a Kafka client (consumer or producer) and the Kafka cluster is done using
+`link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#exceptionHandler-io.vertx.core.Handler-[exceptionHandler]` or
+`link:../../apidocs/io/vertx/kafka/client/producer/KafkaProducer.html#exceptionHandler-io.vertx.core.Handler-[exceptionHandler]`
 
 [source,java]
 ----
@@ -447,13 +562,39 @@ consumer.exceptionHandler(e -> {
 });
 ----
 
+ifdef::java[]
+== RxJava API
+
+The Kafka client provides an Rxified version of the original API.
+
+[source,java]
+----
+Observable<KafkaConsumerRecord<String, Long>> observable = consumer.toObservable();
+
+observable
+  .map(record -> record.value())
+  .buffer(256)
+  .map(
+  list -> list.stream().mapToDouble(n -> n).average()
+).subscribe(val -> {
+
+  // Obtained an average
+
+});
+----
+endif::[]
+
+ifdef::java,groovy,kotlin[]
 == Stream implementation and native Kafka objects
 
-Other than the polyglot version of the Kafka consumer and producer, this component provides a stream oriented
-implementation which handles native Kafka objects (and not the related Vert.x counterparts).
-The available interfaces are `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaReadStream.html[KafkaReadStream]` for reading topic partitions and
-`link:../../apidocs/io/vertx/kafka/client/producer/KafkaWriteStream.html[KafkaWriteStream]` for writing to topics. The extends the interfaces provided
-by Vert.x for handling stream so the `link:../../apidocs/io/vertx/core/streams/ReadStream.html[ReadStream]` and `link:../../apidocs/io/vertx/core/streams/WriteStream.html[WriteStream]`
-where the handled classes are the native ones from the Kafka client libraries like the
-`link:../../apidocs/org/apache/kafka/clients/consumer/ConsumerRecord.html[ConsumerRecord]` and the `link:../../apidocs/org/apache/kafka/clients/producer/ProducerRecord.html[ProducerRecord]`.
-The way to interact with the above streams is quite similar to the polyglot version.
+When you want to operate on native Kafka records you can use a stream oriented
+implementation which handles native Kafka objects.
+
+The `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaReadStream.html[KafkaReadStream]` shall be used for reading topic partitions, it is
+a read stream of `link:../../apidocs/org/apache/kafka/clients/consumer/ConsumerRecord.html[ConsumerRecord]` objects.
+
+The `link:../../apidocs/io/vertx/kafka/client/producer/KafkaWriteStream.html[KafkaWriteStream]` shall be used for writing to topics, it is a write
+stream of `link:../../apidocs/org/apache/kafka/clients/producer/ProducerRecord.html[ProducerRecord]`.
+
+The API exposed by these interfaces is mostly the same than the polyglot version.
+endif::[]

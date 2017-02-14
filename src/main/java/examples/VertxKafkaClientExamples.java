@@ -43,27 +43,116 @@ public class VertxKafkaClientExamples {
    * Example about Kafka consumer and producer creation
    * @param vertx
    */
-  public void example1(Vertx vertx) {
+  public void exampleCreateConsumerJava(Vertx vertx) {
 
-    // creating the consumer using properties
-    Properties props = new Properties();
-    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
-    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    // creating the consumer using properties config
+    Properties config = new Properties();
+    config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
+    config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
-    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, props);
+    // use consumer for interacting with Apache Kafka
+    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+  }
+
+  /**
+   * Example about Kafka consumer and producer creation
+   * @param vertx
+   */
+  public void exampleCreateConsumer(Vertx vertx) {
+
+    // creating the consumer using map config
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    config.put("group.id", "my_group");
+    config.put("auto.offset.reset", "earliest");
+    config.put("enable.auto.commit", "false");
+
+    // use consumer for interacting with Apache Kafka
+    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+  }
+
+  public void createProducer(Vertx vertx) {
 
     // creating the producer using map and class types for key and value serializers/deserializers
-    Map<String, String> map = new HashMap<>();
-    map.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-    map.put(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    config.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    config.put("acks", "1");
 
-    KafkaProducer<String, String> producer = KafkaProducer.create(vertx, map, String.class, String.class);
+    // use producer for interacting with Apache Kafka
+    KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config);
+  }
 
-    // using consumer and producer for interacting with Apache Kafka
+  /**
+   * Example about Kafka consumer and producer creation
+   * @param vertx
+   */
+  public void createProducerJava(Vertx vertx) {
+
+    // creating the producer using map and class types for key and value serializers/deserializers
+    Properties config = new Properties();
+    config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    config.put(ProducerConfig.ACKS_CONFIG, "1");
+
+    // use producer for interacting with Apache Kafka
+    KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config, String.class, String.class);
+  }
+
+  public void exampleSubscribe(KafkaConsumer<String, String> consumer) {
+
+    // register the handler for incoming messages
+    consumer.handler(record -> {
+      System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
+        ",partition=" + record.partition() + ",offset=" + record.offset());
+    });
+
+    // subscribe to several topics
+    Set<String> topics = new HashSet<>();
+    topics.add("topic1");
+    topics.add("topic2");
+    topics.add("topic3");
+    consumer.subscribe(topics);
+
+    // or just subscribe to a single topic
+    consumer.subscribe("a-single-topic");
+  }
+
+  public void exampleSubscribeWithResult(KafkaConsumer<String, String> consumer) {
+
+    // register the handler for incoming messages
+    consumer.handler(record -> {
+      System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
+        ",partition=" + record.partition() + ",offset=" + record.offset());
+    });
+
+    // subscribe to several topics
+    Set<String> topics = new HashSet<>();
+    topics.add("topic1");
+    topics.add("topic2");
+    topics.add("topic3");
+    consumer.subscribe(topics, ar -> {
+      if (ar.succeeded()) {
+        System.out.println("subscribed");
+      } else {
+        System.out.println("Could not subscribe " + ar.cause().getMessage());
+      }
+    });
+
+    // or just subscribe to a single topic
+    consumer.subscribe("a-single-topic", ar -> {
+      if (ar.succeeded()) {
+        System.out.println("subscribed");
+      } else {
+        System.out.println("Could not subscribe " + ar.cause().getMessage());
+      }
+    });
   }
 
   /**
@@ -71,11 +160,11 @@ public class VertxKafkaClientExamples {
    * from a topic being part of a consumer group
    * @param consumer
    */
-  public void example2(KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerPartitionsNotifs(KafkaConsumer<String, String> consumer) {
 
-    // registering the handler for incoming messages
+    // register the handler for incoming messages
     consumer.handler(record -> {
-      System.out.println("key=" + record.key() + ",value=" + record.value() +
+      System.out.println("Processing key=" + record.key() + ",value=" + record.value() +
         ",partition=" + record.partition() + ",offset=" + record.offset());
     });
 
@@ -96,13 +185,21 @@ public class VertxKafkaClientExamples {
       }
     });
 
-    // subscribing to the topic
-    consumer.subscribe("test", done -> {
+    // subscribes to the topic
+    consumer.subscribe("test", ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
         System.out.println("Consumer subscribed");
       }
     });
+  }
+
+  public void exampleUnsubscribe(KafkaConsumer<String, String> consumer) {
+
+    // consumer is already member of a consumer group
+
+    // unsubscribing request
+    consumer.unsubscribe();
   }
 
   /**
@@ -110,14 +207,14 @@ public class VertxKafkaClientExamples {
    * a previous joined consumer group
    * @param consumer
    */
-  public void example3(KafkaConsumer<String, String> consumer) {
+  public void exampleUnsubscribeWithCallback(KafkaConsumer<String, String> consumer) {
 
     // consumer is already member of a consumer group
 
     // unsubscribing request
-    consumer.unsubscribe(done -> {
+    consumer.unsubscribe(ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
         System.out.println("Consumer unsubscribed");
       }
     });
@@ -128,18 +225,19 @@ public class VertxKafkaClientExamples {
    * from a topic requesting a specific partition for that
    * @param consumer
    */
-  public void example4(KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerAssignPartition(KafkaConsumer<String, String> consumer) {
 
-    Set<TopicPartition> topicPartitions = new HashSet<>();
-    topicPartitions.add(new TopicPartition("test", 0)
-      .setTopic("test")
-      .setPartition(0));
-
-    // registering the handler for incoming messages
+    // register the handler for incoming messages
     consumer.handler(record -> {
       System.out.println("key=" + record.key() + ",value=" + record.value() +
         ",partition=" + record.partition() + ",offset=" + record.offset());
     });
+
+    //
+    Set<TopicPartition> topicPartitions = new HashSet<>();
+    topicPartitions.add(new TopicPartition()
+      .setTopic("test")
+      .setPartition(0));
 
     // requesting to be assigned the specific partition
     consumer.assign(topicPartitions, done -> {
@@ -167,27 +265,44 @@ public class VertxKafkaClientExamples {
    * Kafka consumer and producer instances)
    * @param consumer
    */
-  public void example5(KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerPartitionsFor(KafkaConsumer<String, String> consumer) {
+
+    // asking partitions information about specific topic
+    consumer.partitionsFor("test", ar -> {
+
+      if (ar.succeeded()) {
+
+        for (PartitionInfo partitionInfo : ar.result()) {
+          System.out.println(partitionInfo);
+        }
+      }
+    });
+  }
+
+  public void exampleConsumerListTopics(KafkaConsumer<String, String> consumer) {
 
     // asking information about available topics and related partitions
-    consumer.listTopics(done -> {
+    consumer.listTopics(ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
 
-        Map<String, List<PartitionInfo>> map = done.result();
+        Map<String, List<PartitionInfo>> map = ar.result();
         map.forEach((topic, partitions) -> {
           System.out.println("topic = " + topic);
           System.out.println("partitions = " + map.get(topic));
         });
       }
     });
+  }
+
+  public void exampleProducerPartitionsFor(KafkaProducer<String, String> producer) {
 
     // asking partitions information about specific topic
-    consumer.partitionsFor("test", done -> {
+    producer.partitionsFor("test", ar -> {
 
-      if (done.succeeded()) {
+      if (ar.succeeded()) {
 
-        for (PartitionInfo partitionInfo : done.result()) {
+        for (PartitionInfo partitionInfo : ar.result()) {
           System.out.println(partitionInfo);
         }
       }
@@ -199,15 +314,46 @@ public class VertxKafkaClientExamples {
    * of the current offset for a topic partition
    * @param consumer
    */
-  public void example6(KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerManualOffsetCommit(KafkaConsumer<String, String> consumer) {
 
     // consumer is processing read messages
 
     // committing offset of the last read message
-    consumer.commit(done -> {
+    consumer.commit(ar -> {
+
+      if (ar.succeeded()) {
+        System.out.println("Last read message offset committed");
+      }
+    });
+  }
+
+  public void exampleSeek(KafkaConsumer<String, String> consumer) {
+
+    TopicPartition topicPartition = new TopicPartition()
+      .setTopic("test")
+      .setPartition(0);
+
+    // seek to a specific offset
+    consumer.seek(topicPartition, 10, done -> {
 
       if (done.succeeded()) {
-        System.out.println("Last read message offset committed");
+        System.out.println("Seeking done");
+      }
+    });
+
+  }
+
+  public void exampleSeekToBeginning(KafkaConsumer<String, String> consumer) {
+
+    TopicPartition topicPartition = new TopicPartition()
+      .setTopic("test")
+      .setPartition(0);
+
+    // seek to the beginning of the partition
+    consumer.seekToBeginning(Collections.singleton(topicPartition), done -> {
+
+      if (done.succeeded()) {
+        System.out.println("Seeking done");
       }
     });
   }
@@ -217,29 +363,13 @@ public class VertxKafkaClientExamples {
    * changing the offset from which starting to read messages
    * @param consumer
    */
-  public void example7(KafkaConsumer<String, String> consumer) {
+  public void exampleSeekToEnd(KafkaConsumer<String, String> consumer) {
 
     TopicPartition topicPartition = new TopicPartition()
       .setTopic("test")
       .setPartition(0);
 
-    // seeking to a specific offset
-    consumer.seek(topicPartition, 10, done -> {
-
-      if (done.succeeded()) {
-        System.out.println("Seeking done");
-      }
-    });
-
-    // seeking at the beginning of the partition
-    consumer.seekToBeginning(Collections.singleton(topicPartition), done -> {
-
-      if (done.succeeded()) {
-        System.out.println("Seeking done");
-      }
-    });
-
-    // seeking at the end of the partition
+    // seek to the end of the partition
     consumer.seekToEnd(Collections.singleton(topicPartition), done -> {
 
       if (done.succeeded()) {
@@ -254,12 +384,11 @@ public class VertxKafkaClientExamples {
    * @param vertx
    * @param consumer
    */
-  public void example8(Vertx vertx, KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerFlowControl(Vertx vertx, KafkaConsumer<String, String> consumer) {
 
-    Set<TopicPartition> topicPartitions = new HashSet<>();
-    topicPartitions.add(new TopicPartition()
+    TopicPartition topicPartition = new TopicPartition()
       .setTopic("test")
-      .setPartition(0));
+      .setPartition(0);
 
     // registering the handler for incoming messages
     consumer.handler(record -> {
@@ -269,37 +398,35 @@ public class VertxKafkaClientExamples {
       // i.e. pause/resume on partition 0, after reading message up to offset 5
       if ((record.partition() == 0) && (record.offset() == 5)) {
 
-        // pausing read operation
-        consumer.pause(topicPartitions, done -> {
+        // pause the read operations
+        consumer.pause(topicPartition, ar -> {
 
-          if (done.succeeded()) {
+          if (ar.succeeded()) {
 
             System.out.println("Paused");
-            // resuming read operation after a specific time
-            vertx.setTimer(5000, t -> {
 
-              // resuming read operation
-              consumer.resume(topicPartitions, done1 -> {
+            // resume read operation after a specific time
+            vertx.setTimer(5000, timeId -> {
 
-                if (done1.succeeded()) {
-                  System.out.println("Resumed");
-                }
-              });
-
+              // resumi read operations
+              consumer.resume(topicPartition);
             });
-
           }
         });
       }
     });
+  }
 
-    // subscribing to the topic
-    consumer.subscribe(Collections.singleton("test"), done -> {
+  public void exampleProducerWrite(KafkaProducer<String, String> producer) {
 
-      if (done.succeeded()) {
-        System.out.println("Consumer subscribed");
-      }
-    });
+    for (int i = 0; i < 5; i++) {
+
+      // only topic and message value are specified, round robin on destination partitions
+      KafkaProducerRecord<String, String> record =
+        KafkaProducerRecord.create("test", "message_" + i);
+
+      producer.write(record);
+    }
   }
 
   /**
@@ -307,7 +434,7 @@ public class VertxKafkaClientExamples {
    * partitions in a round robin fashion
    * @param producer
    */
-  public void example9(KafkaProducer<String, String> producer) {
+  public void exampleProducerWriteWithAck(KafkaProducer<String, String> producer) {
 
     for (int i = 0; i < 5; i++) {
 
@@ -335,7 +462,7 @@ public class VertxKafkaClientExamples {
    * specified topic partition
    * @param producer
    */
-  public void example10(KafkaProducer<String, String> producer) {
+  public void exampleProducerWriteWithSpecificPartition(KafkaProducer<String, String> producer) {
 
     for (int i = 0; i < 10; i++) {
 
@@ -343,19 +470,8 @@ public class VertxKafkaClientExamples {
       KafkaProducerRecord<String, String> record =
         KafkaProducerRecord.create("test", null, "message_" + i, 0);
 
-      producer.write(record, done -> {
-
-        if (done.succeeded()) {
-
-          RecordMetadata recordMetadata = done.result();
-          System.out.println("Message " + record.value() + " written on topic=" + recordMetadata.getTopic() +
-            ", partition=" + recordMetadata.getPartition() +
-            ", offset=" + recordMetadata.getOffset());
-        }
-
-      });
+      producer.write(record);
     }
-
   }
 
   /**
@@ -364,7 +480,7 @@ public class VertxKafkaClientExamples {
    * the destination partition
    * @param producer
    */
-  public void example11(KafkaProducer<String, String> producer) {
+  public void exampleProducerWriteWithSpecificKey(KafkaProducer<String, String> producer) {
 
     for (int i = 0; i < 10; i++) {
 
@@ -375,19 +491,8 @@ public class VertxKafkaClientExamples {
       KafkaProducerRecord<String, String> record =
         KafkaProducerRecord.create("test", String.valueOf(key), "message_" + i);
 
-      producer.write(record, done -> {
-
-        if (done.succeeded()) {
-
-          RecordMetadata recordMetadata = done.result();
-          System.out.println("Message " + record.value() + " written on topic=" + record.value() +
-            ", partition=" + record.value() +
-            ", offset=" + recordMetadata.getOffset());
-        }
-
-      });
+      producer.write(record);
     }
-
   }
 
   /**
@@ -396,7 +501,7 @@ public class VertxKafkaClientExamples {
    * with the Kafka cluster
    * @param consumer
    */
-  public void example12(KafkaConsumer<String, String> consumer) {
+  public void exampleErrorHandling(KafkaConsumer<String, String> consumer) {
 
     // setting handler for errors
     consumer.exceptionHandler(e -> {

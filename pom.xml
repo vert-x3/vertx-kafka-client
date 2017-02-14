@@ -83,6 +83,21 @@
       <artifactId>vertx-lang-groovy</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-js</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-ruby</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-kotlin</artifactId>
+      <optional>true</optional>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.kafka</groupId>
@@ -127,6 +142,22 @@
           <configuration>
             <argLine>-server -Xmx1200M</argLine>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.asciidoctor</groupId>
+          <artifactId>asciidoctor-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>asciidoctor</id>
+              <goals>
+                <goal>process-asciidoc</goal>
+              </goals>
+              <configuration>
+                <attributes></attributes>
+              </configuration>
+              <phase>prepare-package</phase>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>

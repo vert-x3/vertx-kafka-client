@@ -1,0 +1,660 @@
+= Vert.x Kafka client
+:toc: left
+:lang: js
+:js: js
+
+This component provides a Kafka client for reading and sending messages from/to an link:https://kafka.apache.org/[Apache Kafka] cluster.
+
+As consumer, the API provides methods for subscribing to a topic partition receiving
+messages asynchronously or reading them as a stream (even with the possibility to pause/resume the stream).
+
+As producer, the API provides methods for sending message to a topic partition like writing on a stream.
+
+WARNING: this module has the tech preview status, this means the API can change between versions.
+
+== Using the Vert.x Kafka client
+
+As component not yet officially released in the Vert.x stack, to use the Vert.x Kafka client current snapshot version,
+add the following repository under the _repositories_ section and the following dependency to the _dependencies_ section
+of your build descriptor:
+
+* Maven (in your `pom.xml`):
+
+[source,xml,subs="+attributes"]
+----
+<repository>
+    <id>oss.sonatype.org-snapshot</id>
+    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+</repository>
+----
+
+[source,xml,subs="+attributes"]
+----
+<dependency>
+    <groupId>io.vertx</groupId>
+    <artifactId>vertx-kafka-client</artifactId>
+    <version>3.4.0-SNAPSHOT</version>
+</dependency>
+----
+
+* Gradle (in your `build.gradle` file):
+
+[source,groovy,subs="+attributes"]
+----
+maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+----
+
+[source,groovy,subs="+attributes"]
+----
+compile io.vertx:vertx-kafka-client:3.4.0-SNAPSHOT
+----
+
+== Creating Kafka clients
+
+Creating consumers and sproducer is quite similar and on how it works using the native Kafka client library.
+
+They need to be configured with a bunch of properties as described in the official
+Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
+for the link:https://kafka.apache.org/documentation/#producerconfigs[producer].
+
+To achieve that, a map can be configured with such properties passing it to one of the
+static creation methods exposed by `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html[KafkaConsumer]` and
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_producer-KafkaProducer.html[KafkaProducer]`
+
+[source,js]
+----
+var KafkaConsumer = require("vertx-kafka-client-js/kafka_consumer");
+
+// creating the consumer using map config
+var config = {};
+config["bootstrap.servers"] = "localhost:9092";
+config["key.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer";
+config["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer";
+config["group.id"] = "my_group";
+config["auto.offset.reset"] = "earliest";
+config["enable.auto.commit"] = "false";
+
+// use consumer for interacting with Apache Kafka
+var consumer = KafkaConsumer.create(vertx, config);
+
+----
+
+In the above example, a `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html[KafkaConsumer]` instance is created using
+a map instance in order to specify the Kafka nodes list to connect (just one) and
+the deserializers to use for getting key and value from each received message.
+
+Likewise a producer can be created
+
+[source,js]
+----
+var KafkaProducer = require("vertx-kafka-client-js/kafka_producer");
+
+// creating the producer using map and class types for key and value serializers/deserializers
+var config = {};
+config["bootstrap.servers"] = "localhost:9092";
+config["key.serializer"] = "org.apache.kafka.common.serialization.StringSerializer";
+config["value.serializer"] = "org.apache.kafka.common.serialization.StringSerializer";
+config["acks"] = "1";
+
+// use producer for interacting with Apache Kafka
+var producer = KafkaProducer.create(vertx, config);
+
+----
+
+ifdef::java,groovy,kotlin[]
+Another way is to use a `Properties` instance instead of the map.
+
+[source,js]
+----
+var KafkaConsumer = require("vertx-kafka-client-js/kafka_consumer");
+
+// creating the consumer using properties config
+var config = new (Java.type("java.util.Properties"))();
+config.put(Java.type("org.apache.kafka.clients.consumer.ConsumerConfig").BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+config.put(Java.type("org.apache.kafka.clients.consumer.ConsumerConfig").KEY_DESERIALIZER_CLASS_CONFIG, Java.type("org.apache.kafka.common.serialization.StringDeserializer").class);
+config.put(Java.type("org.apache.kafka.clients.consumer.ConsumerConfig").VALUE_DESERIALIZER_CLASS_CONFIG, Java.type("org.apache.kafka.common.serialization.StringDeserializer").class);
+config.put(Java.type("org.apache.kafka.clients.consumer.ConsumerConfig").GROUP_ID_CONFIG, "my_group");
+config.put(Java.type("org.apache.kafka.clients.consumer.ConsumerConfig").AUTO_OFFSET_RESET_CONFIG, "earliest");
+config.put(Java.type("org.apache.kafka.clients.consumer.ConsumerConfig").ENABLE_AUTO_COMMIT_CONFIG, "false");
+
+// use consumer for interacting with Apache Kafka
+var consumer = KafkaConsumer.create(vertx, config);
+
+----
+
+More advanced creation methods allow to specify the class type for the key and the value used for sending messages
+or provided by received messages; this is a way for setting the key and value serializers/deserializers instead of
+using the related properties for that
+
+[source,js]
+----
+var KafkaProducer = require("vertx-kafka-client-js/kafka_producer");
+
+// creating the producer using map and class types for key and value serializers/deserializers
+var config = new (Java.type("java.util.Properties"))();
+config.put(Java.type("org.apache.kafka.clients.producer.ProducerConfig").BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+config.put(Java.type("org.apache.kafka.clients.producer.ProducerConfig").ACKS_CONFIG, "1");
+
+// use producer for interacting with Apache Kafka
+var producer = KafkaProducer.create(vertx, config, Java.type("java.lang.String").class, Java.type("java.lang.String").class);
+
+----
+
+Here the `link:../../jsdoc/module-vertx-kafka-client-js_kafka_producer-KafkaProducer.html[KafkaProducer]` instance is created in using a `Properties` for
+specifying Kafka nodes list to connect (just one) and the acknowledgment mode; the key and value deserializers are
+specified as parameters of `link:../../jsdoc/module-vertx-kafka-client-js_kafka_producer-KafkaProducer.html#create[KafkaProducer.create]`.
+endif::[]
+
+== Receiving messages from a topic joining a consumer group
+
+In order to start receiving messages from Kafka topics, the consumer can use the
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#subscribe[subscribe]` method for
+subscribing to a set of topics being part of a consumer group (specified by the properties on creation).
+
+You need to register an handler for handling incoming messages using the
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#handler[handler]`
+
+[source,js]
+----
+
+// register the handler for incoming messages
+consumer.handler(function (record) {
+  console.log("Processing key=" + record.key() + ",value=" + record.value() + ",partition=" + record.partition() + ",offset=" + record.offset());
+});
+
+// subscribe to several topics
+var topics = new (Java.type("java.util.HashSet"))();
+topics.add("topic1");
+topics.add("topic2");
+topics.add("topic3");
+consumer.subscribe(topics);
+
+// or just subscribe to a single topic
+consumer.subscribe("a-single-topic");
+
+----
+
+An handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
+is completed.
+
+[source,js]
+----
+
+// register the handler for incoming messages
+consumer.handler(function (record) {
+  console.log("Processing key=" + record.key() + ",value=" + record.value() + ",partition=" + record.partition() + ",offset=" + record.offset());
+});
+
+// subscribe to several topics
+var topics = new (Java.type("java.util.HashSet"))();
+topics.add("topic1");
+topics.add("topic2");
+topics.add("topic3");
+consumer.subscribe(topics, function (ar, ar_err) {
+  if (ar_err == null) {
+    console.log("subscribed");
+  } else {
+    console.log("Could not subscribe " + ar_err.getMessage());
+  }
+});
+
+// or just subscribe to a single topic
+consumer.subscribe("a-single-topic", function (ar, ar_err) {
+  if (ar_err == null) {
+    console.log("subscribed");
+  } else {
+    console.log("Could not subscribe " + ar_err.getMessage());
+  }
+});
+
+----
+
+Using the consumer group way, the Kafka cluster assigns partitions to the consumer taking into account other connected
+consumers in the same consumer group, so that partitions can be spread across them.
+
+The Kafka cluster handles partitions re-balancing when a consumer leaves the group (so assigned partitions are free
+to be assigned to other consumers) or a new consumer joins the group (so it wants partitions to read from).
+
+You can register handlers on a `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html[KafkaConsumer]` to be notified
+of the partitions revocations and assignments by the Kafka cluster using
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#partitionsRevokedHandler[partitionsRevokedHandler]` and
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#partitionsAssignedHandler[partitionsAssignedHandler]`.
+
+[source,js]
+----
+
+// register the handler for incoming messages
+consumer.handler(function (record) {
+  console.log("Processing key=" + record.key() + ",value=" + record.value() + ",partition=" + record.partition() + ",offset=" + record.offset());
+});
+
+// registering handlers for assigned and revoked partitions
+consumer.partitionsAssignedHandler(function (topicPartitions) {
+
+  console.log("Partitions assigned");
+  Array.prototype.forEach.call(topicPartitions, function(topicPartition) {
+    console.log(topicPartition.topic + " " + topicPartition.partition);
+  });
+});
+
+consumer.partitionsRevokedHandler(function (topicPartitions) {
+
+  console.log("Partitions revoked");
+  Array.prototype.forEach.call(topicPartitions, function(topicPartition) {
+    console.log(topicPartition.topic + " " + topicPartition.partition);
+  });
+});
+
+// subscribes to the topic
+consumer.subscribe("test", function (ar, ar_err) {
+
+  if (ar_err == null) {
+    console.log("Consumer subscribed");
+  }
+});
+
+----
+
+After joining a consumer group for receiving messages, a consumer can decide to leave the consumer group in order to
+not get messages anymore using `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#unsubscribe[unsubscribe]`
+
+[source,js]
+----
+
+// consumer is already member of a consumer group
+
+// unsubscribing request
+consumer.unsubscribe();
+
+----
+
+You can add an handler to be notified of the result
+
+[source,js]
+----
+
+// consumer is already member of a consumer group
+
+// unsubscribing request
+consumer.unsubscribe(function (ar, ar_err) {
+
+  if (ar_err == null) {
+    console.log("Consumer unsubscribed");
+  }
+});
+
+----
+
+== Receiving messages from a topic requesting specific partitions
+
+Besides being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
+topic partition. When the consumer is not part part of a consumer group the overall application cannot
+rely on the re-balancing feature.
+
+You can use `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#assign[assign]`
+in order to ask for specific partitions.
+
+[source,js]
+----
+
+// register the handler for incoming messages
+consumer.handler(function (record) {
+  console.log("key=" + record.key() + ",value=" + record.value() + ",partition=" + record.partition() + ",offset=" + record.offset());
+});
+
+//
+var topicPartitions = new (Java.type("java.util.HashSet"))();
+topicPartitions.add({
+  "topic" : "test",
+  "partition" : 0
+});
+
+// requesting to be assigned the specific partition
+consumer.assign(topicPartitions, function (done, done_err) {
+
+  if (done_err == null) {
+    console.log("Partition assigned");
+
+    // requesting the assigned partitions
+    consumer.assignment(function (done1, done1_err) {
+
+      if (done1_err == null) {
+
+        Array.prototype.forEach.call(done1, function(topicPartition) {
+          console.log(topicPartition.topic + " " + topicPartition.partition);
+        });
+      }
+    });
+  }
+});
+
+----
+
+Calling `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#assignment[assignment]` provides
+the list of the current assigned partitions.
+
+== Getting topic partition information
+
+You can call the `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#partitionsFor[partitionsFor]` to get information about
+partitions for a specified topic
+
+[source,js]
+----
+
+// asking partitions information about specific topic
+consumer.partitionsFor("test", function (ar, ar_err) {
+
+  if (ar_err == null) {
+
+    Array.prototype.forEach.call(ar, function(partitionInfo) {
+      console.log(partitionInfo);
+    });
+  }
+});
+
+----
+
+In addition `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#listTopics[listTopics]` provides all available topics
+with related partitions
+
+[source,js]
+----
+
+// asking information about available topics and related partitions
+consumer.listTopics(function (ar, ar_err) {
+
+  if (ar_err == null) {
+
+    var map = ar;
+    map.forEach(function (partitions, topic) {
+      console.log("topic = " + topic);
+      console.log("partitions = " + map[topic]);
+    });
+  }
+});
+
+----
+
+== Manual offset commit
+
+In Apache Kafka the consumer is in charge to handle the offset of the last read message.
+
+This is executed by the commit operation executed automatically every time a bunch of messages are read
+from a topic partition. The configuration parameter `enable.auto.commit` must be set to `true` when the
+consumer is created.
+
+Manual offset commit, can be achieved with `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#commit[commit]`.
+It can be used to achieve _at least once_ delivery to be sure that the read messages are processed before committing
+the offset.
+
+[source,js]
+----
+
+// consumer is processing read messages
+
+// committing offset of the last read message
+consumer.commit(function (ar, ar_err) {
+
+  if (ar_err == null) {
+    console.log("Last read message offset committed");
+  }
+});
+
+----
+
+== Seeking in a topic partition
+
+Apache Kafka can retain messages for a long period of time and the consumer can seek inside a topic partition
+and obtain arbitraty access to the messages.
+
+You can use `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#seek[seek]` to change the offset for reading at a specific
+position
+
+[source,js]
+----
+
+var topicPartition = {
+  "topic" : "test",
+  "partition" : 0
+};
+
+// seek to a specific offset
+consumer.seek(topicPartition, 10, function (done, done_err) {
+
+  if (done_err == null) {
+    console.log("Seeking done");
+  }
+});
+
+
+----
+
+When the consumer needs to re-read the stream from the beginning, it can use `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#seekToBeginning[seekToBeginning]`
+
+[source,js]
+----
+
+var topicPartition = {
+  "topic" : "test",
+  "partition" : 0
+};
+
+// seek to the beginning of the partition
+consumer.seekToBeginning(Java.type("java.util.Collections").singleton(topicPartition), function (done, done_err) {
+
+  if (done_err == null) {
+    console.log("Seeking done");
+  }
+});
+
+----
+
+Finally `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#seekToEnd[seekToEnd]` can be used to come back at the end of the partition
+
+[source,js]
+----
+
+var topicPartition = {
+  "topic" : "test",
+  "partition" : 0
+};
+
+// seek to the end of the partition
+consumer.seekToEnd(Java.type("java.util.Collections").singleton(topicPartition), function (done, done_err) {
+
+  if (done_err == null) {
+    console.log("Seeking done");
+  }
+});
+
+----
+
+== Message flow control
+
+A consumer can control the incoming message flow and pause/resume the read operation from a topic, e.g it
+can pause the message flow when it needs more time to process the actual messages and then resume
+to continue message processing.
+
+To achieve that you can use `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#pause[pause]` and
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#resume[resume]`
+
+[source,js]
+----
+
+var topicPartition = {
+  "topic" : "test",
+  "partition" : 0
+};
+
+// registering the handler for incoming messages
+consumer.handler(function (record) {
+  console.log("key=" + record.key() + ",value=" + record.value() + ",partition=" + record.partition() + ",offset=" + record.offset());
+
+  // i.e. pause/resume on partition 0, after reading message up to offset 5
+  if ((record.partition() === 0) && (record.offset() === 5)) {
+
+    // pause the read operations
+    consumer.pause(topicPartition, function (ar, ar_err) {
+
+      if (ar_err == null) {
+
+        console.log("Paused");
+
+        // resume read operation after a specific time
+        vertx.setTimer(5000, function (timeId) {
+
+          // resumi read operations
+          consumer.resume(topicPartition);
+        });
+      }
+    });
+  }
+});
+
+----
+
+== Sending messages to a topic
+
+You can use  `link:../../jsdoc/module-vertx-kafka-client-js_kafka_producer-KafkaProducer.html#write[write]` to send messages (records) to a topic.
+
+The simplest way to send a message is to specify only the destination topic and the related value, omitting its key
+or partition, in this case the messages are sent in a round robin fashion across all the partitions of the topic.
+
+[source,js]
+----
+var KafkaProducerRecord = require("vertx-kafka-client-js/kafka_producer_record");
+
+for (var i = 0;i < 5;i++) {
+
+  // only topic and message value are specified, round robin on destination partitions
+  var record = KafkaProducerRecord.create("test", "message_" + i);
+
+  producer.write(record);
+}
+
+----
+
+You can receive message sent metadata like its topic, its destination partition and its assigned offset.
+
+[source,js]
+----
+var KafkaProducerRecord = require("vertx-kafka-client-js/kafka_producer_record");
+
+for (var i = 0;i < 5;i++) {
+
+  // only topic and message value are specified, round robin on destination partitions
+  var record = KafkaProducerRecord.create("test", "message_" + i);
+
+  producer.write(record, function (done, done_err) {
+
+    if (done_err == null) {
+
+      var recordMetadata = done;
+      console.log("Message " + record.value() + " written on topic=" + recordMetadata.topic + ", partition=" + recordMetadata.partition + ", offset=" + recordMetadata.offset);
+    }
+
+  });
+}
+
+
+----
+
+When you need to assign a partition to a message, you can specify its partition identifier
+or its key
+
+[source,js]
+----
+var KafkaProducerRecord = require("vertx-kafka-client-js/kafka_producer_record");
+
+for (var i = 0;i < 10;i++) {
+
+  // a destination partition is specified
+  var record = KafkaProducerRecord.create("test", null, "message_" + i, 0);
+
+  producer.write(record);
+}
+
+----
+
+Since the producers identifies the destination using key hashing, you can use that to guarantee that all
+messages with the same key are sent to the same partition and retain the order.
+
+[source,js]
+----
+var KafkaProducerRecord = require("vertx-kafka-client-js/kafka_producer_record");
+
+for (var i = 0;i < 10;i++) {
+
+  // i.e. defining different keys for odd and even messages
+  var key = i % 2;
+
+  // a key is specified, all messages with same key will be sent to the same partition
+  var record = KafkaProducerRecord.create("test", Java.type("java.lang.String").valueOf(key), "message_" + i);
+
+  producer.write(record);
+}
+
+----
+
+== Getting topic partition information
+
+You can call the `link:../../jsdoc/module-vertx-kafka-client-js_kafka_producer-KafkaProducer.html#partitionsFor[partitionsFor]` to get information about
+partitions for a specified topic:
+
+[source,js]
+----
+
+// asking partitions information about specific topic
+producer.partitionsFor("test", function (ar, ar_err) {
+
+  if (ar_err == null) {
+
+    Array.prototype.forEach.call(ar, function(partitionInfo) {
+      console.log(partitionInfo);
+    });
+  }
+});
+
+----
+
+== Handling errors
+
+Errors handling (e.g timeout) between a Kafka client (consumer or producer) and the Kafka cluster is done using
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#exceptionHandler[exceptionHandler]` or
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_producer-KafkaProducer.html#exceptionHandler[exceptionHandler]`
+
+[source,js]
+----
+
+// setting handler for errors
+consumer.exceptionHandler(function (e) {
+  console.log("Error = " + e.getMessage());
+});
+
+----
+
+ifdef::java[]
+== RxJava API
+
+The Kafka client provides an Rxified version of the original API.
+
+[source,js]
+----
+Code not translatable
+----
+endif::[]
+
+ifdef::java,groovy,kotlin[]
+== Stream implementation and native Kafka objects
+
+When you want to operate on native Kafka records you can use a stream oriented
+implementation which handles native Kafka objects.
+
+The `KafkaReadStream` shall be used for reading topic partitions, it is
+a read stream of `ConsumerRecord` objects.
+
+The `KafkaWriteStream` shall be used for writing to topics, it is a write
+stream of `ProducerRecord`.
+
+The API exposed by these interfaces is mostly the same than the polyglot version.
+endif::[]
