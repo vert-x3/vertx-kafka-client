@@ -17,6 +17,7 @@
 package examples;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.docgen.Source;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -507,5 +508,49 @@ public class VertxKafkaClientExamples {
     consumer.exceptionHandler(e -> {
       System.out.println("Error = " + e.getMessage());
     });
+  }
+
+  public void exampleUsingBufferDeserializer() {
+
+    // Creating a consumer able to deserialize bytes to Vert.x buffers
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.deserializer", "io.vertx.kafka.client.BufferDeserializer");
+    config.put("value.deserializer", "io.vertx.kafka.client.BufferDeserializer");
+    config.put("group.id", "my_group");
+    config.put("auto.offset.reset", "earliest");
+    config.put("enable.auto.commit", "false");
+  }
+
+  public void exampleUsingBufferSerializer() {
+
+    // Creating a producer able to serialize bytes to Vert.x buffers
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.serializer", "io.vertx.kafka.client.BufferSerializer");
+    config.put("value.serializer", "io.vertx.kafka.client.BufferSerializer");
+    config.put("acks", "1");
+  }
+
+  public void exampleUsingBufferDeserializer2(Vertx vertx) {
+
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("group.id", "my_group");
+    config.put("auto.offset.reset", "earliest");
+    config.put("enable.auto.commit", "false");
+
+    // Creating a consumer able to deserialize bytes to Vert.x buffers
+    KafkaConsumer<Buffer, Buffer> consumer = KafkaConsumer.create(vertx, config, Buffer.class, Buffer.class);
+  }
+
+  public void exampleUsingBufferSerializer2(Vertx vertx) {
+
+    Map<String, String> config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("acks", "1");
+
+    // Creating a producer able to serialize bytes to Vert.x buffers
+    KafkaProducer<Buffer, Buffer> consumer = KafkaProducer.create(vertx, config, Buffer.class, Buffer.class);
   }
 }

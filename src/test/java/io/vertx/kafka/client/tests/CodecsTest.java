@@ -21,6 +21,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.BufferDeserializer;
+import io.vertx.kafka.client.BufferSerializer;
 import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
@@ -81,18 +83,47 @@ public class CodecsTest extends KafkaClusterTestBase {
 
   @Test
   public void testStringCodec(TestContext ctx) throws Exception {
-    testCodec(ctx, String.class, String.class, i -> "key-" + i, i -> "value-" + i);
+    testCodec(ctx,
+      cfg -> producer(vertx, cfg, String.class, String.class),
+      cfg -> KafkaReadStream.create(vertx, cfg, String.class, String.class),
+      i -> "key-" + i,
+      i -> "value-" + i);
   }
 
   @Test
   public void testBufferCodec(TestContext ctx) throws Exception {
-    testCodec(ctx, Buffer.class, Buffer.class, i -> Buffer.buffer("key-" + i), i -> Buffer.buffer("value-" + i));
+    testCodec(ctx,
+      cfg -> producer(vertx, cfg, Buffer.class, Buffer.class),
+      cfg -> KafkaReadStream.create(vertx, cfg, Buffer.class, Buffer.class),
+      i -> Buffer.buffer("key-" + i),
+      i -> Buffer.buffer("value-" + i));
   }
 
-  private <K, V> void testCodec(TestContext ctx, Class<K> keyType, Class<V> valueType, Function<Integer, K> keyConv, Function<Integer, V> valueConv) throws Exception {
+  @Test
+  public void testBufferCodecString(TestContext ctx) throws Exception {
+    testCodec(ctx,
+      cfg -> {
+        cfg.put("key.serializer", BufferSerializer.class);
+        cfg.put("value.serializer", BufferSerializer.class);
+        return KafkaWriteStream.create(vertx, cfg);
+      },
+      cfg -> {
+        cfg.put("key.deserializer", BufferDeserializer.class);
+        cfg.put("value.deserializer", BufferDeserializer.class);
+        return KafkaReadStream.create(vertx, cfg);
+      },
+      i -> Buffer.buffer("key-" + i),
+      i -> Buffer.buffer("value-" + i));
+  }
+
+  private <K, V> void testCodec(TestContext ctx,
+                                Function<Properties,KafkaWriteStream<K, V>> producerFactory,
+                                Function<Properties, KafkaReadStream<K, V>> consumerFactory,
+                                Function<Integer, K> keyConv,
+                                Function<Integer, V> valueConv) throws Exception {
     KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
     Properties producerConfig = kafkaCluster.useTo().getProducerProperties("the_producer");
-    KafkaWriteStream<K, V> writeStream = producer(Vertx.vertx(), producerConfig, keyType, valueType);
+    KafkaWriteStream<K, V> writeStream = producerFactory.apply(producerConfig);
     producer = writeStream;
     writeStream.exceptionHandler(ctx::fail);
     int numMessages = 100000;
@@ -107,7 +138,7 @@ public class CodecsTest extends KafkaClusterTestBase {
     }
     Async done = ctx.async();
     Properties consumerConfig = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);;
-    KafkaReadStream<K, V> readStream = KafkaReadStream.create(vertx, consumerConfig, keyType, valueType);
+    KafkaReadStream<K, V> readStream = consumerFactory.apply(consumerConfig);
     consumer = readStream;
     AtomicInteger count = new AtomicInteger(numMessages);
     readStream.exceptionHandler(ctx::fail);
