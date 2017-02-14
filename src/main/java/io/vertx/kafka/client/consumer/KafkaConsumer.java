@@ -34,7 +34,15 @@ import java.util.Properties;
 import java.util.Set;
 
 /**
- * Vert.x Kafka consumer
+ * Vert.x Kafka consumer.
+ * <p>
+ * You receive Kafka records by providing a {@link KafkaConsumer#handler(Handler)}. As messages arrive the handler
+ * will be called with the records.
+ * <p>
+ * The {@link #pause()} and {@link #resume()} provides global control over reading the records from the consumer.
+ * <p>
+ * The {@link #pause(Set)} and {@link #resume(Set)} provides finer grained control over reading records
+ * for specific Topic/Partition, these are Kafka's specific operations.
  */
 @VertxGen
 public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V>> {
@@ -496,7 +504,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   void close(Handler<Void> completionHandler);
 
   /**
-   * @return  underlying {@link KafkaReadStream} instance
+   * @return  underlying the {@link KafkaReadStream} instance
    */
   @GenIgnore
   KafkaReadStream<K, V> asStream();

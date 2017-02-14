@@ -28,8 +28,8 @@ var PartitionInfo = Java.type('io.vertx.kafka.client.common.PartitionInfo');
 var TopicPartition = Java.type('io.vertx.kafka.client.common.TopicPartition');
 
 /**
- Vert.x Kafka consumer
-
+ Vert.x Kafka consumer.
+ <p>
  @class
 */
 var KafkaConsumer = function(j_val, j_arg_0, j_arg_1) {

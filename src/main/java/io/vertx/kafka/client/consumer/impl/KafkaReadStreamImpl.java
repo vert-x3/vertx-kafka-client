@@ -20,6 +20,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.kafka.client.common.Helper;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -52,8 +53,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private final AtomicBoolean paused = new AtomicBoolean(true);
   private Handler<ConsumerRecord<K, V>> recordHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
-  private Handler<Collection<TopicPartition>> partitionsRevokedHandler;
-  private Handler<Collection<TopicPartition>> partitionsAssignedHandler;
+  private Handler<Set<TopicPartition>> partitionsRevokedHandler;
+  private Handler<Set<TopicPartition>> partitionsAssignedHandler;
 
   private ExecutorService worker;
 
@@ -62,10 +63,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     @Override
     public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
 
-      Handler<Collection<TopicPartition>> handler = partitionsRevokedHandler;
+      Handler<Set<TopicPartition>> handler = partitionsRevokedHandler;
       if (handler != null) {
         context.runOnContext(v -> {
-          handler.handle(partitions);
+          handler.handle(Helper.toSet(partitions));
         });
       }
     }
@@ -73,10 +74,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     @Override
     public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
 
-      Handler<Collection<TopicPartition>> handler = partitionsAssignedHandler;
+      Handler<Set<TopicPartition>> handler = partitionsAssignedHandler;
       if (handler != null) {
         context.runOnContext(v -> {
-          handler.handle(partitions);
+          handler.handle(Helper.toSet(partitions));
         });
       }
     }
@@ -173,12 +174,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions) {
+  public KafkaReadStream<K, V> pause(Set<TopicPartition> topicPartitions) {
     return pause(topicPartitions, null);
   }
 
   @Override
-  public KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+  public KafkaReadStream<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
 
     this.submitTask((consumer, future) -> {
       consumer.pause(topicPartitions);
@@ -202,12 +203,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions) {
+  public KafkaReadStream<K, V> resume(Set<TopicPartition> topicPartitions) {
     return this.resume(topicPartitions, null);
   }
 
   @Override
-  public KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+  public KafkaReadStream<K, V> resume(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
 
     this.submitTask((consumer, future) -> {
       consumer.resume(topicPartitions);
@@ -231,12 +232,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions) {
+  public KafkaReadStream<K, V> seekToEnd(Set<TopicPartition> topicPartitions) {
     return this.seekToEnd(topicPartitions, null);
   }
 
   @Override
-  public KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+  public KafkaReadStream<K, V> seekToEnd(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
 
     this.submitTask((consumer, future) -> {
       consumer.seekToEnd(topicPartitions);
@@ -249,12 +250,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions) {
+  public KafkaReadStream<K, V> seekToBeginning(Set<TopicPartition> topicPartitions) {
     return this.seekToBeginning(topicPartitions, null);
   }
 
   @Override
-  public KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+  public KafkaReadStream<K, V> seekToBeginning(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
 
     this.submitTask((consumer, future) -> {
       consumer.seekToBeginning(topicPartitions);
@@ -285,13 +286,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Collection<TopicPartition>> handler) {
+  public KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Set<TopicPartition>> handler) {
     this.partitionsRevokedHandler = handler;
     return this;
   }
 
   @Override
-  public KafkaReadStream<K, V> partitionsAssignedHandler(Handler<Collection<TopicPartition>> handler) {
+  public KafkaReadStream<K, V> partitionsAssignedHandler(Handler<Set<TopicPartition>> handler) {
     this.partitionsAssignedHandler = handler;
     return this;
   }
@@ -363,12 +364,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions) {
+  public KafkaReadStream<K, V> assign(Set<TopicPartition> partitions) {
     return this.assign(partitions, null);
   }
 
   @Override
-  public KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
+  public KafkaReadStream<K, V> assign(Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
 
     if (this.recordHandler == null) {
       throw new IllegalStateException();

@@ -21,6 +21,7 @@ import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.RecordMetadata;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,12 +31,20 @@ import java.util.stream.Collectors;
  */
 public class Helper {
 
+  public static <T> Set<T> toSet(Collection<T> collection) {
+    if (collection instanceof Set) {
+      return (Set<T>) collection;
+    } else {
+      return new HashSet<>(collection);
+    }
+  }
+
   public static org.apache.kafka.common.TopicPartition to(TopicPartition topicPartition) {
     return new org.apache.kafka.common.TopicPartition(topicPartition.getTopic(), topicPartition.getPartition());
   }
 
-  public static Collection<org.apache.kafka.common.TopicPartition> to(Collection<TopicPartition> topicPartitions) {
-    return topicPartitions.stream().map(Helper::to).collect(Collectors.toList());
+  public static Set<org.apache.kafka.common.TopicPartition> to(Set<TopicPartition> topicPartitions) {
+    return topicPartitions.stream().map(Helper::to).collect(Collectors.toSet());
   }
 
   public static Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndMetadata> to(Map<TopicPartition, OffsetAndMetadata> offsets) {
@@ -60,7 +69,7 @@ public class Helper {
     return topicPartitions.stream().map(Helper::from).collect(Collectors.toSet());
   }
 
-  public static Handler<Collection<org.apache.kafka.common.TopicPartition>> adaptHandler(Handler<Set<TopicPartition>> handler) {
+  public static Handler<Set<org.apache.kafka.common.TopicPartition>> adaptHandler(Handler<Set<TopicPartition>> handler) {
     if (handler != null) {
       return topicPartitions -> handler.handle(Helper.from(topicPartitions));
     } else {

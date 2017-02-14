@@ -4,7 +4,15 @@ require 'vertx/read_stream'
 require 'vertx/util/utils.rb'
 # Generated from io.vertx.kafka.client.consumer.KafkaConsumer
 module VertxKafkaClient
-  #  Vert.x Kafka consumer
+  #  Vert.x Kafka consumer.
+  #  <p>
+  #  You receive Kafka records by providing a {::VertxKafkaClient::KafkaConsumer#handler}. As messages arrive the handler
+  #  will be called with the records.
+  #  <p>
+  #  The {::VertxKafkaClient::KafkaConsumer#pause} and {::VertxKafkaClient::KafkaConsumer#resume} provides global control over reading the records from the consumer.
+  #  <p>
+  #  The {::VertxKafkaClient::KafkaConsumer#pause} and {::VertxKafkaClient::KafkaConsumer#resume} provides finer grained control over reading records
+  #  for specific Topic/Partition, these are Kafka's specific operations.
   class KafkaConsumer
     include ::Vertx::ReadStream
     # @private

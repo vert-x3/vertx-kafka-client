@@ -29,7 +29,6 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Deserializer;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -38,9 +37,9 @@ import java.util.Set;
 /**
  * A {@link ReadStream} for consuming Kafka {@link ConsumerRecord}.
  * <p>
- * The {@code pause()} and {@code resume()} provides global control over reading the records from the consumer.
+ * The {@link #pause()} and {@link #resume()} provides global control over reading the records from the consumer.
  * <p>
- * The {@link #pause(Collection)} and {@link #resume(Collection)} provides finer grained control over reading records
+ * The {@link #pause(Set)} and {@link #resume(Set)} provides finer grained control over reading records
  * for specific Topic/Partition, these are Kafka's specific operations.
  *
  */
@@ -123,7 +122,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param topicPartitions topic partition from which suspend fetching
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions);
+  KafkaReadStream<K, V> pause(Set<TopicPartition> topicPartitions);
 
   /**
    * Suspend fetching from the requested partitions.
@@ -132,10 +131,10 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param completionHandler handler called on operation completed
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> pause(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+  KafkaReadStream<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
-   * Get the set of partitions that were previously paused by a call to pause(Collection).
+   * Get the set of partitions that were previously paused by a call to {@link #pause(Set)}.
    *
    * @param handler handler called on operation completed
    */
@@ -147,7 +146,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param topicPartitions topic partition from which resume fetching
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions);
+  KafkaReadStream<K, V> resume(Set<TopicPartition> topicPartitions);
 
   /**
    * Resume specified partitions which have been paused with pause.
@@ -156,7 +155,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param completionHandler handler called on operation completed
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> resume(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+  KafkaReadStream<K, V> resume(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Seek to the last offset for each of the given partitions.
@@ -164,7 +163,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param topicPartitions topic partition for which seek
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions);
+  KafkaReadStream<K, V> seekToEnd(Set<TopicPartition> topicPartitions);
 
   /**
    * Seek to the last offset for each of the given partitions.
@@ -173,7 +172,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param completionHandler handler called on operation completed
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> seekToEnd(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+  KafkaReadStream<K, V> seekToEnd(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Seek to the first offset for each of the given partitions.
@@ -181,7 +180,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param topicPartitions topic partition for which seek
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions);
+  KafkaReadStream<K, V> seekToBeginning(Set<TopicPartition> topicPartitions);
 
   /**
    * Seek to the first offset for each of the given partitions.
@@ -190,7 +189,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param completionHandler handler called on operation completed
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> seekToBeginning(Collection<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+  KafkaReadStream<K, V> seekToBeginning(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Overrides the fetch offsets that the consumer will use on the next poll.
@@ -217,7 +216,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param handler handler called on revoked topic partitions
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Collection<TopicPartition>> handler);
+  KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Set<TopicPartition>> handler);
 
   /**
    * Set the handler called when topic partitions are assigned to the consumer
@@ -225,7 +224,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param handler handler called on assigned topic partitions
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> partitionsAssignedHandler(Handler<Collection<TopicPartition>> handler);
+  KafkaReadStream<K, V> partitionsAssignedHandler(Handler<Set<TopicPartition>> handler);
 
   /**
    * Subscribe to the given list of topics to get dynamically assigned partitions.
@@ -273,7 +272,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param partitions  partitions which want assigned
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions);
+  KafkaReadStream<K, V> assign(Set<TopicPartition> partitions);
 
   /**
    * Manually assign a list of partition to this consumer.
@@ -282,7 +281,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param completionHandler handler called on operation completed
    * @return  current KafkaReadStream instance
    */
-  KafkaReadStream<K, V> assign(Collection<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
+  KafkaReadStream<K, V> assign(Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Get the set of partitions currently assigned to this consumer.
