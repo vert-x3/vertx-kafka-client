@@ -110,12 +110,12 @@ require 'vertx-kafka-client/kafka_consumer'
 
 # creating the consumer using properties config
 config = Java::JavaUtil::Properties.new()
-config.put("bootstrap.servers", "localhost:9092")
-config.put("key.deserializer", Java::OrgApacheKafkaCommonSerialization::StringDeserializer::class)
-config.put("value.deserializer", Java::OrgApacheKafkaCommonSerialization::StringDeserializer::class)
-config.put("group.id", "my_group")
-config.put("auto.offset.reset", "earliest")
-config.put("enable.auto.commit", "false")
+config.put(Java::OrgApacheKafkaClientsConsumer::ConsumerConfig::BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
+config.put(Java::OrgApacheKafkaClientsConsumer::ConsumerConfig::KEY_DESERIALIZER_CLASS_CONFIG, Java::OrgApacheKafkaCommonSerialization::StringDeserializer::class)
+config.put(Java::OrgApacheKafkaClientsConsumer::ConsumerConfig::VALUE_DESERIALIZER_CLASS_CONFIG, Java::OrgApacheKafkaCommonSerialization::StringDeserializer::class)
+config.put(Java::OrgApacheKafkaClientsConsumer::ConsumerConfig::GROUP_ID_CONFIG, "my_group")
+config.put(Java::OrgApacheKafkaClientsConsumer::ConsumerConfig::AUTO_OFFSET_RESET_CONFIG, "earliest")
+config.put(Java::OrgApacheKafkaClientsConsumer::ConsumerConfig::ENABLE_AUTO_COMMIT_CONFIG, "false")
 
 # use consumer for interacting with Apache Kafka
 consumer = VertxKafkaClient::KafkaConsumer.create(vertx, config)
@@ -132,8 +132,8 @@ require 'vertx-kafka-client/kafka_producer'
 
 # creating the producer using map and class types for key and value serializers/deserializers
 config = Java::JavaUtil::Properties.new()
-config.put("bootstrap.servers", "localhost:9092")
-config.put("acks", "1")
+config.put(Java::OrgApacheKafkaClientsProducer::ProducerConfig::BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
+config.put(Java::OrgApacheKafkaClientsProducer::ProducerConfig::ACKS_CONFIG, "1")
 
 # use producer for interacting with Apache Kafka
 producer = VertxKafkaClient::KafkaProducer.create(vertx, config, Java::JavaLang::String::class, Java::JavaLang::String::class)

@@ -43,16 +43,16 @@ public class VertxKafkaClientExamples {
    * Example about Kafka consumer and producer creation
    * @param vertx
    */
-  public void createConsumerJava(Vertx vertx) {
+  public void exampleCreateConsumerJava(Vertx vertx) {
 
     // creating the consumer using properties config
     Properties config = new Properties();
-    config.put("bootstrap.servers", "localhost:9092");
-    config.put("key.deserializer", StringDeserializer.class);
-    config.put("value.deserializer", StringDeserializer.class);
-    config.put("group.id", "my_group");
-    config.put("auto.offset.reset", "earliest");
-    config.put("enable.auto.commit", "false");
+    config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
+    config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
     // use consumer for interacting with Apache Kafka
     KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
@@ -98,8 +98,8 @@ public class VertxKafkaClientExamples {
 
     // creating the producer using map and class types for key and value serializers/deserializers
     Properties config = new Properties();
-    config.put("bootstrap.servers", "localhost:9092");
-    config.put("acks", "1");
+    config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    config.put(ProducerConfig.ACKS_CONFIG, "1");
 
     // use producer for interacting with Apache Kafka
     KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config, String.class, String.class);
@@ -160,7 +160,7 @@ public class VertxKafkaClientExamples {
    * from a topic being part of a consumer group
    * @param consumer
    */
-  public void example2(KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerPartitionsNotifs(KafkaConsumer<String, String> consumer) {
 
     // register the handler for incoming messages
     consumer.handler(record -> {
@@ -225,7 +225,7 @@ public class VertxKafkaClientExamples {
    * from a topic requesting a specific partition for that
    * @param consumer
    */
-  public void example4(KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerAssignPartition(KafkaConsumer<String, String> consumer) {
 
     // register the handler for incoming messages
     consumer.handler(record -> {
@@ -314,7 +314,7 @@ public class VertxKafkaClientExamples {
    * of the current offset for a topic partition
    * @param consumer
    */
-  public void example6(KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerManualOffsetCommit(KafkaConsumer<String, String> consumer) {
 
     // consumer is processing read messages
 
@@ -384,7 +384,7 @@ public class VertxKafkaClientExamples {
    * @param vertx
    * @param consumer
    */
-  public void example8(Vertx vertx, KafkaConsumer<String, String> consumer) {
+  public void exampleConsumerFlowControl(Vertx vertx, KafkaConsumer<String, String> consumer) {
 
     TopicPartition topicPartition = new TopicPartition()
       .setTopic("test")
@@ -417,7 +417,7 @@ public class VertxKafkaClientExamples {
     });
   }
 
-  public void exampleWrite(KafkaProducer<String, String> producer) {
+  public void exampleProducerWrite(KafkaProducer<String, String> producer) {
 
     for (int i = 0; i < 5; i++) {
 
@@ -434,7 +434,7 @@ public class VertxKafkaClientExamples {
    * partitions in a round robin fashion
    * @param producer
    */
-  public void example9(KafkaProducer<String, String> producer) {
+  public void exampleProducerWriteWithAck(KafkaProducer<String, String> producer) {
 
     for (int i = 0; i < 5; i++) {
 
@@ -462,7 +462,7 @@ public class VertxKafkaClientExamples {
    * specified topic partition
    * @param producer
    */
-  public void example10(KafkaProducer<String, String> producer) {
+  public void exampleProducerWriteWithSpecificPartition(KafkaProducer<String, String> producer) {
 
     for (int i = 0; i < 10; i++) {
 
@@ -480,7 +480,7 @@ public class VertxKafkaClientExamples {
    * the destination partition
    * @param producer
    */
-  public void example11(KafkaProducer<String, String> producer) {
+  public void exampleProducerWriteWithSpecificKey(KafkaProducer<String, String> producer) {
 
     for (int i = 0; i < 10; i++) {
 
@@ -501,7 +501,7 @@ public class VertxKafkaClientExamples {
    * with the Kafka cluster
    * @param consumer
    */
-  public void example12(KafkaConsumer<String, String> consumer) {
+  public void exampleErrorHandling(KafkaConsumer<String, String> consumer) {
 
     // setting handler for errors
     consumer.exceptionHandler(e -> {

@@ -99,7 +99,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#createConsumerJava}
+ * {@link examples.VertxKafkaClientExamples#exampleCreateConsumerJava}
  * ----
  *
  * More advanced creation methods allow to specify the class type for the key and the value used for sending messages
@@ -151,7 +151,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example2}
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerPartitionsNotifs}
  * ----
  *
  * After joining a consumer group for receiving messages, a consumer can decide to leave the consumer group in order to
@@ -180,7 +180,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example4}
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerAssignPartition}
  * ----
  *
  * Calling {@link io.vertx.kafka.client.consumer.KafkaConsumer#assignment(io.vertx.core.Handler)} provides
@@ -218,7 +218,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example6}
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerManualOffsetCommit}
  * ----
  *
  * == Seeking in a topic partition
@@ -259,7 +259,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example8}
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerFlowControl}
  * ----
  *
  * == Sending messages to a topic
@@ -271,14 +271,14 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#exampleWrite}
+ * {@link examples.VertxKafkaClientExamples#exampleProducerWrite}
  * ----
  *
  * You can receive message sent metadata like its topic, its destination partition and its assigned offset.
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example9}
+ * {@link examples.VertxKafkaClientExamples#exampleProducerWriteWithAck}
  * ----
  *
  * When you need to assign a partition to a message, you can specify its partition identifier
@@ -286,7 +286,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example10}
+ * {@link examples.VertxKafkaClientExamples#exampleProducerWriteWithSpecificPartition}
  * ----
  *
  * Since the producers identifies the destination using key hashing, you can use that to guarantee that all
@@ -294,7 +294,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example11}
+ * {@link examples.VertxKafkaClientExamples#exampleProducerWriteWithSpecificKey}
  * ----
  *
  * == Getting topic partition information
@@ -315,7 +315,7 @@
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#example12}
+ * {@link examples.VertxKafkaClientExamples#exampleErrorHandling}
  * ----
  *
  * ifdef::java[]

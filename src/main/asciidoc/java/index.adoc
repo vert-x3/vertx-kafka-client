@@ -99,12 +99,12 @@ Another way is to use a `link:../../apidocs/java/util/Properties.html[Properties
 [source,java]
 ----
 Properties config = new Properties();
-config.put("bootstrap.servers", "localhost:9092");
-config.put("key.deserializer", StringDeserializer.class);
-config.put("value.deserializer", StringDeserializer.class);
-config.put("group.id", "my_group");
-config.put("auto.offset.reset", "earliest");
-config.put("enable.auto.commit", "false");
+config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+config.put(ConsumerConfig.GROUP_ID_CONFIG, "my_group");
+config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
 // use consumer for interacting with Apache Kafka
 KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
@@ -117,8 +117,8 @@ using the related properties for that
 [source,java]
 ----
 Properties config = new Properties();
-config.put("bootstrap.servers", "localhost:9092");
-config.put("acks", "1");
+config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+config.put(ProducerConfig.ACKS_CONFIG, "1");
 
 // use producer for interacting with Apache Kafka
 KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config, String.class, String.class);

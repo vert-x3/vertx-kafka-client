@@ -107,12 +107,12 @@ Another way is to use a `link:../../apidocs/java/util/Properties.html[Properties
 
 // creating the consumer using properties config
 var config = java.util.Properties()
-config.put("bootstrap.servers", "localhost:9092")
-config.put("key.deserializer", org.apache.kafka.common.serialization.StringDeserializer.`class`)
-config.put("value.deserializer", org.apache.kafka.common.serialization.StringDeserializer.`class`)
-config.put("group.id", "my_group")
-config.put("auto.offset.reset", "earliest")
-config.put("enable.auto.commit", "false")
+config.put(org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
+config.put(org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringDeserializer.`class`)
+config.put(org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringDeserializer.`class`)
+config.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG, "my_group")
+config.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+config.put(org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
 
 // use consumer for interacting with Apache Kafka
 var consumer = KafkaConsumer.create<Any, Any>(vertx, config)
@@ -128,8 +128,8 @@ using the related properties for that
 
 // creating the producer using map and class types for key and value serializers/deserializers
 var config = java.util.Properties()
-config.put("bootstrap.servers", "localhost:9092")
-config.put("acks", "1")
+config.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
+config.put(org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG, "1")
 
 // use producer for interacting with Apache Kafka
 var producer = KafkaProducer.create(vertx, config, String.`class`, String.`class`)
