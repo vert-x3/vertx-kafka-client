@@ -9,6 +9,9 @@ As producer, its API provides methods for sending message to a topic partition l
 
 See the in-source docs for more details:
 - [Java](src/main/asciidoc/java/index.adoc).
+- [JavaScript](src/main/asciidoc/js/index.adoc).
+- [Ruby](src/main/asciidoc/ruby/index.adoc).
 - [Groovy](src/main/asciidoc/groovy/index.adoc).
+- [Kotlin](src/main/asciidoc/kotlin/index.adoc).
 
 **Note: This module has Tech Preview status, this means the API can change between versions.**
