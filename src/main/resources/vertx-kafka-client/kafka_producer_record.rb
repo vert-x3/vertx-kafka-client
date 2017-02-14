@@ -1,7 +1,7 @@
 require 'vertx/util/utils.rb'
 # Generated from io.vertx.kafka.client.producer.KafkaProducerRecord
 module VertxKafkaClient
-  #  Vert.x Kafka producer record
+  #  Vert.x Kafka producer record.
   class KafkaProducerRecord
     # @private
     # @param j_del [::VertxKafkaClient::KafkaProducerRecord] the java delegate

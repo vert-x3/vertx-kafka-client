@@ -22,7 +22,7 @@ var JsonObject = io.vertx.core.json.JsonObject;
 var JKafkaProducerRecord = Java.type('io.vertx.kafka.client.producer.KafkaProducerRecord');
 
 /**
- Vert.x Kafka producer record
+ Vert.x Kafka producer record.
 
  @class
 */

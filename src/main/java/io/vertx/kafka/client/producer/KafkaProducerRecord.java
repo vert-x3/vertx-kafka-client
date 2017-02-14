@@ -22,7 +22,7 @@ import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 /**
- * Vert.x Kafka producer record
+ * Vert.x Kafka producer record.
  */
 @VertxGen
 public interface KafkaProducerRecord<K, V> {

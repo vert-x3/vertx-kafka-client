@@ -32,7 +32,9 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Vert.x Kafka producer
+ * Vert.x Kafka producer.
+ * <p>
+ * The {@link #write(Object)} provides global control over writing a record.
  */
 @VertxGen
 public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, V>> {

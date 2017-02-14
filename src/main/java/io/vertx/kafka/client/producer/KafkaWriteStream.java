@@ -33,7 +33,7 @@ import java.util.Properties;
 /**
  * A {@link WriteStream} for writing to Kafka {@link ProducerRecord}.
  * <p>
- * The {@code write()} provides global control over writing a record.
+ * The {@link #write(Object)} provides global control over writing a record.
  * <p>
  */
 public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>> {

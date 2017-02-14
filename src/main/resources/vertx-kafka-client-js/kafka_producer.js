@@ -27,8 +27,8 @@ var RecordMetadata = Java.type('io.vertx.kafka.client.producer.RecordMetadata');
 var PartitionInfo = Java.type('io.vertx.kafka.client.common.PartitionInfo');
 
 /**
- Vert.x Kafka producer
-
+ Vert.x Kafka producer.
+ <p>
  @class
 */
 var KafkaProducer = function(j_val, j_arg_0, j_arg_1) {

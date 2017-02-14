@@ -4,7 +4,9 @@ require 'vertx-kafka-client/kafka_producer_record'
 require 'vertx/util/utils.rb'
 # Generated from io.vertx.kafka.client.producer.KafkaProducer
 module VertxKafkaClient
-  #  Vert.x Kafka producer
+  #  Vert.x Kafka producer.
+  #  <p>
+  #  The  provides global control over writing a record.
   class KafkaProducer
     include ::Vertx::WriteStream
     # @private
