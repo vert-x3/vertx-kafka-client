@@ -39,18 +39,10 @@
  *
  * [source,xml,subs="+attributes"]
  * ----
- * <repository>
- *     <id>oss.sonatype.org-snapshot</id>
- *     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
- * </repository>
- * ----
- *
- * [source,xml,subs="+attributes"]
- * ----
  * <dependency>
- *     <groupId>io.vertx</groupId>
- *     <artifactId>vertx-kafka-client</artifactId>
- *     <version>3.4.0-SNAPSHOT</version>
+ *   <groupId>io.vertx</groupId>
+ *   <artifactId>vertx-kafka-client</artifactId>
+ *   <version>${maven.version}</version>
  * </dependency>
  * ----
  *
@@ -58,12 +50,7 @@
  *
  * [source,groovy,subs="+attributes"]
  * ----
- * maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
- * ----
- *
- * [source,groovy,subs="+attributes"]
- * ----
- * compile io.vertx:vertx-kafka-client:3.4.0-SNAPSHOT
+ * compile io.vertx:vertx-kafka-client:${maven.version}
  * ----
  *
  * == Creating Kafka clients
