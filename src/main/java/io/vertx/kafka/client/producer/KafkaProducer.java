@@ -25,6 +25,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.streams.WriteStream;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
+import org.apache.kafka.clients.producer.Producer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,19 @@ import java.util.Properties;
  */
 @VertxGen
 public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, V>> {
+
+  /**
+   * Create a new KafkaProducer instance from a native {@link Producer}.
+   *
+   * @param vertx Vert.x instance to use
+   * @param producer the Kafka producer to wrap
+   * @return  an instance of the KafkaProducer
+   */
+  @GenIgnore
+  static <K, V> KafkaProducer<K, V> create(Vertx vertx, Producer<K, V> producer) {
+    KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, producer);
+    return new KafkaProducerImpl<>(stream);
+  }
 
   /**
    * Create a new KafkaProducer instance
@@ -165,4 +179,10 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    */
   @GenIgnore
   KafkaWriteStream<K, V> asStream();
+
+  /**
+   * @return the native producer
+   */
+  @GenIgnore
+  Producer<K, V> producer();
 }

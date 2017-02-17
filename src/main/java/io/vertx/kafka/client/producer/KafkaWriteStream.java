@@ -136,4 +136,9 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @param completionHandler handler called on operation completed
    */
   void close(long timeout, Handler<Void> completionHandler);
+
+  /**
+   * @return the native producer
+   */
+  Producer<K, V> producer();
 }

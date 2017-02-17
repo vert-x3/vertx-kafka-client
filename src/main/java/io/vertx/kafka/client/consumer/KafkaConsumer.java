@@ -26,6 +26,8 @@ import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
+import io.vertx.kafka.client.consumer.impl.KafkaReadStreamImpl;
+import org.apache.kafka.clients.consumer.Consumer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +48,19 @@ import java.util.Set;
  */
 @VertxGen
 public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V>> {
+
+  /**
+   * Create a new KafkaConsumer instance from a native {@link Consumer}.
+   *
+   * @param vertx Vert.x instance to use
+   * @param consumer the Kafka consumer to wrap
+   * @return  an instance of the KafkaConsumer
+   */
+  @GenIgnore
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Consumer<K, V> consumer) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, consumer);
+    return new KafkaConsumerImpl<K, V>(stream);
+  }
 
   /**
    * Create a new KafkaConsumer instance
@@ -509,4 +524,9 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   @GenIgnore
   KafkaReadStream<K, V> asStream();
 
+  /**
+   * @return the native consumer
+   */
+  @GenIgnore
+  Consumer<K, V> consumer();
 }

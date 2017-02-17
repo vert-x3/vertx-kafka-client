@@ -25,6 +25,7 @@ import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.producer.RecordMetadata;
+import org.apache.kafka.clients.producer.Producer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -148,5 +149,10 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   @Override
   public KafkaWriteStream<K, V> asStream() {
     return this.stream;
+  }
+
+  @Override
+  public Producer<K, V> producer() {
+    return this.stream.producer();
   }
 }

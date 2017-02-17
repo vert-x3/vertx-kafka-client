@@ -349,4 +349,9 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    */
   void close(Handler<Void> completionHandler);
 
+  /**
+   * @return the native consumer
+   */
+  Consumer<K, V> consumer();
+
 }

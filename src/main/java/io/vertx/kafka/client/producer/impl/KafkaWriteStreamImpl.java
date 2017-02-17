@@ -216,4 +216,9 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
       future.complete();
     }, ar -> completionHandler.handle(null));
   }
+
+  @Override
+  public Producer<K, V> producer() {
+    return this.producer;
+  }
 }

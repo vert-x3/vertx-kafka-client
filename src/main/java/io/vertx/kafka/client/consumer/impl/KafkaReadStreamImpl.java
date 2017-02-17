@@ -515,4 +515,9 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       this.consumer.wakeup();
     }
   }
+
+  @Override
+  public Consumer<K, V> consumer() {
+    return this.consumer;
+  }
 }

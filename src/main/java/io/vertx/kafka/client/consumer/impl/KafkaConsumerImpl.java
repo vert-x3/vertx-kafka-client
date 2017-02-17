@@ -26,6 +26,7 @@ import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.consumer.Consumer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -401,5 +402,10 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public KafkaReadStream<K, V> asStream() {
     return this.stream;
+  }
+
+  @Override
+  public Consumer<K, V> consumer() {
+    return this.stream.consumer();
   }
 }
