@@ -18,6 +18,8 @@ package examples;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.docgen.Source;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -510,29 +512,61 @@ public class VertxKafkaClientExamples {
     });
   }
 
-  public void exampleUsingBufferDeserializer() {
+  public void exampleUsingVertxDeserializers() {
 
-    // Creating a consumer able to deserialize bytes to Vert.x buffers
+    // Creating a consumer able to deserialize to buffers
     Map<String, String> config = new HashMap<>();
     config.put("bootstrap.servers", "localhost:9092");
-    config.put("key.deserializer", "io.vertx.kafka.client.BufferDeserializer");
-    config.put("value.deserializer", "io.vertx.kafka.client.BufferDeserializer");
+    config.put("key.deserializer", "io.vertx.kafka.client.serialization.BufferDeserializer");
+    config.put("value.deserializer", "io.vertx.kafka.client.serialization.BufferDeserializer");
+    config.put("group.id", "my_group");
+    config.put("auto.offset.reset", "earliest");
+    config.put("enable.auto.commit", "false");
+
+    // Creating a consumer able to deserialize to json object
+    config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.deserializer", "io.vertx.kafka.client.serialization.JsonObjectDeserializer");
+    config.put("value.deserializer", "io.vertx.kafka.client.serialization.JsonObjectDeserializer");
+    config.put("group.id", "my_group");
+    config.put("auto.offset.reset", "earliest");
+    config.put("enable.auto.commit", "false");
+
+    // Creating a consumer able to deserialize to json array
+    config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.deserializer", "io.vertx.kafka.client.serialization.JsonArrayDeserializer");
+    config.put("value.deserializer", "io.vertx.kafka.client.serialization.JsonArrayDeserializer");
     config.put("group.id", "my_group");
     config.put("auto.offset.reset", "earliest");
     config.put("enable.auto.commit", "false");
   }
 
-  public void exampleUsingBufferSerializer() {
+  public void exampleUsingVertxSerializers() {
 
-    // Creating a producer able to serialize bytes to Vert.x buffers
+    // Creating a producer able to serialize to buffers
     Map<String, String> config = new HashMap<>();
     config.put("bootstrap.servers", "localhost:9092");
-    config.put("key.serializer", "io.vertx.kafka.client.BufferSerializer");
-    config.put("value.serializer", "io.vertx.kafka.client.BufferSerializer");
+    config.put("key.serializer", "io.vertx.kafka.client.serialization.BufferSerializer");
+    config.put("value.serializer", "io.vertx.kafka.client.serialization.BufferSerializer");
+    config.put("acks", "1");
+
+    // Creating a producer able to serialize to json object
+    config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.serializer", "io.vertx.kafka.client.serialization.JsonObjectSerializer");
+    config.put("value.serializer", "io.vertx.kafka.client.serialization.JsonObjectSerializer");
+    config.put("acks", "1");
+
+    // Creating a producer able to serialize to json array
+    config = new HashMap<>();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("key.serializer", "io.vertx.kafka.client.serialization.JsonArraySerializer");
+    config.put("value.serializer", "io.vertx.kafka.client.serialization.JsonArraySerializer");
     config.put("acks", "1");
   }
 
-  public void exampleUsingBufferDeserializer2(Vertx vertx) {
+  public void exampleUsingVertxDeserializers2(Vertx vertx) {
 
     Map<String, String> config = new HashMap<>();
     config.put("bootstrap.servers", "localhost:9092");
@@ -540,17 +574,29 @@ public class VertxKafkaClientExamples {
     config.put("auto.offset.reset", "earliest");
     config.put("enable.auto.commit", "false");
 
-    // Creating a consumer able to deserialize bytes to Vert.x buffers
-    KafkaConsumer<Buffer, Buffer> consumer = KafkaConsumer.create(vertx, config, Buffer.class, Buffer.class);
+    // Creating a consumer able to deserialize buffers
+    KafkaConsumer<Buffer, Buffer> bufferConsumer = KafkaConsumer.create(vertx, config, Buffer.class, Buffer.class);
+
+    // Creating a consumer able to deserialize json objects
+    KafkaConsumer<JsonObject, JsonObject> jsonObjectConsumer = KafkaConsumer.create(vertx, config, JsonObject.class, JsonObject.class);
+
+    // Creating a consumer able to deserialize json arrays
+    KafkaConsumer<JsonArray, JsonArray> jsonArrayConsumer = KafkaConsumer.create(vertx, config, JsonArray.class, JsonArray.class);
   }
 
-  public void exampleUsingBufferSerializer2(Vertx vertx) {
+  public void exampleUsingVertxSerializers2(Vertx vertx) {
 
     Map<String, String> config = new HashMap<>();
     config.put("bootstrap.servers", "localhost:9092");
     config.put("acks", "1");
 
-    // Creating a producer able to serialize bytes to Vert.x buffers
-    KafkaProducer<Buffer, Buffer> consumer = KafkaProducer.create(vertx, config, Buffer.class, Buffer.class);
+    // Creating a producer able to serialize to buffers
+    KafkaProducer<Buffer, Buffer> bufferProducer = KafkaProducer.create(vertx, config, Buffer.class, Buffer.class);
+
+    // Creating a producer able to serialize to json objects
+    KafkaProducer<JsonObject, JsonObject> jsonObjectProducer = KafkaProducer.create(vertx, config, JsonObject.class, JsonObject.class);
+
+    // Creating a producer able to serialize to json arrays
+    KafkaProducer<JsonArray, JsonArray> jsonArrayProducer = KafkaProducer.create(vertx, config, JsonArray.class, JsonArray.class);
   }
 }

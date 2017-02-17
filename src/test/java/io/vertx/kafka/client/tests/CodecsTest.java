@@ -19,10 +19,12 @@ package io.vertx.kafka.client.tests;
 import io.debezium.kafka.KafkaCluster;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.client.BufferDeserializer;
-import io.vertx.kafka.client.BufferSerializer;
+import io.vertx.kafka.client.serialization.BufferDeserializer;
+import io.vertx.kafka.client.serialization.BufferSerializer;
 import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
@@ -68,18 +70,32 @@ public class CodecsTest extends KafkaClusterTestBase {
 
   @Test
   public void testBufferSerializer() {
-    final Deserializer<Buffer> deserializer = KafkaCodecs.deserializer(Buffer.class);
-    final Serializer<Buffer> serializer = KafkaCodecs.serializer(Buffer.class);
+    testSerializer(Buffer.class, Buffer.buffer("Hello"));
+  }
 
-    final Buffer stringBuffer = Buffer.buffer("Hello");
+  @Test
+  public void testJsonObjectSerializer() {
+    testSerializer(JsonObject.class, new JsonObject()
+      .put("s", "the-string")
+      .put("the-number", 3)
+      .put("the-boolean", true));
+  }
 
-    assertEquals("Should get the original Buffer after serialization and deserialization",
-      stringBuffer, deserializer.deserialize(topic, serializer.serialize(topic, stringBuffer)));
+  @Test
+  public void testJsonArraySerializer() {
+    testSerializer(JsonArray.class, new JsonArray().add(3).add("s").add(true));
+  }
+
+  private <T> void testSerializer(Class<T> type, T val) {
+    final Deserializer<T> deserializer = KafkaCodecs.deserializer(type);
+    final Serializer<T> serializer = KafkaCodecs.serializer(type);
+
+    assertEquals("Should get the original value after serialization and deserialization",
+      val, deserializer.deserialize(topic, serializer.serialize(topic, val)));
 
     assertEquals("Should support null in serialization and deserialization",
       null, deserializer.deserialize(topic, serializer.serialize(topic, null)));
   }
-
 
   @Test
   public void testStringCodec(TestContext ctx) throws Exception {

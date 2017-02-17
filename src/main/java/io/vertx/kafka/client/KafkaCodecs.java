@@ -18,6 +18,14 @@ package io.vertx.kafka.client;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.kafka.client.serialization.BufferDeserializer;
+import io.vertx.kafka.client.serialization.BufferSerializer;
+import io.vertx.kafka.client.serialization.JsonArrayDeserializer;
+import io.vertx.kafka.client.serialization.JsonArraySerializer;
+import io.vertx.kafka.client.serialization.JsonObjectDeserializer;
+import io.vertx.kafka.client.serialization.JsonObjectSerializer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.ByteBufferDeserializer;
@@ -57,6 +65,8 @@ public class KafkaCodecs {
   private static final ConcurrentMap<Class<?>, Deserializer<?>> deserializers = new ConcurrentHashMap<>();
 
   static {
+    serializers.put(JsonObject.class, new JsonObjectSerializer());
+    serializers.put(JsonArray.class, new JsonArraySerializer());
     serializers.put(Buffer.class, new BufferSerializer());
     serializers.put(Double.class, new DoubleSerializer());
     serializers.put(Integer.class, new IntegerSerializer());
@@ -68,6 +78,8 @@ public class KafkaCodecs {
   }
 
   static {
+    deserializers.put(JsonObject.class, new JsonObjectDeserializer());
+    deserializers.put(JsonArray.class, new JsonArrayDeserializer());
     deserializers.put(Buffer.class, new BufferDeserializer());
     deserializers.put(Double.class, new DoubleDeserializer());
     deserializers.put(Integer.class, new IntegerDeserializer());

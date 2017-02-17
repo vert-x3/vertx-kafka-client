@@ -620,20 +620,39 @@ consumer.exception_handler() { |e|
 
 ----
 
-== Using Vert.x buffers as records key/value
+== Using Vert.x serializers/deserizaliers
 
-Vert.x Kafka client provides a serializer and deserializer for creating records with Vert.x buffers.
+Vert.x Kafka client comes out of the box with serializers and deserializers for buffers, json object
+and json array.
 
-In a consumer
+In a consumer you can use buffers
 
 [source,ruby]
 ----
 
-# Creating a consumer able to deserialize bytes to Vert.x buffers
+# Creating a consumer able to deserialize to buffers
 config = Hash.new()
 config["bootstrap.servers"] = "localhost:9092"
-config["key.deserializer"] = "io.vertx.kafka.client.BufferDeserializer"
-config["value.deserializer"] = "io.vertx.kafka.client.BufferDeserializer"
+config["key.deserializer"] = "io.vertx.kafka.client.serialization.BufferDeserializer"
+config["value.deserializer"] = "io.vertx.kafka.client.serialization.BufferDeserializer"
+config["group.id"] = "my_group"
+config["auto.offset.reset"] = "earliest"
+config["enable.auto.commit"] = "false"
+
+# Creating a consumer able to deserialize to json object
+config = Hash.new()
+config["bootstrap.servers"] = "localhost:9092"
+config["key.deserializer"] = "io.vertx.kafka.client.serialization.JsonObjectDeserializer"
+config["value.deserializer"] = "io.vertx.kafka.client.serialization.JsonObjectDeserializer"
+config["group.id"] = "my_group"
+config["auto.offset.reset"] = "earliest"
+config["enable.auto.commit"] = "false"
+
+# Creating a consumer able to deserialize to json array
+config = Hash.new()
+config["bootstrap.servers"] = "localhost:9092"
+config["key.deserializer"] = "io.vertx.kafka.client.serialization.JsonArrayDeserializer"
+config["value.deserializer"] = "io.vertx.kafka.client.serialization.JsonArrayDeserializer"
 config["group.id"] = "my_group"
 config["auto.offset.reset"] = "earliest"
 config["enable.auto.commit"] = "false"
@@ -645,50 +664,44 @@ Or in a producer
 [source,ruby]
 ----
 
-# Creating a producer able to serialize bytes to Vert.x buffers
+# Creating a producer able to serialize to buffers
 config = Hash.new()
 config["bootstrap.servers"] = "localhost:9092"
-config["key.serializer"] = "io.vertx.kafka.client.BufferSerializer"
-config["value.serializer"] = "io.vertx.kafka.client.BufferSerializer"
+config["key.serializer"] = "io.vertx.kafka.client.serialization.BufferSerializer"
+config["value.serializer"] = "io.vertx.kafka.client.serialization.BufferSerializer"
+config["acks"] = "1"
+
+# Creating a producer able to serialize to json object
+config = Hash.new()
+config["bootstrap.servers"] = "localhost:9092"
+config["key.serializer"] = "io.vertx.kafka.client.serialization.JsonObjectSerializer"
+config["value.serializer"] = "io.vertx.kafka.client.serialization.JsonObjectSerializer"
+config["acks"] = "1"
+
+# Creating a producer able to serialize to json array
+config = Hash.new()
+config["bootstrap.servers"] = "localhost:9092"
+config["key.serializer"] = "io.vertx.kafka.client.serialization.JsonArraySerializer"
+config["value.serializer"] = "io.vertx.kafka.client.serialization.JsonArraySerializer"
 config["acks"] = "1"
 
 ----
 
 ifdef::java,groovy,kotlin[]
-You can also specify the buffer serizalizer/deserializer at creation time:
+You can also specify the serizalizers/deserializers at creation time:
 
 In a consumer
 
 [source,ruby]
 ----
-require 'vertx/buffer'
-require 'vertx-kafka-client/kafka_consumer'
-
-config = Hash.new()
-config["bootstrap.servers"] = "localhost:9092"
-config["group.id"] = "my_group"
-config["auto.offset.reset"] = "earliest"
-config["enable.auto.commit"] = "false"
-
-# Creating a consumer able to deserialize bytes to Vert.x buffers
-consumer = VertxKafkaClient::KafkaConsumer.create(vertx, config, Vertx::Buffer::class, Vertx::Buffer::class)
-
+Code not translatable
 ----
 
 Or in a producer
 
 [source,ruby]
 ----
-require 'vertx/buffer'
-require 'vertx-kafka-client/kafka_producer'
-
-config = Hash.new()
-config["bootstrap.servers"] = "localhost:9092"
-config["acks"] = "1"
-
-# Creating a producer able to serialize bytes to Vert.x buffers
-consumer = VertxKafkaClient::KafkaProducer.create(vertx, config, Vertx::Buffer::class, Vertx::Buffer::class)
-
+Code not translatable
 ----
 
 endif::[]

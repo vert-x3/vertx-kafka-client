@@ -305,39 +305,40 @@
  * {@link examples.VertxKafkaClientExamples#exampleErrorHandling}
  * ----
  *
- * == Using Vert.x buffers as records key/value
+ * == Using Vert.x serializers/deserizaliers
  *
- * Vert.x Kafka client provides a serializer and deserializer for creating records with Vert.x buffers.
+ * Vert.x Kafka client comes out of the box with serializers and deserializers for buffers, json object
+ * and json array.
  *
- * In a consumer
+ * In a consumer you can use buffers
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#exampleUsingBufferDeserializer()}
+ * {@link examples.VertxKafkaClientExamples#exampleUsingVertxDeserializers()}
  * ----
  *
  * Or in a producer
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#exampleUsingBufferSerializer()}
+ * {@link examples.VertxKafkaClientExamples#exampleUsingVertxSerializers()}
  * ----
  *
  * ifdef::java,groovy,kotlin[]
- * You can also specify the buffer serizalizer/deserializer at creation time:
+ * You can also specify the serizalizers/deserializers at creation time:
  *
  * In a consumer
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#exampleUsingBufferDeserializer2(io.vertx.core.Vertx)}
+ * {@link examples.VertxKafkaClientExamples#exampleUsingVertxDeserializers2(io.vertx.core.Vertx)}
  * ----
  *
  * Or in a producer
  *
  * [source,$lang]
  * ----
- * {@link examples.VertxKafkaClientExamples#exampleUsingBufferSerializer2(io.vertx.core.Vertx)}
+ * {@link examples.VertxKafkaClientExamples#exampleUsingVertxSerializers2(io.vertx.core.Vertx)}
  * ----
  *
  * endif::[]

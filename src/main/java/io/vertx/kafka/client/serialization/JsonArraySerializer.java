@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package io.vertx.kafka.client;
+package io.vertx.kafka.client.serialization;
 
-import io.vertx.core.buffer.Buffer;
-import org.apache.kafka.common.serialization.Deserializer;
+import io.vertx.core.json.JsonArray;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
 
 /**
- * Kafka deserializer for raw bytes in a buffer
+ * Kafka serializer for raw bytes in a buffer
  */
-public class BufferDeserializer implements Deserializer<Buffer> {
+public class JsonArraySerializer implements Serializer<JsonArray> {
 
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {
   }
 
   @Override
-  public Buffer deserialize(String topic, byte[] data) {
+  public byte[] serialize(String topic, JsonArray data) {
     if (data == null)
       return null;
 
-    return Buffer.buffer(data);
+    return data.encode().getBytes();
   }
 
   @Override
