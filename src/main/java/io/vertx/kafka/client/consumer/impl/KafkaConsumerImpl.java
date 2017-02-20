@@ -400,6 +400,11 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public void position(TopicPartition partition, Handler<AsyncResult<Long>> handler) {
+    this.stream.position(Helper.to(partition), handler);
+  }
+
+  @Override
   public KafkaReadStream<K, V> asStream() {
     return this.stream;
   }
