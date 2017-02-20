@@ -348,6 +348,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param completionHandler handler called on operation completed
    */
   void close(Handler<Void> completionHandler);
+  
+  /**
+   * Get the offset of the next record that will be fetched (if a record with that offset exists).
+   *
+   * @param partition The partition to get the position for
+   * @param handler handler called on operation completed
+   */
+  void position(TopicPartition partition, Handler<AsyncResult<Long>> handler);
 
   /**
    * @return the native consumer

@@ -517,6 +517,16 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public void position(TopicPartition partition, Handler<AsyncResult<Long>> handler) {
+    this.submitTask((consumer, future) -> {
+      long pos = this.consumer.position(partition);
+      if (future != null) {
+        future.complete(pos);
+      }
+    }, handler);
+  }
+
+  @Override
   public Consumer<K, V> consumer() {
     return this.consumer;
   }

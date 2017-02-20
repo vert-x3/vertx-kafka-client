@@ -195,7 +195,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         case 101:
           TopicPartition the_topic = new TopicPartition("the_topic", 0);
           consumer.commit(Collections.singletonMap(the_topic, new OffsetAndMetadata(rec.offset())),
-              ctx.asyncAssertSuccess(v -> commited.countDown()));
+                  ctx.asyncAssertSuccess(v -> commited.countDown()));
           break;
         case 500:
           commited.countDown();
@@ -457,6 +457,94 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       }
 
     });
+  }
+
+  @Test
+  public void testPositionEmptyTopic(TestContext ctx) throws Exception {
+    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
+    kafkaCluster.createTopic("the_topic", 1, 1);
+    Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+
+    Async done = ctx.async();
+
+    consumer.handler(record -> {
+      // no need for handling incoming records in this test
+    });
+
+    consumer.subscribe(Collections.singleton("the_topic"), asyncResult -> {
+
+      if (asyncResult.succeeded()) {
+        consumer.partitionsFor("the_topic", asyncResult1 -> {
+          if (asyncResult.succeeded()) {
+            for (org.apache.kafka.common.PartitionInfo pi : asyncResult1.result()) {
+              TopicPartition tp = new TopicPartition("the_topic", pi.partition());
+              consumer.position(tp, asyncResult2 -> {
+                if (asyncResult2.succeeded()) {
+                  ctx.assertTrue(asyncResult2.result() == 0);
+                  done.complete();
+                } else {
+                  ctx.fail();
+                }
+              });
+            }
+          } else {
+            ctx.fail();
+          }
+        });
+
+      } else {
+        ctx.fail();
+      }
+
+    });
+  }
+
+  @Test
+  public void testPositionNonEmptyTopic(TestContext ctx) throws Exception {
+    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
+    kafkaCluster.createTopic("the_topic", 1, 1);
+    Async batch = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 1000;
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, ()
+            -> new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch.awaitSuccess(20000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+
+    Async done = ctx.async();
+
+    AtomicInteger count = new AtomicInteger(numMessages);
+    consumer.exceptionHandler(ctx::fail);
+    consumer.handler(rec -> {
+      if (count.decrementAndGet() == 0) {
+        consumer.partitionsFor("the_topic", asyncResult -> {
+          if (asyncResult.succeeded()) {
+            for (org.apache.kafka.common.PartitionInfo pi : asyncResult.result()) {
+              TopicPartition tp = new TopicPartition("the_topic", pi.partition());
+              consumer.position(tp, asyncResult1 -> {
+                if (asyncResult1.succeeded()) {
+                  ctx.assertTrue(asyncResult1.result() == numMessages);
+                  done.complete();
+                } else {
+                  ctx.fail();
+                }
+              });
+            }
+          } else {
+            ctx.fail();
+          }
+        });
+      }
+    });
+    consumer.subscribe(Collections.singleton("the_topic"));
   }
 
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
