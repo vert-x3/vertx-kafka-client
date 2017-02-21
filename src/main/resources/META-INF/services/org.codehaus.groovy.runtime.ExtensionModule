@@ -1,0 +1,4 @@
+moduleName = io.vertx.kafka.client.producer.KafkaProducerRecord-module
+moduleVersion = 1.0
+extensionClasses = io.vertx.groovy.kafka.client.consumer.KafkaConsumer_GroovyExtension, io.vertx.groovy.kafka.client.consumer.KafkaConsumerRecord_GroovyExtension, io.vertx.groovy.kafka.client.producer.KafkaProducer_GroovyExtension, io.vertx.groovy.kafka.client.producer.KafkaProducerRecord_GroovyExtension
+staticExtensionClasses = io.vertx.groovy.kafka.client.producer.KafkaProducerRecord_GroovyStaticExtension

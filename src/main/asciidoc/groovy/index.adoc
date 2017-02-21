@@ -25,7 +25,7 @@ of your build descriptor:
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-kafka-client</artifactId>
-  <version>3.4.0-SNAPSHOT</version>
+  <version>3.4.0.Beta1</version>
 </dependency>
 ----
 
@@ -33,7 +33,7 @@ of your build descriptor:
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-kafka-client:3.4.0-SNAPSHOT
+compile io.vertx:vertx-kafka-client:3.4.0.Beta1
 ----
 
 == Creating Kafka clients
@@ -50,6 +50,7 @@ static creation methods exposed by `link:../../apidocs/io/vertx/kafka/client/con
 
 [source,groovy]
 ----
+import io.vertx.kafka.client.consumer.KafkaConsumer
 
 // creating the consumer using map config
 def config = [:]
@@ -73,6 +74,7 @@ Likewise a producer can be created
 
 [source,groovy]
 ----
+import io.vertx.kafka.client.producer.KafkaProducer
 
 // creating the producer using map and class types for key and value serializers/deserializers
 def config = [:]
@@ -91,6 +93,7 @@ Another way is to use a `link:../../apidocs/java/util/Properties.html[Properties
 
 [source,groovy]
 ----
+import io.vertx.kafka.client.consumer.KafkaConsumer
 
 // creating the consumer using properties config
 def config = new java.util.Properties()
@@ -112,6 +115,7 @@ using the related properties for that
 
 [source,groovy]
 ----
+import io.vertx.kafka.client.producer.KafkaProducer
 
 // creating the producer using map and class types for key and value serializers/deserializers
 def config = new java.util.Properties()
@@ -505,6 +509,7 @@ or partition, in this case the messages are sent in a round robin fashion across
 
 [source,groovy]
 ----
+import io.vertx.kafka.client.producer.KafkaProducerRecord
 
 (0..<5).each { i ->
 
@@ -520,6 +525,7 @@ You can receive message sent metadata like its topic, its destination partition 
 
 [source,groovy]
 ----
+import io.vertx.kafka.client.producer.KafkaProducerRecord
 
 (0..<5).each { i ->
 
@@ -545,6 +551,7 @@ or its key
 
 [source,groovy]
 ----
+import io.vertx.kafka.client.producer.KafkaProducerRecord
 
 (0..<10).each { i ->
 
@@ -561,6 +568,7 @@ messages with the same key are sent to the same partition and retain the order.
 
 [source,groovy]
 ----
+import io.vertx.kafka.client.producer.KafkaProducerRecord
 
 (0..<10).each { i ->
 
