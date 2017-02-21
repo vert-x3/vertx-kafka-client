@@ -25,7 +25,7 @@ of your build descriptor:
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-kafka-client</artifactId>
-  <version>3.4.0.Beta1</version>
+  <version>3.4.0-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -33,7 +33,7 @@ of your build descriptor:
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-kafka-client:3.4.0.Beta1
+compile io.vertx:vertx-kafka-client:3.4.0-SNAPSHOT
 ----
 
 == Creating Kafka clients
@@ -50,8 +50,6 @@ static creation methods exposed by `link:../../apidocs/io/vertx/kafka/client/con
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.consumer.KafkaConsumer
-
 
 // creating the consumer using map config
 var config = mutableMapOf<String, Any?>()
@@ -75,8 +73,6 @@ Likewise a producer can be created
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.producer.KafkaProducer
-
 
 // creating the producer using map and class types for key and value serializers/deserializers
 var config = mutableMapOf<String, Any?>()
@@ -95,8 +91,6 @@ Another way is to use a `link:../../apidocs/java/util/Properties.html[Properties
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.consumer.KafkaConsumer
-
 
 // creating the consumer using properties config
 var config = java.util.Properties()
@@ -118,8 +112,6 @@ using the related properties for that
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.producer.KafkaProducer
-
 
 // creating the producer using map and class types for key and value serializers/deserializers
 var config = java.util.Properties()
@@ -148,7 +140,6 @@ You need to register an handler for handling incoming messages using the
 [source,kotlin]
 ----
 
-
 // register the handler for incoming messages
 consumer.handler({ record ->
   println("Processing key=${record.key()},value=${record.value()},partition=${record.partition()},offset=${record.offset()}")
@@ -171,7 +162,6 @@ is completed.
 
 [source,kotlin]
 ----
-
 
 // register the handler for incoming messages
 consumer.handler({ record ->
@@ -216,7 +206,6 @@ of the partitions revocations and assignments by the Kafka cluster using
 [source,kotlin]
 ----
 
-
 // register the handler for incoming messages
 consumer.handler({ record ->
   println("Processing key=${record.key()},value=${record.value()},partition=${record.partition()},offset=${record.offset()}")
@@ -255,7 +244,6 @@ not get messages anymore using `link:../../apidocs/io/vertx/kafka/client/consume
 [source,kotlin]
 ----
 
-
 // consumer is already member of a consumer group
 
 // unsubscribing request
@@ -267,7 +255,6 @@ You can add an handler to be notified of the result
 
 [source,kotlin]
 ----
-
 
 // consumer is already member of a consumer group
 
@@ -292,9 +279,6 @@ in order to ask for specific partitions.
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.common.TopicPartition
-import io.vertx.kotlin.kafka.client.common.*
-
 
 // register the handler for incoming messages
 consumer.handler({ record ->
@@ -339,7 +323,6 @@ partitions for a specified topic
 [source,kotlin]
 ----
 
-
 // asking partitions information about specific topic
 consumer.partitionsFor("test", { ar ->
 
@@ -358,7 +341,6 @@ with related partitions
 
 [source,kotlin]
 ----
-
 
 // asking information about available topics and related partitions
 consumer.listTopics({ ar ->
@@ -391,7 +373,6 @@ the offset.
 [source,kotlin]
 ----
 
-
 // consumer is processing read messages
 
 // committing offset of the last read message
@@ -414,9 +395,6 @@ position
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.common.TopicPartition
-import io.vertx.kotlin.kafka.client.common.*
-
 
 var topicPartition = TopicPartition(
   topic = "test",
@@ -437,9 +415,6 @@ When the consumer needs to re-read the stream from the beginning, it can use `li
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.common.TopicPartition
-import io.vertx.kotlin.kafka.client.common.*
-
 
 var topicPartition = TopicPartition(
   topic = "test",
@@ -459,9 +434,6 @@ Finally `link:../../apidocs/io/vertx/kafka/client/consumer/KafkaConsumer.html#se
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.common.TopicPartition
-import io.vertx.kotlin.kafka.client.common.*
-
 
 var topicPartition = TopicPartition(
   topic = "test",
@@ -488,9 +460,6 @@ To achieve that you can use `link:../../apidocs/io/vertx/kafka/client/consumer/K
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.common.TopicPartition
-import io.vertx.kotlin.kafka.client.common.*
-
 
 var topicPartition = TopicPartition(
   topic = "test",
@@ -532,8 +501,6 @@ or partition, in this case the messages are sent in a round robin fashion across
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.producer.KafkaProducerRecord
-
 
 for (i in 0 until 5) {
 
@@ -551,8 +518,6 @@ You can receive message sent metadata like its topic, its destination partition 
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.producer.KafkaProducerRecord
-
 
 for (i in 0 until 5) {
 
@@ -580,8 +545,6 @@ or its key
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.producer.KafkaProducerRecord
-
 
 for (i in 0 until 10) {
 
@@ -600,8 +563,6 @@ messages with the same key are sent to the same partition and retain the order.
 
 [source,kotlin]
 ----
-import io.vertx.kafka.client.producer.KafkaProducerRecord
-
 
 for (i in 0 until 10) {
 
@@ -626,7 +587,6 @@ partitions for a specified topic:
 [source,kotlin]
 ----
 
-
 // asking partitions information about specific topic
 producer.partitionsFor("test", { ar ->
 
@@ -649,7 +609,6 @@ Errors handling (e.g timeout) between a Kafka client (consumer or producer) and 
 [source,kotlin]
 ----
 
-
 // setting handler for errors
 consumer.exceptionHandler({ e ->
   println("Error = ${e.getMessage()}")
@@ -666,7 +625,6 @@ In a consumer you can use buffers
 
 [source,kotlin]
 ----
-
 
 // Creating a consumer able to deserialize to buffers
 var config = mutableMapOf<String, Any?>()
@@ -701,7 +659,6 @@ Or in a producer
 
 [source,kotlin]
 ----
-
 
 // Creating a producer able to serialize to buffers
 var config = mutableMapOf<String, Any?>()
