@@ -52,8 +52,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   @Override
   @SuppressWarnings("unchecked")
   public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord) {
-    this.stream.write(kafkaProducerRecord.record());
-    return this;
+    return this.write(kafkaProducerRecord, null);
   }
 
   @Override

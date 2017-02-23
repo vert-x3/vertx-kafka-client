@@ -139,8 +139,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> subscribe(Set<String> topics) {
-    this.stream.subscribe(topics);
-    return this;
+    return this.subscribe(topics, null);
   }
 
   @Override
@@ -161,8 +160,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> assign(Set<TopicPartition> topicPartitions) {
-    this.stream.assign(Helper.to(topicPartitions));
-    return this;
+    return this.assign(topicPartitions, null);
   }
 
   @Override
@@ -232,8 +230,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> unsubscribe() {
-    this.stream.unsubscribe();
-    return this;
+    return this.unsubscribe(null);
   }
 
   @Override
@@ -267,8 +264,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> seek(TopicPartition topicPartition, long offset) {
-    this.stream.seek(Helper.to(topicPartition), offset);
-    return this;
+    return this.seek(topicPartition, offset, null);
   }
 
   @Override
@@ -284,8 +280,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> seekToBeginning(Set<TopicPartition> topicPartitions) {
-    this.stream.seekToBeginning(Helper.to(topicPartitions));
-    return this;
+    return this.seekToBeginning(topicPartitions, null);
   }
 
   @Override
@@ -306,8 +301,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> seekToEnd(Set<TopicPartition> topicPartitions) {
-    this.stream.seekToEnd(Helper.to(topicPartitions));
-    return this;
+    return this.seekToEnd(topicPartitions, null);
   }
 
   @Override
