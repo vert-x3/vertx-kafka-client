@@ -500,6 +500,27 @@ consumer.handler(function (record) {
 
 ----
 
+== Closing a consumer
+
+Call close to close the consumer. Closing the consumer closes any open connections and releases all consumer resources.
+
+The close is actually asynchronous and might not complete until some time after the call has returned. If you want to be notified
+when the actual close has completed then you can pass in a handler.
+
+This handler will then be called when the close has fully completed.
+
+[source,js]
+----
+consumer.close(function (res, res_err) {
+  if (res_err == null) {
+    console.log("Consumer is now closed");
+  } else {
+    console.log("close failed");
+  }
+});
+
+----
+
 == Sending messages to a topic
 
 You can use  `link:../../jsdoc/module-vertx-kafka-client-js_kafka_producer-KafkaProducer.html#write[write]` to send messages (records) to a topic.
@@ -583,6 +604,27 @@ for (var i = 0;i < 10;i++) {
 
 ----
 
+== Closing a producer
+
+Call close to close the producer. Closing the producer closes any open connections and releases all producer resources.
+
+The close is actually asynchronous and might not complete until some time after the call has returned. If you want to be notified
+when the actual close has completed then you can pass in a handler.
+
+This handler will then be called when the close has fully completed.
+
+[source,js]
+----
+producer.close(function (res, res_err) {
+  if (res_err == null) {
+    console.log("Producer is now closed");
+  } else {
+    console.log("close failed");
+  }
+});
+
+----
+
 == Getting topic partition information
 
 You can call the `link:../../jsdoc/module-vertx-kafka-client-js_kafka_producer-KafkaProducer.html#partitionsFor[partitionsFor]` to get information about
@@ -619,6 +661,11 @@ consumer.exceptionHandler(function (e) {
 });
 
 ----
+
+== Consumer automatic clean-up in verticles
+
+If you’re creating consumers and producer from inside verticles, those consumers and producers will be automatically
+closed when the verticle is undeployed.
 
 == Using Vert.x serializers/deserizaliers
 

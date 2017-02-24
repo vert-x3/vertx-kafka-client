@@ -420,6 +420,16 @@ public class VertxKafkaClientExamples {
     });
   }
 
+  public void exampleConsumerClose(KafkaConsumer<String, String> consumer) {
+    consumer.close(res -> {
+      if (res.succeeded()) {
+        System.out.println("Consumer is now closed");
+      } else {
+        System.out.println("close failed");
+      }
+    });
+  }
+
   public void exampleProducerWrite(KafkaProducer<String, String> producer) {
 
     for (int i = 0; i < 5; i++) {
@@ -496,6 +506,16 @@ public class VertxKafkaClientExamples {
 
       producer.write(record);
     }
+  }
+
+  public void exampleProducerClose(KafkaProducer<String, String> producer) {
+    producer.close(res -> {
+      if (res.succeeded()) {
+        System.out.println("Producer is now closed");
+      } else {
+        System.out.println("close failed");
+      }
+    });
   }
 
   /**

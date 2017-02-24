@@ -205,16 +205,28 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   public void close() {
-    producer.close();
+    this.context.executeBlocking(future -> {
+      producer.close();
+    }, ar -> {
+
+    });
   }
 
-  public void close(long timeout, Handler<Void> completionHandler) {
+  @Override
+  public void close(Handler<AsyncResult<Void>> completionHandler) {
+    this.context.executeBlocking(future -> {
+      producer.close();
+      future.complete();
+    }, completionHandler);
+  }
+
+  public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
 
     this.context.executeBlocking(future -> {
 
       this.producer.close(timeout, TimeUnit.MILLISECONDS);
       future.complete();
-    }, ar -> completionHandler.handle(null));
+    }, completionHandler);
   }
 
   @Override
