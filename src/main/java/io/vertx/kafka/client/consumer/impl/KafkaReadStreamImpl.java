@@ -39,12 +39,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Kafka read stream implementation
  */
 public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
+
+  private static final AtomicInteger threadCount = new AtomicInteger(0);
 
   private final Context context;
   private final AtomicBoolean closed = new AtomicBoolean(true);
@@ -89,7 +93,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   private <T> void start(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task, Handler<AsyncResult<T>> handler) {
-    this.worker = Executors.newSingleThreadExecutor();
+    this.worker = Executors.newSingleThreadExecutor(r -> new Thread(r, "vert.x-kafka-consumer-thread-" + threadCount.getAndIncrement()));
     this.submitTask(task, handler);
   }
 
@@ -503,14 +507,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public void close(Handler<Void> completionHandler) {
+  public void close(Handler<AsyncResult<Void>> completionHandler) {
 
     if (this.closed.compareAndSet(false, true)) {
       this.worker.submit(() -> {
         this.consumer.close();
-        if (completionHandler != null) {
-          this.context.runOnContext(completionHandler);
-        }
+        this.context.runOnContext(v -> {
+          this.worker.shutdownNow();
+          if (completionHandler != null) {
+            completionHandler.handle(Future.succeededFuture());
+          }
+        });
       });
       this.consumer.wakeup();
     }

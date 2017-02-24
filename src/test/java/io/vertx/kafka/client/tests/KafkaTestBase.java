@@ -16,6 +16,7 @@
 
 package io.vertx.kafka.client.tests;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
@@ -34,7 +35,7 @@ import java.util.function.Consumer;
  */
 public class KafkaTestBase {
 
-  static void close(TestContext ctx, Consumer<Handler<Void>> producer) {
+  static void close(TestContext ctx, Consumer<Handler<AsyncResult<Void>>> producer) {
     if (producer != null) {
       Async closeAsync = ctx.async();
       producer.accept(v -> {

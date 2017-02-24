@@ -249,6 +249,20 @@
  * {@link examples.VertxKafkaClientExamples#exampleConsumerFlowControl}
  * ----
  *
+ * == Closing a consumer
+ *
+ * Call close to close the consumer. Closing the consumer closes any open connections and releases all consumer resources.
+ *
+ * The close is actually asynchronous and might not complete until some time after the call has returned. If you want to be notified
+ * when the actual close has completed then you can pass in a handler.
+ *
+ * This handler will then be called when the close has fully completed.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerClose(io.vertx.kafka.client.consumer.KafkaConsumer)}
+ * ----
+ *
  * == Sending messages to a topic
  *
  * You can use  {@link io.vertx.kafka.client.producer.KafkaProducer#write} to send messages (records) to a topic.
@@ -284,6 +298,20 @@
  * {@link examples.VertxKafkaClientExamples#exampleProducerWriteWithSpecificKey}
  * ----
  *
+ * == Closing a producer
+ *
+ * Call close to close the producer. Closing the producer closes any open connections and releases all producer resources.
+ *
+ * The close is actually asynchronous and might not complete until some time after the call has returned. If you want to be notified
+ * when the actual close has completed then you can pass in a handler.
+ *
+ * This handler will then be called when the close has fully completed.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleProducerClose(io.vertx.kafka.client.producer.KafkaProducer)}
+ * ----
+ *
  * == Getting topic partition information
  *
  * You can call the {@link io.vertx.kafka.client.producer.KafkaProducer#partitionsFor} to get information about
@@ -304,6 +332,11 @@
  * ----
  * {@link examples.VertxKafkaClientExamples#exampleErrorHandling}
  * ----
+ *
+ * == Consumer automatic clean-up in verticles
+ *
+ * If you’re creating consumers and producer from inside verticles, those consumers and producers will be automatically
+ * closed when the verticle is undeployed.
  *
  * == Using Vert.x serializers/deserizaliers
  *

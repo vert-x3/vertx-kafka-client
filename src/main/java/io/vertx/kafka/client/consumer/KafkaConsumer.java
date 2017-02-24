@@ -71,7 +71,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    */
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, new HashMap<>(config));
-    return new KafkaConsumerImpl<>(stream);
+    return new KafkaConsumerImpl<>(stream).registerCloseHook();
   }
 
   /**
@@ -86,7 +86,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config,
                                            Class<K> keyType, Class<V> valueType) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, new HashMap<>(config), keyType, valueType);
-    return new KafkaConsumerImpl<>(stream);
+    return new KafkaConsumerImpl<>(stream).registerCloseHook();
   }
 
   /**
@@ -99,7 +99,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   @GenIgnore
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config);
-    return new KafkaConsumerImpl<>(stream);
+    return new KafkaConsumerImpl<>(stream).registerCloseHook();
   }
 
   /**
@@ -115,7 +115,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config,
                                            Class<K> keyType, Class<V> valueType) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config, keyType, valueType);
-    return new KafkaConsumerImpl<>(stream);
+    return new KafkaConsumerImpl<>(stream).registerCloseHook();
   }
 
   @Fluent
@@ -516,7 +516,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    *
    * @param completionHandler handler called on operation completed
    */
-  void close(Handler<Void> completionHandler);
+  void close(Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Get the offset of the next record that will be fetched (if a record with that offset exists).

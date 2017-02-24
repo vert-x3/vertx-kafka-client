@@ -17,8 +17,11 @@
 package io.vertx.kafka.client.producer.impl;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Closeable;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.KafkaProducer;
@@ -38,9 +41,46 @@ import java.util.stream.Stream;
 public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   private final KafkaWriteStream<K, V> stream;
+  private Closeable closeable;
+  private Runnable closeableHookCleanup;
 
   public KafkaProducerImpl(KafkaWriteStream<K, V> stream) {
     this.stream = stream;
+  }
+
+  public synchronized KafkaProducerImpl<K, V> registerCloseHook() {
+    Context context = Vertx.currentContext();
+    if (context == null) {
+      return this;
+    }
+    if (closeable == null) {
+      closeable = ar -> {
+        synchronized (KafkaProducerImpl.this) {
+          if (closeable == null) {
+            ar.handle(Future.succeededFuture());
+            return;
+          }
+          closeable = null;
+        }
+        stream.close(ar);
+      };
+      closeableHookCleanup = () -> {
+        synchronized (KafkaProducerImpl.this) {
+          if (closeable != null) {
+            context.removeCloseHook(closeable);
+            closeable = null;
+          }
+        }
+      };
+      context.addCloseHook(closeable);
+    }
+    return this;
+  }
+
+  private synchronized void removeCloseHook() {
+    if (closeableHookCleanup != null) {
+      closeableHookCleanup.run();
+    }
   }
 
   @Override
@@ -137,11 +177,19 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public void close() {
+    removeCloseHook();
     this.stream.close();
   }
 
   @Override
-  public void close(long timeout, Handler<Void> completionHandler) {
+  public void close(Handler<AsyncResult<Void>> completionHandler) {
+    removeCloseHook();
+    this.stream.close(completionHandler);
+  }
+
+  @Override
+  public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
+    removeCloseHook();
     this.stream.close(timeout, completionHandler);
   }
 
