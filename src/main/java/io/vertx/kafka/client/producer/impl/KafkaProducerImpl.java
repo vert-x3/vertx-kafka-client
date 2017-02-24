@@ -17,11 +17,12 @@
 package io.vertx.kafka.client.producer.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Closeable;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.VertxInternal;
+import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.KafkaProducer;
@@ -31,7 +32,11 @@ import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.clients.producer.Producer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,47 +45,79 @@ import java.util.stream.Stream;
  */
 public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
-  private final KafkaWriteStream<K, V> stream;
-  private Closeable closeable;
-  private Runnable closeableHookCleanup;
-
-  public KafkaProducerImpl(KafkaWriteStream<K, V> stream) {
-    this.stream = stream;
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config));
   }
 
-  public synchronized KafkaProducerImpl<K, V> registerCloseHook() {
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config)));
+  }
+
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config, Class<K> keyType, Class<V> valueType) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config, keyType, valueType));
+  }
+
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Class<K> keyType, Class<V> valueType) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config), keyType, valueType));
+  }
+
+  private static class SharedProducer extends HashMap<Object, KafkaProducer> {
+
+    final KafkaWriteStream stream;
+    final CloseHandler closeHandler;
+
+    public SharedProducer(KafkaWriteStream stream) {
+      this.stream = stream;
+      this.closeHandler = new CloseHandler(stream::close);
+    }
+  }
+
+  private static final Map<String, SharedProducer> sharedProducers = new HashMap<>();
+
+  private static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Supplier<KafkaWriteStream> streamFactory) {
+    synchronized (sharedProducers) {
+      SharedProducer sharedProducer = sharedProducers.computeIfAbsent(name, key -> {
+        KafkaWriteStream stream = streamFactory.get();
+        SharedProducer s = new SharedProducer(stream);
+        s.closeHandler.registerCloseHook((VertxInternal) vertx);
+        return s;
+      });
+      Object key = new Object();
+      KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>((KafkaWriteStream<K, V>) sharedProducer.stream, new CloseHandler((timeout, ar) -> {
+        synchronized (sharedProducers) {
+          sharedProducer.remove(key);
+          if (sharedProducer.isEmpty()) {
+            sharedProducers.remove(name);
+            sharedProducer.closeHandler.close(timeout, ar);
+            return;
+          }
+        }
+        ar.handle(Future.succeededFuture());
+      }));
+      sharedProducer.put(key, producer);
+      return producer.registerCloseHook();
+    }
+  }
+
+  private final KafkaWriteStream<K, V> stream;
+  private final CloseHandler closeHandler;
+
+  public KafkaProducerImpl(KafkaWriteStream<K, V> stream, CloseHandler closeHandler) {
+    this.stream = stream;
+    this.closeHandler = closeHandler;
+  }
+
+  public KafkaProducerImpl(KafkaWriteStream<K, V> stream) {
+    this(stream, new CloseHandler(stream::close));
+  }
+
+  public KafkaProducerImpl<K, V> registerCloseHook() {
     Context context = Vertx.currentContext();
     if (context == null) {
       return this;
     }
-    if (closeable == null) {
-      closeable = ar -> {
-        synchronized (KafkaProducerImpl.this) {
-          if (closeable == null) {
-            ar.handle(Future.succeededFuture());
-            return;
-          }
-          closeable = null;
-        }
-        stream.close(ar);
-      };
-      closeableHookCleanup = () -> {
-        synchronized (KafkaProducerImpl.this) {
-          if (closeable != null) {
-            context.removeCloseHook(closeable);
-            closeable = null;
-          }
-        }
-      };
-      context.addCloseHook(closeable);
-    }
+    closeHandler.registerCloseHook(context);
     return this;
-  }
-
-  private synchronized void removeCloseHook() {
-    if (closeableHookCleanup != null) {
-      closeableHookCleanup.run();
-    }
   }
 
   @Override
@@ -177,20 +214,17 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public void close() {
-    removeCloseHook();
-    this.stream.close();
+    closeHandler.close();
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
-    removeCloseHook();
-    this.stream.close(completionHandler);
+    closeHandler.close(completionHandler);
   }
 
   @Override
   public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
-    removeCloseHook();
-    this.stream.close(timeout, completionHandler);
+    closeHandler.close(completionHandler);
   }
 
   @Override

@@ -508,6 +508,15 @@ public class VertxKafkaClientExamples {
     }
   }
 
+  public void exampleSharedProducer(Vertx vertx, Map<String, String> config) {
+
+    // Create a shared producer identified by 'the-producer'
+    KafkaProducer<String, String> producer1 = KafkaProducer.createShared(vertx, "the-producer", config);
+
+    // Sometimes later you can close it
+    producer1.close();
+  }
+
   public void exampleProducerClose(KafkaProducer<String, String> producer) {
     producer.close(res -> {
       if (res.succeeded()) {

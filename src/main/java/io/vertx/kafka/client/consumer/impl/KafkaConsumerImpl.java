@@ -22,6 +22,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -46,11 +47,11 @@ import java.util.stream.Stream;
 public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   private final KafkaReadStream<K, V> stream;
-  private Closeable closeable;
-  private Runnable closeableHookCleanup;
+  private final CloseHandler closeHandler;
 
   public KafkaConsumerImpl(KafkaReadStream<K, V> stream) {
     this.stream = stream;
+    this.closeHandler = new CloseHandler((timeout, ar) -> stream.close(ar));
   }
 
   public synchronized KafkaConsumerImpl<K, V> registerCloseHook() {
@@ -58,34 +59,8 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
     if (context == null) {
       return this;
     }
-    if (closeable == null) {
-      closeable = ar -> {
-        synchronized (KafkaConsumerImpl.this) {
-          if (closeable == null) {
-            ar.handle(Future.succeededFuture());
-            return;
-          }
-          closeable = null;
-        }
-        stream.close(ar);
-      };
-      closeableHookCleanup = () -> {
-        synchronized (KafkaConsumerImpl.this) {
-          if (closeable != null) {
-            context.removeCloseHook(closeable);
-            closeable = null;
-          }
-        }
-      };
-      context.addCloseHook(closeable);
-    }
+    closeHandler.registerCloseHook(context);
     return this;
-  }
-
-  private synchronized void removeCloseHook() {
-    if (closeableHookCleanup != null) {
-      closeableHookCleanup.run();
-    }
   }
 
   @Override
@@ -430,8 +405,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
-    removeCloseHook();
-    this.stream.close(completionHandler);
+    this.closeHandler.close(completionHandler);
   }
 
   @Override
