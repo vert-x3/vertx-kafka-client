@@ -298,6 +298,26 @@
  * {@link examples.VertxKafkaClientExamples#exampleProducerWriteWithSpecificKey}
  * ----
  *
+ * NOTE: the shared producer is created on the first `createShared` call and its configuration is defined at this moment,
+ * shared producer usage must use the same configuration.
+ *
+ * == Sharing a producer
+ *
+ * Sometimes you want to share the same producer from within several verticles or contexts.
+ *
+ * Calling {@link io.vertx.kafka.client.producer.KafkaProducer#createShared(io.vertx.core.Vertx, java.lang.String, java.util.Map)}
+ * returns a producer that can be shared safely.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleSharedProducer}
+ * ----
+ *
+ * The same resources (thread, connection) will be shared between the producer returned by this method.
+ *
+ * When you are done with the producer, just close it, when all shared producers are closed, the resources will
+ * be released for you.
+ *
  * == Closing a producer
  *
  * Call close to close the producer. Closing the producer closes any open connections and releases all producer resources.
@@ -333,7 +353,7 @@
  * {@link examples.VertxKafkaClientExamples#exampleErrorHandling}
  * ----
  *
- * == Consumer automatic clean-up in verticles
+ * == Automatic clean-up in verticles
  *
  * If you’re creating consumers and producer from inside verticles, those consumers and producers will be automatically
  * closed when the verticle is undeployed.
