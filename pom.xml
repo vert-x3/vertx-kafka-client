@@ -74,6 +74,12 @@
       <version>0.10.0.1</version>
     </dependency>
     <dependency>
+      <!-- Kafka requires SLF4J: declare this dependency to force shiro to use this one. It is the version used by vert.x -->
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.21</version>
+    </dependency>
+    <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-rx-java</artifactId>
       <optional>true</optional>
