@@ -475,7 +475,7 @@ public class VertxKafkaClientExamples {
           System.out.println("Offset for topic="+topicPartition.getTopic()+
             ", partition="+topicPartition.getPartition()+"\n"+
             ", timestamp="+timestamp+", offset="+offsetAndTimestamp.getOffset()+
-            ", offsetTimestamp="+offsetAndTimestamp.getTimestamp()));
+            ", offsetTimestamp="+offsetAndTimestamp.getTimestamp());
 
       }
     });

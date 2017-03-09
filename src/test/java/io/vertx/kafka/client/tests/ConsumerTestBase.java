@@ -595,7 +595,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     TopicPartition topicPartition= new TopicPartition("the_topic", 0);
     topicPartitions.add(topicPartition);
 
-    // Test contains three sub-tests, so we need to countdown three times for completion
+    // Test contains two sub-tests
     Async done = ctx.async(2);
     consumer.handler(handler -> {
       // nothing to do in this test
@@ -614,7 +614,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
             });
             consumer.beginningOffsets(topicPartition, beginningOffsetResult -> {
                 ctx.assertTrue(beginningOffsetResult.succeeded());
-                // expect one result
                 // beginning offset must be 0
                 ctx.assertEquals(0L, beginningOffsetResult.result());
                 done.countDown();
@@ -625,12 +624,14 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
             consumer.endOffsets(topicPartitions, endOffsetResult -> {
               ctx.assertTrue(endOffsetResult.succeeded());
               ctx.assertEquals(1, endOffsetResult.result().size());
+              // endOffset must be equal to the number of ingested messages
               ctx.assertEquals((long) numMessages, endOffsetResult.result().get(topicPartition));
               done.countDown();
             });
 
             consumer.endOffsets(topicPartition, endOffsetResult -> {
               ctx.assertTrue(endOffsetResult.succeeded());
+              // endOffset must be equal to the number of ingested messages
               ctx.assertEquals((long) numMessages, endOffsetResult.result());
               done.countDown();
             });
@@ -666,7 +667,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     TopicPartition topicPartition= new TopicPartition("the_topic", 0);
 
-    // Test contains three sub-tests, so we need to countdown three times for completion
+    // Test contains two sub-tests
     Async done = ctx.async(2);
     consumer.handler(handler -> {
       // nothing to do in this test
