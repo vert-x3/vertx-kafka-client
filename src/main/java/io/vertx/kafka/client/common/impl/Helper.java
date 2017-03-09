@@ -18,6 +18,7 @@ package io.vertx.kafka.client.common.impl;
 
 import io.vertx.core.Handler;
 import io.vertx.kafka.client.common.Node;
+import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.RecordMetadata;
@@ -98,5 +99,33 @@ public class Helper {
 
   public static org.apache.kafka.clients.consumer.OffsetAndMetadata to(OffsetAndMetadata offsetAndMetadata) {
     return new org.apache.kafka.clients.consumer.OffsetAndMetadata(offsetAndMetadata.getOffset(), offsetAndMetadata.getMetadata());
+  }
+
+  public static Map<TopicPartition, Long> fromTopicPartitionOffsets(Map<org.apache.kafka.common.TopicPartition, Long> offsets) {
+    return offsets.entrySet().stream().collect(Collectors.toMap(
+      e -> new TopicPartition(e.getKey().topic(), e.getKey().partition()),
+      Map.Entry::getValue)
+    );
+  }
+
+  public static Map<org.apache.kafka.common.TopicPartition, Long> toTopicPartitionTimes(Map<TopicPartition, Long> topicPartitionTimes) {
+    return topicPartitionTimes.entrySet().stream().collect(Collectors.toMap(
+      e -> new org.apache.kafka.common.TopicPartition(e.getKey().getTopic(), e.getKey().getPartition()),
+      Map.Entry::getValue)
+    );
+  }
+
+  public static Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndTimestamp> toTopicPartitionOffsetAndTimestamp(Map<TopicPartition, OffsetAndTimestamp> topicPartitionOffsetAndTimestamps) {
+    return topicPartitionOffsetAndTimestamps.entrySet().stream().collect(Collectors.toMap(
+      e -> new org.apache.kafka.common.TopicPartition(e.getKey().getTopic(), e.getKey().getPartition()),
+      e -> new org.apache.kafka.clients.consumer.OffsetAndTimestamp(e.getValue().getOffset(), e.getValue().getTimestamp()))
+    );
+  }
+
+  public static Map<TopicPartition, OffsetAndTimestamp> fromTopicPartitionOffsetAndTimestamp(Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndTimestamp> topicPartitionOffsetAndTimestamps) {
+    return topicPartitionOffsetAndTimestamps.entrySet().stream().collect(Collectors.toMap(
+      e -> new TopicPartition(e.getKey().topic(), e.getKey().partition()),
+      e -> new OffsetAndTimestamp(e.getValue().offset(), e.getValue().timestamp()))
+    );
   }
 }

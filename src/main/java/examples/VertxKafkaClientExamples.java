@@ -21,6 +21,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.docgen.Source;
+import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
@@ -381,6 +382,105 @@ public class VertxKafkaClientExamples {
     });
   }
 
+
+  /**
+   * Example to demonstrate how one can use the new beginningOffsets API (introduced with Kafka
+   * 0.10.1.1) to look up the first offset for a given partition.
+   * @param consumer Consumer to be used
+   */
+  public void exampleConsumerBeginningOffsets(KafkaConsumer<String, String> consumer) {
+    Set<TopicPartition> topicPartitions = new HashSet<>();
+    TopicPartition topicPartition = new TopicPartition().setTopic("test").setPartition(0);
+    topicPartitions.add(topicPartition);
+
+    consumer.beginningOffsets(topicPartitions, done -> {
+      if(done.succeeded()) {
+        Map<TopicPartition, Long> results = done.result();
+        results.forEach((topic, beginningOffset) ->
+          System.out.println("Beginning offset for topic="+topic.getTopic()+", partition="+
+            topic.getPartition()+", beginningOffset="+beginningOffset));
+      }
+    });
+
+    // Convenience method for single-partition lookup
+    consumer.beginningOffsets(topicPartition, done -> {
+      if(done.succeeded()) {
+        Long beginningOffset = done.result();
+          System.out.println("Beginning offset for topic="+topicPartition.getTopic()+", partition="+
+            topicPartition.getPartition()+", beginningOffset="+beginningOffset);
+      }
+    });
+
+  }
+
+  /**
+   * Example to demonstrate how one can use the new endOffsets API (introduced with Kafka
+   * 0.10.1.1) to look up the last offset for a given partition.
+   * @param consumer Consumer to be used
+   */
+  public void exampleConsumerEndOffsets(KafkaConsumer<String, String> consumer) {
+    Set<TopicPartition> topicPartitions = new HashSet<>();
+    TopicPartition topicPartition = new TopicPartition().setTopic("test").setPartition(0);
+    topicPartitions.add(topicPartition);
+
+    consumer.endOffsets(topicPartitions, done -> {
+      if(done.succeeded()) {
+        Map<TopicPartition, Long> results = done.result();
+        results.forEach((topic, endOffset) ->
+          System.out.println("End offset for topic="+topic.getTopic()+", partition="+
+            topic.getPartition()+", endOffset="+endOffset));
+      }
+    });
+
+    // Convenience method for single-partition lookup
+    consumer.endOffsets(topicPartition, done -> {
+      if(done.succeeded()) {
+        Long endOffset = done.result();
+          System.out.println("End offset for topic="+topicPartition.getTopic()+", partition="+
+            topicPartition.getPartition()+", endOffset="+endOffset);
+      }
+    });
+  }
+
+  /**
+   * Example to demonstrate how one can use the new offsetsForTimes API (introduced with Kafka
+   * 0.10.1.1) to look up an offset by timestamp, i.e. search parameter is an epoch timestamp and
+   * the call returns the lowest offset with ingestion timestamp >= given timestamp.
+   * @param consumer Consumer to be used
+   */
+  public void exampleConsumerOffsetsForTimes(KafkaConsumer<String, String> consumer) {
+    Map<TopicPartition, Long> topicPartitionsWithTimestamps = new HashMap<>();
+    TopicPartition topicPartition = new TopicPartition().setTopic("test").setPartition(0);
+
+    // We are interested in the offset for data ingested 60 seconds ago
+    long timestamp = (System.currentTimeMillis() - 60000);
+
+    topicPartitionsWithTimestamps.put(topicPartition, timestamp);
+    consumer.offsetsForTimes(topicPartitionsWithTimestamps, done -> {
+      if(done.succeeded()) {
+        Map<TopicPartition, OffsetAndTimestamp> results = done.result();
+        results.forEach((topic, offset) ->
+          System.out.println("Offset for topic="+topic.getTopic()+
+            ", partition="+topic.getPartition()+"\n"+
+            ", timestamp="+timestamp+", offset="+offset.getOffset()+
+            ", offsetTimestamp="+offset.getTimestamp()));
+
+      }
+    });
+
+    // Convenience method for single-partition lookup
+    consumer.offsetsForTimes(topicPartition, timestamp, done -> {
+      if(done.succeeded()) {
+        OffsetAndTimestamp offsetAndTimestamp = done.result();
+          System.out.println("Offset for topic="+topicPartition.getTopic()+
+            ", partition="+topicPartition.getPartition()+"\n"+
+            ", timestamp="+timestamp+", offset="+offsetAndTimestamp.getOffset()+
+            ", offsetTimestamp="+offsetAndTimestamp.getTimestamp()));
+
+      }
+    });
+  }
+
   /**
    * Example about how Kafka consumer can pause reading from a topic partition
    * and then resume read operation for continuing to get messages
@@ -419,6 +519,7 @@ public class VertxKafkaClientExamples {
       }
     });
   }
+
 
   public void exampleConsumerClose(KafkaConsumer<String, String> consumer) {
     consumer.close(res -> {

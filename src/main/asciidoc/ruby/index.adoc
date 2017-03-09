@@ -25,7 +25,7 @@ of your build descriptor:
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-kafka-client</artifactId>
-  <version>3.4.0</version>
+  <version>3.4.1-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -33,7 +33,7 @@ of your build descriptor:
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-kafka-client:3.4.0
+compile io.vertx:vertx-kafka-client:3.4.1-SNAPSHOT
 ----
 
 == Creating Kafka clients
@@ -392,7 +392,7 @@ consumer.commit() { |ar_err,ar|
 == Seeking in a topic partition
 
 Apache Kafka can retain messages for a long period of time and the consumer can seek inside a topic partition
-and obtain arbitraty access to the messages.
+and obtain arbitrary access to the messages.
 
 You can use `link:../../yardoc/VertxKafkaClient/KafkaConsumer.html#seek-instance_method[seek]` to change the offset for reading at a specific
 position
@@ -456,6 +456,81 @@ consumer.seek_to_end(Java::JavaUtil::Collections.singleton(topicPartition)) { |d
 
 ----
 
+== Offset lookup
+
+You can use the beginningOffsets API introduced in Kafka 0.10.1.1 to get the first offset
+for a given partition. In contrast to `link:../../yardoc/VertxKafkaClient/KafkaConsumer.html#seek_to_beginning-instance_method[seekToBeginning]`,
+it does not change the consumer's offset.
+
+[source,ruby]
+----
+topicPartitions = Java::JavaUtil::HashSet.new()
+topicPartition = {
+  'topic' => "test",
+  'partition' => 0
+}
+topicPartitions.add?(topicPartition)
+
+consumer.beginning_offsets(topicPartitions) { |done_err,done|
+  if (done_err == nil)
+    results = done
+    results.each_pair { |topic,beginningOffset|
+      puts "Beginning offset for topic=#{topic['topic']}, partition=#{topic['partition']}, beginningOffset=#{beginningOffset}"
+    }
+  end
+}
+
+# Convenience method for single-partition lookup
+consumer.beginning_offsets(topicPartition) { |done_err,done|
+  if (done_err == nil)
+    beginningOffset = done
+    puts "Beginning offset for topic=#{topicPartition['topic']}, partition=#{topicPartition['partition']}, beginningOffset=#{beginningOffset}"
+  end
+}
+
+
+----
+
+You can use the endOffsets API introduced in Kafka 0.10.1.1 to get the last offset
+for a given partition. In contrast to `link:../../yardoc/VertxKafkaClient/KafkaConsumer.html#seek_to_end-instance_method[seekToEnd]`,
+it does not change the consumer's offset.
+
+[source,ruby]
+----
+topicPartitions = Java::JavaUtil::HashSet.new()
+topicPartition = {
+  'topic' => "test",
+  'partition' => 0
+}
+topicPartitions.add?(topicPartition)
+
+consumer.end_offsets(topicPartitions) { |done_err,done|
+  if (done_err == nil)
+    results = done
+    results.each_pair { |topic,endOffset|
+      puts "End offset for topic=#{topic['topic']}, partition=#{topic['partition']}, endOffset=#{endOffset}"
+    }
+  end
+}
+
+# Convenience method for single-partition lookup
+consumer.end_offsets(topicPartition) { |done_err,done|
+  if (done_err == nil)
+    endOffset = done
+    puts "End offset for topic=#{topicPartition['topic']}, partition=#{topicPartition['partition']}, endOffset=#{endOffset}"
+  end
+}
+
+----
+
+You can use the offsetsForTimes API introduced in Kafka 0.10.1.1 to look up an offset by
+timestamp, i.e. search parameter is an epoch timestamp and the call returns the lowest offset
+with ingestion timestamp >= given timestamp.
+
+[source,ruby]
+----
+Code not translatable
+----
 == Message flow control
 
 A consumer can control the incoming message flow and pause/resume the read operation from a topic, e.g it
