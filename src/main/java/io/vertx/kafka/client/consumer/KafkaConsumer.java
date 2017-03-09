@@ -26,7 +26,6 @@ import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
-import io.vertx.kafka.client.consumer.impl.KafkaReadStreamImpl;
 import org.apache.kafka.clients.consumer.Consumer;
 
 import java.util.HashMap;
@@ -525,6 +524,54 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param handler handler called on operation completed
    */
   void position(TopicPartition partition, Handler<AsyncResult<Long>> handler);
+
+  /**
+   * Look up the offsets for the given partitions by timestamp.
+   * @param topicPartitionTimestamps A map with pairs of (TopicPartition, Timestamp).
+   * @param handler handler called on operation completed
+   */
+  @GenIgnore
+  void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler);
+
+  /**
+   * Look up the offset for the given partition by timestamp.
+   * @param topicPartition TopicPartition to query.
+   * @param timestamp Timestamp to be used in the query.
+   * @param handler handler called on operation completed
+   */
+  void offsetsForTimes(TopicPartition topicPartition, Long timestamp, Handler<AsyncResult<OffsetAndTimestamp>> handler);
+
+  /**
+   * Get the first offset for the given partitions.
+   * @param topicPartitions the partitions to get the earliest offsets.
+   * @param handler handler called on operation completed. Returns the earliest available offsets for the given partitions
+   */
+  @GenIgnore
+  void beginningOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler);
+
+  /**
+   * Get the first offset for the given partitions.
+   * @param topicPartition the partition to get the earliest offset.
+   * @param handler handler called on operation completed. Returns the earliest available offset for the given partition
+   */
+  void beginningOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler);
+
+  /**
+   * Get the last offset for the given partitions. The last offset of a partition is the offset
+   * of the upcoming message, i.e. the offset of the last available message + 1.
+   * @param topicPartitions the partitions to get the end offsets.
+   * @param handler handler called on operation completed. The end offsets for the given partitions.
+   */
+  @GenIgnore
+  void endOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler);
+
+  /**
+   * Get the last offset for the given partition. The last offset of a partition is the offset
+   * of the upcoming message, i.e. the offset of the last available message + 1.
+   * @param topicPartition the partition to get the end offset.
+   * @param handler handler called on operation completed. The end offset for the given partition.
+   */
+  void endOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler);
 
   /**
    * @return  underlying the {@link KafkaReadStream} instance

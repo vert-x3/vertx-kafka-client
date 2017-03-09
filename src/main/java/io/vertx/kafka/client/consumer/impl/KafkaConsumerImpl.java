@@ -17,11 +17,11 @@
 package io.vertx.kafka.client.consumer.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Closeable;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.common.PartitionInfo;
@@ -35,6 +35,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -411,6 +412,91 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public void position(TopicPartition partition, Handler<AsyncResult<Long>> handler) {
     this.stream.position(Helper.to(partition), handler);
+  }
+
+  @Override
+  public void offsetsForTimes(TopicPartition topicPartition, Long timestamp, Handler<AsyncResult<OffsetAndTimestamp>> handler) {
+    Map<TopicPartition, Long> topicPartitions = new HashMap<>();
+    topicPartitions.put(topicPartition, timestamp);
+
+    this.stream.offsetsForTimes(Helper.toTopicPartitionTimes(topicPartitions), done -> {
+      if(done.succeeded()) {
+        // We know that this will result in exactly one iteration
+        for(org.apache.kafka.clients.consumer.OffsetAndTimestamp offsetAndTimestamp : done.result().values()) {
+          OffsetAndTimestamp resultOffsetAndTimestamp = new OffsetAndTimestamp(offsetAndTimestamp.offset(), offsetAndTimestamp.timestamp());
+          handler.handle(Future.succeededFuture(resultOffsetAndTimestamp));
+          break;
+        }
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
+  }
+
+  @Override
+  public void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler) {
+    this.stream.offsetsForTimes(Helper.toTopicPartitionTimes(topicPartitionTimestamps), done -> {
+      if(done.succeeded()) {
+        handler.handle(Future.succeededFuture(Helper.fromTopicPartitionOffsetAndTimestamp(done.result())));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
+  }
+
+  @Override
+  public void beginningOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
+    this.stream.beginningOffsets(Helper.to(topicPartitions), done -> {
+      if(done.succeeded()) {
+        handler.handle(Future.succeededFuture(Helper.fromTopicPartitionOffsets(done.result())));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
+  }
+
+  @Override
+  public void beginningOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler) {
+    Set<TopicPartition> beginningOffsets = new HashSet<>();
+    beginningOffsets.add(topicPartition);
+    this.stream.beginningOffsets(Helper.to(beginningOffsets), done -> {
+      if(done.succeeded()) {
+        // We know that this will result in exactly one iteration
+        for(long beginningOffset : done.result().values()) {
+          handler.handle(Future.succeededFuture(beginningOffset));
+          break;
+        }
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
+  }
+
+  @Override
+  public void endOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
+    this.stream.endOffsets(Helper.to(topicPartitions), done -> {
+      if(done.succeeded()) {
+        handler.handle(Future.succeededFuture(Helper.fromTopicPartitionOffsets(done.result())));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
+  }
+
+  @Override
+  public void endOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler) {
+    Set<TopicPartition> topicPartitions = new HashSet<>();
+    topicPartitions.add(topicPartition);
+    this.stream.endOffsets(Helper.to(topicPartitions), done -> {
+      if(done.succeeded()) {
+        for(long endOffset : done.result().values()) {
+          handler.handle(Future.succeededFuture(endOffset));
+          break;
+        }
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
   }
 
   @Override

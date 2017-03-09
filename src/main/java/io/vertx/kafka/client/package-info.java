@@ -211,7 +211,7 @@
  * == Seeking in a topic partition
  *
  * Apache Kafka can retain messages for a long period of time and the consumer can seek inside a topic partition
- * and obtain arbitraty access to the messages.
+ * and obtain arbitrary access to the messages.
  *
  * You can use {@link io.vertx.kafka.client.consumer.KafkaConsumer#seek} to change the offset for reading at a specific
  * position
@@ -235,6 +235,34 @@
  * {@link examples.VertxKafkaClientExamples#exampleSeekToEnd}
  * ----
  *
+ * == Offset lookup
+ *
+ * You can use the beginningOffsets API introduced in Kafka 0.10.1.1 to get the first offset
+ * for a given partition. In contrast to {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToBeginning},
+ * it does not change the consumer's offset.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerBeginningOffsets}
+ * ----
+ *
+ * You can use the endOffsets API introduced in Kafka 0.10.1.1 to get the last offset
+ * for a given partition. In contrast to {@link io.vertx.kafka.client.consumer.KafkaConsumer#seekToEnd},
+ * it does not change the consumer's offset.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerEndOffsets}
+ * ----
+ *
+ * You can use the offsetsForTimes API introduced in Kafka 0.10.1.1 to look up an offset by
+ * timestamp, i.e. search parameter is an epoch timestamp and the call returns the lowest offset
+ * with ingestion timestamp >= given timestamp.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxKafkaClientExamples#exampleConsumerOffsetsForTimes}
+ * ----
  * == Message flow control
  *
  * A consumer can control the incoming message flow and pause/resume the read operation from a topic, e.g it

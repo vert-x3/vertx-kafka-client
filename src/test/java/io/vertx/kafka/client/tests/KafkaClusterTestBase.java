@@ -48,7 +48,11 @@ public class KafkaClusterTestBase extends KafkaTestBase {
     if (kafkaCluster != null) {
       kafkaCluster.shutdown();
       kafkaCluster = null;
-      dataDir.delete();
+      boolean delete = dataDir.delete();
+      // If files are still locked and a test fails: delete on exit to allow subsequent test execution
+      if(!delete) {
+        dataDir.deleteOnExit();
+      }
     }
   }
 }
