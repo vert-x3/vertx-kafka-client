@@ -21,8 +21,8 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -45,8 +45,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
-    Serializer<K> keySerializer = KafkaCodecs.serializer(keyType);
-    Serializer<V> valueSerializer = KafkaCodecs.serializer(valueType);
+    Serializer<K> keySerializer = VertxSerdes.serdeFrom(keyType).serializer();
+    Serializer<V> valueSerializer = VertxSerdes.serdeFrom(valueType).serializer();
     return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
   }
 
@@ -55,8 +55,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
-    Serializer<K> keySerializer = KafkaCodecs.serializer(keyType);
-    Serializer<V> valueSerializer = KafkaCodecs.serializer(valueType);
+    Serializer<K> keySerializer = VertxSerdes.serdeFrom(keyType).serializer();
+    Serializer<V> valueSerializer = VertxSerdes.serdeFrom(valueType).serializer();
     return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
   }
 

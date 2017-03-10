@@ -20,8 +20,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
-import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.consumer.impl.KafkaReadStreamImpl;
+import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -67,8 +67,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
-    Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
-    Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
+    Deserializer<K> keyDeserializer = VertxSerdes.serdeFrom(keyType).deserializer();
+    Deserializer<V> valueDeserializer = VertxSerdes.serdeFrom(valueType).deserializer();
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 
@@ -93,8 +93,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
-    Deserializer<K> keyDeserializer = KafkaCodecs.deserializer(keyType);
-    Deserializer<V> valueDeserializer = KafkaCodecs.deserializer(valueType);
+    Deserializer<K> keyDeserializer = VertxSerdes.serdeFrom(keyType).deserializer();
+    Deserializer<V> valueDeserializer = VertxSerdes.serdeFrom(valueType).deserializer();
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 
