@@ -677,40 +677,30 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       // nothing to do in this test
     });
 
-    consumer.subscribe(Collections.singleton("the_topic"), subscribeRes -> {
-        if (subscribeRes.succeeded()) {
-          // search by timestamp
-          // take timestamp BEFORE start of ingestion and add half of the ingestion duration to it
-          long searchTimestamp = beforeProduce + (produceDuration / 2);
-          Map<TopicPartition, Long> topicAndTimestamp = new HashMap<>();
-          topicAndTimestamp.put(topicPartition, searchTimestamp);
+    consumer.subscribe(Collections.singleton("the_topic"), ctx.asyncAssertSuccess(subscribeRes -> {
+      // search by timestamp
+      // take timestamp BEFORE start of ingestion and add half of the ingestion duration to it
+      long searchTimestamp = beforeProduce + (produceDuration / 2);
+      consumer.offsetsForTimes(Collections.singletonMap(topicPartition, searchTimestamp), ctx.asyncAssertSuccess(offsetAndTimestamps -> {
+        OffsetAndTimestamp offsetAndTimestamp = offsetAndTimestamps.get(topicPartition);
+        ctx.assertEquals(1, offsetAndTimestamps.size());
+        // Offset must be somewhere between beginningOffset and endOffset
+        ctx.assertTrue(offsetAndTimestamp.offset() >= 0L && offsetAndTimestamp.offset() <= (long)numMessages,
+          "Invalid offset 0 <= " + offsetAndTimestamp.offset() + " < " + numMessages);
+        // Timestamp of returned offset must be at >= searchTimestamp
+        ctx.assertTrue(offsetAndTimestamp.timestamp() >= searchTimestamp);
+        done.countDown();
+      }));
 
-          consumer.offsetsForTimes(topicAndTimestamp, offsetSearchResult -> {
-            ctx.assertTrue(offsetSearchResult.succeeded());
-            ctx.assertEquals(1, offsetSearchResult.result().size());
-            OffsetAndTimestamp offsetAndTimestamp = offsetSearchResult.result().get(topicPartition);
-            // Offset must be somewhere between beginningOffset and endOffset
-            ctx.assertTrue(offsetAndTimestamp.offset() > 0L && offsetAndTimestamp.offset() <= (long)numMessages);
-            // Timestamp of returned offset must be at >= searchTimestamp
-            ctx.assertTrue(offsetAndTimestamp.timestamp() >= searchTimestamp);
-            done.countDown();
-          });
-
-          consumer.offsetsForTimes(topicPartition, searchTimestamp, offsetSearchResult -> {
-            ctx.assertTrue(offsetSearchResult.succeeded());
-            OffsetAndTimestamp offsetAndTimestamp = offsetSearchResult.result();
-            // Offset must be somewhere between beginningOffset and endOffset
-            ctx.assertTrue(offsetAndTimestamp.offset() > 0L && offsetAndTimestamp.offset() <= (long)numMessages);
-            // Timestamp of returned offset must be at >= searchTimestamp
-            ctx.assertTrue(offsetAndTimestamp.timestamp() >= searchTimestamp);
-            done.countDown();
-          });
-
-        } else {
-          ctx.fail(subscribeRes.cause());
-        }
-      }
-    );
+      consumer.offsetsForTimes(topicPartition, searchTimestamp, ctx.asyncAssertSuccess(offsetAndTimestamp -> {
+        // Offset must be somewhere between beginningOffset and endOffset
+        ctx.assertTrue(offsetAndTimestamp.offset() >= 0L && offsetAndTimestamp.offset() <= (long)numMessages,
+          "Invalid offset 0 <= " + offsetAndTimestamp.offset() + " < " + numMessages);
+        // Timestamp of returned offset must be at >= searchTimestamp
+        ctx.assertTrue(offsetAndTimestamp.timestamp() >= searchTimestamp);
+        done.countDown();
+      }));
+    }));
   }
 
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
