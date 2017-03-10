@@ -25,12 +25,13 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.serialization.BufferDeserializer;
 import io.vertx.kafka.client.serialization.BufferSerializer;
-import io.vertx.kafka.client.KafkaCodecs;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 import org.junit.After;
 import org.junit.Before;
@@ -87,8 +88,9 @@ public class CodecsTest extends KafkaClusterTestBase {
   }
 
   private <T> void testSerializer(Class<T> type, T val) {
-    final Deserializer<T> deserializer = KafkaCodecs.deserializer(type);
-    final Serializer<T> serializer = KafkaCodecs.serializer(type);
+    final Serde<T> serde = VertxSerdes.serdeFrom(type);
+    final Deserializer<T> deserializer = serde.deserializer();
+    final Serializer<T> serializer = serde.serializer();
 
     assertEquals("Should get the original value after serialization and deserialization",
       val, deserializer.deserialize(topic, serializer.serialize(topic, val)));
