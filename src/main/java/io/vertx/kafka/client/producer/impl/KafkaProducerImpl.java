@@ -63,11 +63,11 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   private static class SharedProducer extends HashMap<Object, KafkaProducer> {
 
-    final KafkaWriteStream stream;
+    final Producer producer;
     final CloseHandler closeHandler;
 
     public SharedProducer(KafkaWriteStream stream) {
-      this.stream = stream;
+      this.producer = stream.producer();
       this.closeHandler = new CloseHandler(stream::close);
     }
   }
@@ -83,7 +83,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
         return s;
       });
       Object key = new Object();
-      KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>((KafkaWriteStream<K, V>) sharedProducer.stream, new CloseHandler((timeout, ar) -> {
+      KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>(KafkaWriteStream.create(vertx, sharedProducer.producer), new CloseHandler((timeout, ar) -> {
         synchronized (sharedProducers) {
           sharedProducer.remove(key);
           if (sharedProducer.isEmpty()) {
