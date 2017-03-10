@@ -61,7 +61,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   private long maxSize = DEFAULT_MAX_SIZE;
-  private long size;
+  private long pending;
   private final Producer<K, V> producer;
   private Handler<Void> drainHandler;
   private Handler<Throwable> exceptionHandler;
@@ -86,7 +86,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   public synchronized KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
 
     int len = this.len(record.value());
-    this.size += len;
+    this.pending += len;
     this.context.<RecordMetadata>executeBlocking(fut -> {
       this.producer.send(record, (metadata, err) -> {
 
@@ -104,8 +104,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             }
 
             long lowWaterMark = this.maxSize / 2;
-            this.size -= len;
-            if (this.size < lowWaterMark && this.drainHandler != null) {
+            this.pending -= len;
+            if (this.pending < lowWaterMark && this.drainHandler != null) {
               Handler<Void> drainHandler = this.drainHandler;
               this.drainHandler = null;
               this.context.runOnContext(drainHandler);
@@ -136,7 +136,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public synchronized boolean writeQueueFull() {
-    return (this.size >= this.maxSize);
+    return (this.pending >= this.maxSize);
   }
 
   @Override
