@@ -235,6 +235,10 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     Context context = vertx.getOrCreateContext();
     consumer = createConsumer(context, config);
+
+    // We need to rename the client to avoid javax.management.InstanceAlreadyExistsException
+    // see https://github.com/vert-x3/vertx-kafka-client/issues/5
+    config.setProperty("client.id", "the_consumer2");
     consumer2 = createConsumer(vertx, config);
     consumer.handler(rec -> {});
     consumer2.handler(rec -> {});
