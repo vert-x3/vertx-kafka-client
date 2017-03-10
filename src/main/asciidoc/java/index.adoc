@@ -467,9 +467,7 @@ with ingestion timestamp >= given timestamp.
 [source,java]
 ----
 Map<TopicPartition, Long> topicPartitionsWithTimestamps = new HashMap<>();
-TopicPartition topicPartition = new TopicPartition()
-  .setTopic("test")
-  .setPartition(0);
+TopicPartition topicPartition = new TopicPartition().setTopic("test").setPartition(0);
 
 // We are interested in the offset for data ingested 60 seconds ago
 long timestamp = (System.currentTimeMillis() - 60000);
@@ -479,8 +477,22 @@ consumer.offsetsForTimes(topicPartitionsWithTimestamps, done -> {
   if(done.succeeded()) {
     Map<TopicPartition, OffsetAndTimestamp> results = done.result();
     results.forEach((topic, offset) ->
-      System.out.println("Offset for topic="+topic.getTopic()+", partition="+topic.getPartition()+"\n"+
-        ", timestamp="+timestamp+", offset="+offset.getOffset()+", offsetTimestamp="+offset.getTimestamp()));
+      System.out.println("Offset for topic="+topic.getTopic()+
+        ", partition="+topic.getPartition()+"\n"+
+        ", timestamp="+timestamp+", offset="+offset.getOffset()+
+        ", offsetTimestamp="+offset.getTimestamp()));
+
+  }
+});
+
+// Convenience method for single-partition lookup
+consumer.offsetsForTimes(topicPartition, timestamp, done -> {
+  if(done.succeeded()) {
+    OffsetAndTimestamp offsetAndTimestamp = done.result();
+      System.out.println("Offset for topic="+topicPartition.getTopic()+
+        ", partition="+topicPartition.getPartition()+"\n"+
+        ", timestamp="+timestamp+", offset="+offsetAndTimestamp.getOffset()+
+        ", offsetTimestamp="+offsetAndTimestamp.getTimestamp());
 
   }
 });
