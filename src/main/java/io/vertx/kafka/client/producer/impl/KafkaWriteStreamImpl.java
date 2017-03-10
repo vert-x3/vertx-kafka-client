@@ -90,8 +90,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     this.context.<RecordMetadata>executeBlocking(fut -> {
       this.producer.send(record, (metadata, err) -> {
 
+        // callback from IO thread
         this.context.runOnContext(v1 -> {
-          // callback from IO thread
           synchronized (KafkaWriteStreamImpl.this) {
 
             // if exception happens, no record written
@@ -101,18 +101,14 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
                 Handler<Throwable> exceptionHandler = this.exceptionHandler;
                 this.context.runOnContext(v2 -> exceptionHandler.handle(err));
               }
+            }
 
-              // no error, record written
-            } else {
-
-              this.size -= len;
-
-              long lowWaterMark = this.maxSize / 2;
-              if (this.size < lowWaterMark && this.drainHandler != null) {
-                Handler<Void> drainHandler = this.drainHandler;
-                this.drainHandler = null;
-                this.context.runOnContext(drainHandler);
-              }
+            long lowWaterMark = this.maxSize / 2;
+            this.size -= len;
+            if (this.size < lowWaterMark && this.drainHandler != null) {
+              Handler<Void> drainHandler = this.drainHandler;
+              this.drainHandler = null;
+              this.context.runOnContext(drainHandler);
             }
           }
 

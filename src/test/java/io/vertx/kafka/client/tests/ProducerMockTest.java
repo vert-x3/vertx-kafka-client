@@ -78,6 +78,15 @@ public class ProducerMockTest {
 
   @Test
   public void testProducerDrain(TestContext ctx) throws Exception {
+    testProducerDrain(ctx, null);
+  }
+
+  @Test
+  public void testProducerFailureDrain(TestContext ctx) throws Exception {
+    testProducerDrain(ctx, new RuntimeException());
+  }
+
+  private void testProducerDrain(TestContext ctx, RuntimeException failure) throws Exception {
     TestProducer mock = new TestProducer();
     KafkaWriteStream<String, String> producer = ProducerTest.producer(Vertx.vertx(), mock);
     int sent = 0;
@@ -92,10 +101,17 @@ public class ProducerMockTest {
       async.complete();
     });
     for (int i = 0;i < sent / 2;i++) {
-      mock.assertCompleteNext();
-//      assertFalse(producer.writeQueueFull());
+      if (failure != null) {
+        mock.assertErrorNext(failure);
+      } else {
+        mock.assertCompleteNext();
+      }
     }
-    mock.assertCompleteNext();
+    if (failure != null) {
+      mock.assertErrorNext(failure);
+    } else {
+      mock.assertCompleteNext();
+    }
     assertFalse(producer.writeQueueFull());
   }
 
