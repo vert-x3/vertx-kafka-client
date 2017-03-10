@@ -87,50 +87,41 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
     int len = this.len(record.value());
     this.size += len;
-
-    try {
-
-      // non blocking
+    this.context.<RecordMetadata>executeBlocking(fut -> {
       this.producer.send(record, (metadata, err) -> {
 
-        // callback from IO thread
-        synchronized (KafkaWriteStreamImpl.this) {
+        this.context.runOnContext(v1 -> {
+          // callback from IO thread
+          synchronized (KafkaWriteStreamImpl.this) {
 
-          // if exception happens, no record written
-          if (err != null) {
+            // if exception happens, no record written
+            if (err != null) {
 
-            if (this.exceptionHandler != null) {
-              Handler<Throwable> exceptionHandler = this.exceptionHandler;
-              this.context.runOnContext(v -> exceptionHandler.handle(err));
-            }
+              if (this.exceptionHandler != null) {
+                Handler<Throwable> exceptionHandler = this.exceptionHandler;
+                this.context.runOnContext(v2 -> exceptionHandler.handle(err));
+              }
 
-            if (handler != null) {
-              this.context.runOnContext(v -> handler.handle(Future.failedFuture(err)));
-            }
+              // no error, record written
+            } else {
 
-          // no error, record written
-          } else {
+              this.size -= len;
 
-            this.size -= len;
-
-            if (handler != null) {
-              this.context.runOnContext(v -> handler.handle(Future.succeededFuture(metadata)));
-            }
-
-            long lowWaterMark = this.maxSize / 2;
-            if (this.size < lowWaterMark && this.drainHandler != null) {
-              Handler<Void> drainHandler = this.drainHandler;
-              this.drainHandler = null;
-              this.context.runOnContext(drainHandler);
+              long lowWaterMark = this.maxSize / 2;
+              if (this.size < lowWaterMark && this.drainHandler != null) {
+                Handler<Void> drainHandler = this.drainHandler;
+                this.drainHandler = null;
+                this.context.runOnContext(drainHandler);
+              }
             }
           }
 
-        }
+          if (handler != null) {
+            handler.handle(err != null ? Future.failedFuture(err) : Future.succeededFuture(metadata));
+          }
+        });
       });
-
-    } catch (Exception e) {
-      this.size -= len;
-    }
+    }, null);
 
     return this;
   }
