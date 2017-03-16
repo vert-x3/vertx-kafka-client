@@ -16,7 +16,6 @@
 
 package io.vertx.kafka.client.tests;
 
-import io.debezium.kafka.KafkaCluster;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServer;
 import io.vertx.ext.unit.Async;
@@ -50,24 +49,23 @@ public class ProducerTest extends KafkaClusterTestBase {
   public void afterTest(TestContext ctx) {
     close(ctx, producer);
     vertx.close(ctx.asyncAssertSuccess());
-    super.afterTest(ctx);
   }
 
   @Test
   public void testProduce(TestContext ctx) throws Exception {
-    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
-    Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
+   String topicName = "testProduce";
+    Properties config = kafkaCluster.useTo().getProducerProperties("testProduce_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producer = producer(Vertx.vertx(), config);
     producer.exceptionHandler(ctx::fail);
     int numMessages = 100000;
     for (int i = 0;i < numMessages;i++) {
-      producer.write(new ProducerRecord<>("the_topic", 0, "key-" + i, "value-" + i));
+      producer.write(new ProducerRecord<>(topicName, 0, "key-" + i, "value-" + i));
     }
     Async done = ctx.async();
     AtomicInteger seq = new AtomicInteger();
-    kafkaCluster.useTo().consumeStrings("the_topic", numMessages, 10, TimeUnit.SECONDS, done::complete, (key, value) -> {
+    kafkaCluster.useTo().consumeStrings(topicName, numMessages, 10, TimeUnit.SECONDS, done::complete, (key, value) -> {
       int count = seq.getAndIncrement();
       ctx.assertEquals("key-" + count, key);
       ctx.assertEquals("value-" + count, value);
@@ -77,31 +75,35 @@ public class ProducerTest extends KafkaClusterTestBase {
 
   @Test
   public void testBlockingBroker(TestContext ctx) throws Exception {
+    // Use a port different from default 9092, because Broker IS running
+    int port = 9091;
     Async serverAsync = ctx.async();
     NetServer server = vertx.createNetServer().connectHandler(so -> {
-    }).listen(9092, ctx.asyncAssertSuccess(v -> serverAsync.complete()));
+    }).listen(port, ctx.asyncAssertSuccess(v -> serverAsync.complete()));
     serverAsync.awaitSuccess(10000);
     Properties props = new Properties();
-    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:"+port);
     props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
 
     producer = producer(Vertx.vertx(), props);
-    producer.write(new ProducerRecord<>("the_topic", 0, "key", "value"), ctx.asyncAssertFailure());
+    producer.write(new ProducerRecord<>("testBlockkingBroker", 0, "key", "value"), ctx.asyncAssertFailure());
   }
 
   @Test
+  // Should fail because it cannot reach the broker
   public void testBrokerConnectionError(TestContext ctx) throws Exception {
     Properties props = new Properties();
-    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    // use a wrong port on purpose, because Broker IS running
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9091");
     props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
 
     producer = producer(Vertx.vertx(), props);
-    producer.write(new ProducerRecord<>("the_topic", 0, "key", "value"), ctx.asyncAssertFailure());
+    producer.write(new ProducerRecord<>("testBrokerConnectionError", 0, "key", "value"), ctx.asyncAssertFailure());
   }
 }

@@ -21,9 +21,12 @@ import io.debezium.util.Testing;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Base class for tests providing a Kafka cluster
@@ -31,10 +34,10 @@ import java.io.File;
 @RunWith(VertxUnitRunner.class)
 public class KafkaClusterTestBase extends KafkaTestBase {
 
-  private File dataDir;
-  private KafkaCluster kafkaCluster;
+  private static File dataDir;
+  protected static KafkaCluster kafkaCluster;
 
-  protected KafkaCluster kafkaCluster() {
+  protected static KafkaCluster kafkaCluster() {
     if (kafkaCluster != null) {
       throw new IllegalStateException();
     }
@@ -43,8 +46,14 @@ public class KafkaClusterTestBase extends KafkaTestBase {
     return kafkaCluster;
   }
 
-  @After
-  public void afterTest(TestContext ctx) {
+  @BeforeClass
+  public static void setUp(TestContext ctx) throws IOException {
+    kafkaCluster = kafkaCluster().deleteDataPriorToStartup(true).addBrokers(1).startup();
+  }
+
+
+  @AfterClass
+  public static void tearDown(TestContext ctx) {
     if (kafkaCluster != null) {
       kafkaCluster.shutdown();
       kafkaCluster = null;

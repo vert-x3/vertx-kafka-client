@@ -1,6 +1,5 @@
 package io.vertx.kafka.client.tests;
 
-import io.debezium.kafka.KafkaCluster;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.rxjava.core.Vertx;
@@ -34,19 +33,18 @@ public class RxConsumerTest extends KafkaClusterTestBase {
     close(ctx, consumer::close);
     consumer = null;
     vertx.close(ctx.asyncAssertSuccess());
-    super.afterTest(ctx);
   }
 
   @Test
   public void testConsume(TestContext ctx) throws Exception {
-    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
+    String topicName = "testConsume";
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 1000;
     kafkaCluster.useTo().produceStrings(numMessages, batch::complete,  () ->
-      new ProducerRecord<>("the_topic", 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch.awaitSuccess(20000);
-    Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
+    Properties config = kafkaCluster.useTo().getConsumerProperties("testConsume_consumer", "testConsume_consumer", OffsetResetStrategy.EARLIEST);
     Map<String ,String> map = mapConfig(config);
     consumer = KafkaConsumer.create(vertx, map, String.class, String.class);
     Async done = ctx.async();
@@ -56,6 +54,6 @@ public class RxConsumerTest extends KafkaClusterTestBase {
         done.complete();
       }
     }, ctx::fail);
-    consumer.subscribe(Collections.singleton("the_topic"));
+    consumer.subscribe(Collections.singleton(topicName));
   }
 }
