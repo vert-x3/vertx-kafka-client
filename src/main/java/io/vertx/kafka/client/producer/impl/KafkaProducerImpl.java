@@ -67,7 +67,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     final CloseHandler closeHandler;
 
     public SharedProducer(KafkaWriteStream stream) {
-      this.producer = stream.producer();
+      this.producer = stream.unwrap();
       this.closeHandler = new CloseHandler(stream::close);
     }
   }
@@ -233,7 +233,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public Producer<K, V> producer() {
-    return this.stream.producer();
+  public Producer<K, V> unwrap() {
+    return this.stream.unwrap();
   }
 }

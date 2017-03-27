@@ -244,8 +244,8 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   KafkaWriteStream<K, V> asStream();
 
   /**
-   * @return the native producer
+   * @return the underlying producer
    */
   @GenIgnore
-  Producer<K, V> producer();
+  Producer<K, V> unwrap();
 }

@@ -605,7 +605,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public Consumer<K, V> consumer() {
+  public Consumer<K, V> unwrap() {
     return this.consumer;
   }
 }

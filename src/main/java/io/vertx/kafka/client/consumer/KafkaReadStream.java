@@ -405,8 +405,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
 
   /**
-   * @return the native consumer
+   * @return the underlying consumer
    */
-  Consumer<K, V> consumer();
+  Consumer<K, V> unwrap();
 
 }

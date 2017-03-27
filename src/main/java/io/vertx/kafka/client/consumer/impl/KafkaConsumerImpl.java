@@ -505,7 +505,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public Consumer<K, V> consumer() {
-    return this.stream.consumer();
+  public Consumer<K, V> unwrap() {
+    return this.stream.unwrap();
   }
 }

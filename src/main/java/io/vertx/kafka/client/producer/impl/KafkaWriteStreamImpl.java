@@ -213,7 +213,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public Producer<K, V> producer() {
+  public Producer<K, V> unwrap() {
     return this.producer;
   }
 }
