@@ -580,8 +580,8 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   KafkaReadStream<K, V> asStream();
 
   /**
-   * @return the native consumer
+   * @return the underlying consumer
    */
   @GenIgnore
-  Consumer<K, V> consumer();
+  Consumer<K, V> unwrap();
 }
