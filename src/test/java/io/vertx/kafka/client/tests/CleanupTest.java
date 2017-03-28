@@ -8,9 +8,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
+import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
@@ -44,7 +46,6 @@ public class CleanupTest extends KafkaClusterTestBase {
   @After
   public void afterTest(TestContext ctx) {
     vertx.close(ctx.asyncAssertSuccess());
-    super.afterTest(ctx);
   }
 
   private long countProducerThreads() {
@@ -56,7 +57,6 @@ public class CleanupTest extends KafkaClusterTestBase {
 
   @Test
   public void testSharedProducer(TestContext ctx) throws Exception {
-    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -104,7 +104,6 @@ public class CleanupTest extends KafkaClusterTestBase {
 
   @Test
   public void testSharedProducerCleanupInVerticle(TestContext ctx) throws Exception {
-    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -128,7 +127,6 @@ public class CleanupTest extends KafkaClusterTestBase {
 
   @Test
   public void testCleanupInProducer(TestContext ctx) throws Exception {
-    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -160,31 +158,42 @@ public class CleanupTest extends KafkaClusterTestBase {
 
   @Test
   public void testCleanupInConsumer(TestContext ctx) throws Exception {
-    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
-    Properties config = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);
+    String topicName = "testCleanupInConsumer";
+    Properties config = kafkaCluster.useTo().getConsumerProperties("testCleanupInConsumer_consumer",
+      "testCleanupInConsumer_consumer", OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
     Async async = ctx.async();
     Async produceLatch = ctx.async();
     vertx.deployVerticle(new AbstractVerticle() {
       @Override
       public void start(Future<Void> fut) throws Exception {
-        KafkaConsumer<String, String> producer = KafkaConsumer.create(vertx, config);
-        producer.handler(record -> {
-          vertx.undeploy(context.deploymentID(), ar -> {
+        KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+        consumer.handler(record -> {
+          // Very rarely, this throws a AlreadyUndedeployed error
+          vertx.undeploy(context.deploymentID(), ctx.asyncAssertSuccess(ar -> {
+            try {
+              // Race condition? Without a sleep, test fails sometimes
+              Thread.sleep(10);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
             Thread.getAllStackTraces().forEach((t, s) -> {
               if (t.getName().contains("vert.x-kafka-consumer-thread")) {
                 ctx.fail("Was expecting the consumer to be closed");
               }
             });
             async.complete();
-          });
+          }));
         });
-        producer.subscribe("the_topic", fut);
+        consumer.assign(new TopicPartition(topicName, 0), fut);
       }
-    }, ctx.asyncAssertSuccess(v -> produceLatch.complete()));
+    }, ctx.asyncAssertSuccess(v ->  produceLatch.complete()
+    ));
     produceLatch.awaitSuccess(10000);
-    kafkaCluster.useTo().produce("the_producer", 1, new StringSerializer(), new StringSerializer(), () -> {
-    }, () -> new ProducerRecord<>("the_topic", "the_value"));
+    kafkaCluster.useTo().produce("testCleanupInConsumer_producer", 100,
+      new StringSerializer(), new StringSerializer(), () -> {
+    }, () -> new ProducerRecord<>(topicName, "the_value"));
   }
 }

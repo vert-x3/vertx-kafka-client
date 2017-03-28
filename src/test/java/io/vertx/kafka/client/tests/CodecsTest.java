@@ -16,7 +16,6 @@
 
 package io.vertx.kafka.client.tests;
 
-import io.debezium.kafka.KafkaCluster;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
@@ -65,7 +64,6 @@ public class CodecsTest extends KafkaClusterTestBase {
     close(ctx, producer);
     close(ctx, consumer);
     vertx.close(ctx.asyncAssertSuccess());
-    super.afterTest(ctx);
   }
 
 
@@ -102,6 +100,7 @@ public class CodecsTest extends KafkaClusterTestBase {
   @Test
   public void testStringCodec(TestContext ctx) throws Exception {
     testCodec(ctx,
+      "testStringCodec",
       cfg -> producer(vertx, cfg, String.class, String.class),
       cfg -> KafkaReadStream.create(vertx, cfg, String.class, String.class),
       i -> "key-" + i,
@@ -111,6 +110,7 @@ public class CodecsTest extends KafkaClusterTestBase {
   @Test
   public void testBufferCodec(TestContext ctx) throws Exception {
     testCodec(ctx,
+      "testBufferCodec",
       cfg -> producer(vertx, cfg, Buffer.class, Buffer.class),
       cfg -> KafkaReadStream.create(vertx, cfg, Buffer.class, Buffer.class),
       i -> Buffer.buffer("key-" + i),
@@ -120,6 +120,7 @@ public class CodecsTest extends KafkaClusterTestBase {
   @Test
   public void testBufferCodecString(TestContext ctx) throws Exception {
     testCodec(ctx,
+      "testBufferCodecString",
       cfg -> {
         cfg.put("key.serializer", BufferSerializer.class);
         cfg.put("value.serializer", BufferSerializer.class);
@@ -135,12 +136,12 @@ public class CodecsTest extends KafkaClusterTestBase {
   }
 
   private <K, V> void testCodec(TestContext ctx,
+                                String prefix,
                                 Function<Properties,KafkaWriteStream<K, V>> producerFactory,
                                 Function<Properties, KafkaReadStream<K, V>> consumerFactory,
                                 Function<Integer, K> keyConv,
                                 Function<Integer, V> valueConv) throws Exception {
-    KafkaCluster kafkaCluster = kafkaCluster().addBrokers(1).startup();
-    Properties producerConfig = kafkaCluster.useTo().getProducerProperties("the_producer");
+    Properties producerConfig = kafkaCluster.useTo().getProducerProperties(prefix+"the_producer");
     KafkaWriteStream<K, V> writeStream = producerFactory.apply(producerConfig);
     producer = writeStream;
     writeStream.exceptionHandler(ctx::fail);
@@ -152,10 +153,10 @@ public class CodecsTest extends KafkaClusterTestBase {
       V value = valueConv.apply(i);
       keys.add(key);
       values.add(value);
-      writeStream.write(new ProducerRecord<>(topic, 0, key, value));
+      writeStream.write(new ProducerRecord<>(prefix + topic, 0, key, value));
     }
     Async done = ctx.async();
-    Properties consumerConfig = kafkaCluster.useTo().getConsumerProperties("the_consumer", "the_consumer", OffsetResetStrategy.EARLIEST);;
+    Properties consumerConfig = kafkaCluster.useTo().getConsumerProperties(prefix+"the_consumer", prefix+"the_consumer", OffsetResetStrategy.EARLIEST);
     KafkaReadStream<K, V> readStream = consumerFactory.apply(consumerConfig);
     consumer = readStream;
     AtomicInteger count = new AtomicInteger(numMessages);
@@ -167,6 +168,6 @@ public class CodecsTest extends KafkaClusterTestBase {
         done.complete();
       }
     });
-    readStream.subscribe(Collections.singleton(topic));
+    readStream.subscribe(Collections.singleton(prefix + topic));
   }
 }
