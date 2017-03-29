@@ -1,4 +1,4 @@
-= Vert.x Kafka AdminUtilsWrapper
+= Vert.x Kafka AdminUtils
 :toc: left
 :lang: java
 :java: java
@@ -6,19 +6,19 @@
 This component provides a vert.x wrapper around the most important functions of Kafka's AdminsUtils.
 
 AdminUtils are used to create, modify, and delete topics. Other functionality covered by AdminUtils,
-but not this Wrapper, includes Partition Management, Broker Configuration management, etc.
+but not this wrapper, includes Partition Management, Broker Configuration management, etc.
 
-== Using the AdminUtilsWrapper
+== Using the AdminUtils
 
-=== Create a topic ===
+=== Create a topic
 
-You can call `link:../../apidocs/io/vertx/kafka/admin/AdminUtilsWrapper.html#createTopic-java.lang.String-int-int-io.vertx.core.Handler-[createTopic]` to create a topic.
+You can call `link:../../apidocs/io/vertx/kafka/admin/AdminUtils.html#createTopic-java.lang.String-int-int-io.vertx.core.Handler-[createTopic]` to create a topic.
 Parameters are: topic name, number of partitions, number of replicas, and the usual callback to handle the result.
 It might return an error, e.g. if the number of requested replicas is greater than the number of brokers.
 
 [source,java]
 ----
-AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(Vertx.vertx(), "localhost:2181", true);
+AdminUtils adminUtils = AdminUtils.create(Vertx.vertx(), "localhost:2181", true);
 // Create topic 'myNewTopic' with 2 partition and 1 replicas
 adminUtils.createTopic("myNewTopic", 2, 1, result -> {
   if(result.succeeded())
@@ -29,15 +29,15 @@ adminUtils.createTopic("myNewTopic", 2, 1, result -> {
 });
 ----
 
-=== Delete a topic ===
+=== Delete a topic
 
-You can call `link:../../apidocs/io/vertx/kafka/admin/AdminUtilsWrapper.html#deleteTopic-java.lang.String-io.vertx.core.Handler-[deleteTopic]` to delete a topic.
+You can call `link:../../apidocs/io/vertx/kafka/admin/AdminUtils.html#deleteTopic-java.lang.String-io.vertx.core.Handler-[deleteTopic]` to delete a topic.
 Parameters are: topic name, and the usual callback to handle the result.
 It might return an error, e.g. if the topic does not exist.
 
 [source,java]
 ----
-AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(Vertx.vertx(), "localhost:2181", true);
+AdminUtils adminUtils = AdminUtils.create(Vertx.vertx(), "localhost:2181", true);
 // Delete topic 'myNewTopic'
 adminUtils.deleteTopic("myNewTopic", result -> {
   if(result.succeeded())
@@ -48,17 +48,17 @@ adminUtils.deleteTopic("myNewTopic", result -> {
 });
 ----
 
-=== Change a topic's configuration ===
+=== Change a topic's configuration
 
 If you need to update the configuration of a topic, e.g., you want to update the retention policy,
-you can call `link:../../apidocs/io/vertx/kafka/admin/AdminUtilsWrapper.html#changeTopicConfig-java.lang.String-java.util.Map-io.vertx.core.Handler-[changeTopicConfig]` to update a topic.
+you can call `link:../../apidocs/io/vertx/kafka/admin/AdminUtils.html#changeTopicConfig-java.lang.String-java.util.Map-io.vertx.core.Handler-[changeTopicConfig]` to update a topic.
 Parameters are: topic name, a Map (String -> String) with parameters to be changed,
 and the usual callback to handle the result.
 It might return an error, e.g. if the topic does not exist.
 
 [source,java]
 ----
-AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(Vertx.vertx(), "localhost:2181", true);
+AdminUtils adminUtils = AdminUtils.create(Vertx.vertx(), "localhost:2181", true);
 // Set retention to 1000 ms and max size of the topic partition to 1 kiByte
 Map<String, String> properties = new HashMap<>();
 properties.put("delete.retention.ms", "1000");
@@ -69,18 +69,18 @@ adminUtils.changeTopicConfig("myNewTopic", properties, result -> {
   else
     System.out.println("Configuration change of topic myNewTopic failed: "+
       result.cause().getLocalizedMessage());
-});}
+});}
 ----
 
-=== Check if a topic exists ===
+=== Check if a topic exists
 
-If you want to check if a topic exists, you can call `link:../../apidocs/io/vertx/kafka/admin/AdminUtilsWrapper.html#topicExists-java.lang.String-io.vertx.core.Handler-[topicExists]`.
+If you want to check if a topic exists, you can call `link:../../apidocs/io/vertx/kafka/admin/AdminUtils.html#topicExists-java.lang.String-io.vertx.core.Handler-[topicExists]`.
 Parameters are: topic name, and the usual callback to handle the result.
 It might return an error, e.g. if the topic does not exist.
 
 [source,java]
 ----
-AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(Vertx.vertx(), "localhost:2181", true);
+AdminUtils adminUtils = AdminUtils.create(Vertx.vertx(), "localhost:2181", true);
 adminUtils.topicExists("myNewTopic", result -> {
   if(result.succeeded()) {
     System.out.println("Topic myNewTopic exists: "+result.result());

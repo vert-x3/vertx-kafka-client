@@ -13,9 +13,9 @@ import java.util.Properties;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.admin.AdminUtilsWrapper;
+import io.vertx.kafka.admin.AdminUtils;
 
-public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
+public class AdminUtilsTest extends KafkaClusterTestBase {
   private Vertx vertx;
   private String zookeeperHosts = "localhost:2181";
 
@@ -36,7 +36,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     Async createAsync = ctx.async();
 
@@ -60,7 +60,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     Async async = ctx.async();
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     adminUtils.createTopic(topicName, 1, 2,
       ctx.asyncAssertFailure(
@@ -82,7 +82,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     Async async = ctx.async();
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     adminUtils.createTopic(topicName, 1, 1,
       ctx.asyncAssertSuccess(
@@ -115,7 +115,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     Async createAsync = ctx.async();
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     adminUtils.createTopic(topicName, 2, 1,
       ctx.asyncAssertSuccess(
@@ -139,7 +139,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     Async createAsync = ctx.async();
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     adminUtils.topicExists(topicName, ctx.asyncAssertSuccess(res -> {
         ctx.assertFalse(res, "Topic must not exist");
@@ -157,7 +157,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     Async async = ctx.async();
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     adminUtils.createTopic(topicName, 1, 1,
       ctx.asyncAssertSuccess(
@@ -178,7 +178,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     Async async = ctx.async();
 
@@ -197,7 +197,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     Async createAsync = ctx.async();
 
@@ -229,7 +229,7 @@ public class AdminUtilsWrapperTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
 
     Async createAsync = ctx.async();
     adminUtils.createTopic(topicName, 2, 1,

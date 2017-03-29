@@ -15,61 +15,61 @@
  */
 
 /**
- * = Vert.x Kafka AdminUtilsWrapper
+ * = Vert.x Kafka AdminUtils
  * :toc: left
  * :lang: $lang
  * :$lang: $lang
  *
- * This component provides a vert.x wrapper around the most important functions of Kafka's AdminsUtils.
+ * This component provides a vert.x wrapper around the most important functions of Kafka's AdminUtils.
  * AdminUtils are used to create, modify, and delete topics. Other functionality covered by AdminUtils,
- * but not this Wrapper, includes Partition Management, Broker Configuration management, etc.
+ * but not this wrapper, includes Partition Management, Broker Configuration management, etc.
  *
- * == Using the AdminUtilsWrapper
+ * == Using the AdminUtils
  *
- * === Create a topic ===
+ * === Create a topic
  *
- * You can call {@link io.vertx.kafka.admin.AdminUtilsWrapper#createTopic} to create a topic.
+ * You can call {@link io.vertx.kafka.admin.AdminUtils#createTopic} to create a topic.
  * Parameters are: topic name, number of partitions, number of replicas, and the usual callback to handle the result.
  * It might return an error, e.g. if the number of requested replicas is greater than the number of brokers.
  *
  * [source,$lang]
  * ----
- * {@link examples.AdminUtilsWrapperExamples#createTopic}
+ * {@link examples.AdminUtilsExamples#createTopic}
  * ----
  *
- * === Delete a topic ===
+ * === Delete a topic
  *
- * You can call {@link io.vertx.kafka.admin.AdminUtilsWrapper#deleteTopic} to delete a topic.
+ * You can call {@link io.vertx.kafka.admin.AdminUtils#deleteTopic} to delete a topic.
  * Parameters are: topic name, and the usual callback to handle the result.
  * It might return an error, e.g. if the topic does not exist.
  *
  * [source,$lang]
  * ----
- * {@link examples.AdminUtilsWrapperExamples#deleteTopic}
+ * {@link examples.AdminUtilsExamples#deleteTopic}
  * ----
  *
- * === Change a topic's configuration ===
+ * === Change a topic's configuration
  *
  * If you need to update the configuration of a topic, e.g., you want to update the retention policy,
- * you can call {@link io.vertx.kafka.admin.AdminUtilsWrapper#changeTopicConfig} to update a topic.
+ * you can call {@link io.vertx.kafka.admin.AdminUtils#changeTopicConfig} to update a topic.
  * Parameters are: topic name, a Map (String -> String) with parameters to be changed,
  * and the usual callback to handle the result.
  * It might return an error, e.g. if the topic does not exist.
  *
  * [source,$lang]
  * ----
- * {@link examples.AdminUtilsWrapperExamples#changeTopicConfig()}}
+ * {@link examples.AdminUtilsExamples#changeTopicConfig()}}
  * ----
  *
- * === Check if a topic exists ===
+ * === Check if a topic exists
  *
- * If you want to check if a topic exists, you can call {@link io.vertx.kafka.admin.AdminUtilsWrapper#topicExists}.
+ * If you want to check if a topic exists, you can call {@link io.vertx.kafka.admin.AdminUtils#topicExists}.
  * Parameters are: topic name, and the usual callback to handle the result.
  * It might return an error, e.g. if the topic does not exist.
  *
  * [source,$lang]
  * ----
- * {@link examples.AdminUtilsWrapperExamples#topicExists()}
+ * {@link examples.AdminUtilsExamples#topicExists()}
  * ----
  */
 @Document(fileName = "adminUtils.adoc")

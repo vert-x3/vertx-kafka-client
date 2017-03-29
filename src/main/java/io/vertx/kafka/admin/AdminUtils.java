@@ -7,7 +7,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.kafka.admin.impl.AdminUtilsWrapperImpl;
+import io.vertx.kafka.admin.impl.AdminUtilsImpl;
 import kafka.admin.RackAwareMode;
 import kafka.utils.ZkUtils;
 
@@ -19,32 +19,32 @@ import kafka.utils.ZkUtils;
  * @see kafka.admin.AdminUtils#topicExists(ZkUtils, String)
  */
 @VertxGen
-public interface AdminUtilsWrapper {
+public interface AdminUtils {
 
   /**
-   * Create a new AdminUtilsWrapper instance
+   * Create a new AdminUtils instance
    *
    * @param vertx Vert.x instance to use
    * @param zookeeperHosts comma-separated list of Zookeeper server, e.g. localhost:2181,localhost:2182
    * @return an instance of the AdminUtilWrapper
    */
-  static AdminUtilsWrapper create(Vertx vertx, String zookeeperHosts) {
-    return new AdminUtilsWrapperImpl(vertx, zookeeperHosts);
+  static AdminUtils create(Vertx vertx, String zookeeperHosts) {
+    return new AdminUtilsImpl(vertx, zookeeperHosts);
   }
 
   /**
-   * Create a new AdminUtilsWrapper instance
+   * Create a new AdminUtils instance
    *
    * @param vertx Vert.x instance to use
    * @param zookeeperHosts comma-separated list of Zookeeper server, e.g. localhost:2181,localhost:2182
    * @param autoClose If set to true, the client will auto-close the connection after a command
    * @return an instance of the AdminUtilWrapper
    */
-  static AdminUtilsWrapper create(Vertx vertx, String zookeeperHosts, boolean autoClose) {
-    return new AdminUtilsWrapperImpl(vertx, zookeeperHosts, autoClose);
+  static AdminUtils create(Vertx vertx, String zookeeperHosts, boolean autoClose) {
+    return new AdminUtilsImpl(vertx, zookeeperHosts, autoClose);
   }
   /**
-   * Create a new AdminUtilsWrapper instance
+   * Create a new AdminUtils instance
    *
    * @param vertx Vert.x instance to use
    * @param zookeeperHosts comma-separated list of Zookeeper server, e.g. localhost:2181,localhost:2182
@@ -53,8 +53,8 @@ public interface AdminUtilsWrapper {
    * @param autoClose If set to true, the client will auto-close the connection after a command
    * @return an instance of the AdminUtilWrapper
    */
-  static AdminUtilsWrapper create(Vertx vertx, String zookeeperHosts, int connectionTimeoutMs, boolean isSecure, boolean autoClose) {
-    return new AdminUtilsWrapperImpl(vertx, zookeeperHosts, connectionTimeoutMs, isSecure, autoClose);
+  static AdminUtils create(Vertx vertx, String zookeeperHosts, int connectionTimeoutMs, boolean isSecure, boolean autoClose) {
+    return new AdminUtilsImpl(vertx, zookeeperHosts, connectionTimeoutMs, isSecure, autoClose);
   }
 
   /**
@@ -109,7 +109,7 @@ public interface AdminUtilsWrapper {
 
   /**
    * Closes the underlying connection to Zookeeper. It is required to call the method for cleanup
-   * purposes if AdminUtilsWrapper was not created with autoClose set to true.
+   * purposes if AdminUtils was not created with autoClose set to true.
    * @param completionHandler vert.x callback
    */
   void close(Handler<AsyncResult<Void>> completionHandler);

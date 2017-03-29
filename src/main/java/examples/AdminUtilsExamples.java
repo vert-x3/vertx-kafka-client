@@ -5,13 +5,13 @@ import java.util.Map;
 
 import io.vertx.core.Vertx;
 import io.vertx.docgen.Source;
-import io.vertx.kafka.admin.AdminUtilsWrapper;
+import io.vertx.kafka.admin.AdminUtils;
 
 @Source
-public class AdminUtilsWrapperExamples {
+public class AdminUtilsExamples {
 
   public void createTopic() {
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(Vertx.vertx(), "localhost:2181", true);
+    AdminUtils adminUtils = AdminUtils.create(Vertx.vertx(), "localhost:2181", true);
     // Create topic 'myNewTopic' with 2 partition and 1 replicas
     adminUtils.createTopic("myNewTopic", 2, 1, result -> {
       if(result.succeeded())
@@ -23,7 +23,7 @@ public class AdminUtilsWrapperExamples {
   }
 
   public void deleteTopic() {
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(Vertx.vertx(), "localhost:2181", true);
+    AdminUtils adminUtils = AdminUtils.create(Vertx.vertx(), "localhost:2181", true);
     // Delete topic 'myNewTopic'
     adminUtils.deleteTopic("myNewTopic", result -> {
       if(result.succeeded())
@@ -35,7 +35,7 @@ public class AdminUtilsWrapperExamples {
   }
 
   public void changeTopicConfig() {
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(Vertx.vertx(), "localhost:2181", true);
+    AdminUtils adminUtils = AdminUtils.create(Vertx.vertx(), "localhost:2181", true);
     // Set retention to 1000 ms and max size of the topic partition to 1 kiByte
     Map<String, String> properties = new HashMap<>();
     properties.put("delete.retention.ms", "1000");
@@ -50,7 +50,7 @@ public class AdminUtilsWrapperExamples {
   }
 
   public void topicExists() {
-    AdminUtilsWrapper adminUtils = AdminUtilsWrapper.create(Vertx.vertx(), "localhost:2181", true);
+    AdminUtils adminUtils = AdminUtils.create(Vertx.vertx(), "localhost:2181", true);
     adminUtils.topicExists("myNewTopic", result -> {
       if(result.succeeded()) {
         System.out.println("Topic myNewTopic exists: "+result.result());
