@@ -136,14 +136,15 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   @SuppressWarnings("unchecked")
   public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
     this.stream.write(record.record(), done -> {
-
-      if (done.succeeded()) {
-        handler.handle(Future.succeededFuture(Helper.from(done.result())));
-      } else {
-        handler.handle(Future.failedFuture(done.cause()));
+      if (handler != null) {
+        if (done.succeeded()) {
+          handler.handle(Future.succeededFuture(Helper.from(done.result())));
+        } else {
+          handler.handle(Future.failedFuture(done.cause()));
+        }
       }
-
     });
+
     return this;
   }
 

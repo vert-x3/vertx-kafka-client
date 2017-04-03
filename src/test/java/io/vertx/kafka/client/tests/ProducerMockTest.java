@@ -22,10 +22,15 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +41,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertFalse;
@@ -63,6 +69,26 @@ public class ProducerMockTest {
       }
     }
   }
+
+  private static class SimulatedWriteException extends Exception {
+
+  }
+  /*
+    Simulates an error during write -- invokes the callback with a RuntimeException
+   */
+  private static class TestProducerWriteError extends MockProducer<String, String> {
+    public TestProducerWriteError() {
+      super(false, new StringSerializer(), new StringSerializer());
+    }
+
+    @Override
+    public synchronized Future<RecordMetadata> send(ProducerRecord<String, String> record, Callback callback) {
+      callback.onCompletion(null, new SimulatedWriteException());
+      return super.send(record, callback);
+    }
+  }
+
+
 
   private Vertx vertx;
 
@@ -163,5 +189,18 @@ public class ProducerMockTest {
         async.complete();
       }
     });
+  }
+
+  @Test
+  public void testWriteWithSimulatedError(TestContext ctx) {
+    TestProducerWriteError mock = new TestProducerWriteError();
+    KafkaProducer<String, String> prod = KafkaProducer.create(vertx, mock);
+    KafkaProducerRecord<String, String> record = KafkaProducerRecord.create("myTopic", "test");
+    vertx.exceptionHandler(h -> {
+      if(!(h instanceof SimulatedWriteException)) {
+        ctx.fail(h);
+      }
+    });
+    prod.write(record);
   }
 }
