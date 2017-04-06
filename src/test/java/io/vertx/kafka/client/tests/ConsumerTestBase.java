@@ -20,6 +20,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -694,7 +695,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         ctx.assertEquals(1, offsetAndTimestamps.size());
         // Offset must be somewhere between beginningOffset and endOffset
         ctx.assertTrue(offsetAndTimestamp.offset() >= 0L && offsetAndTimestamp.offset() <= (long) numMessages,
-          "Invalid offset 0 <= " + offsetAndTimestamp.offset() + " < " + numMessages);
+          "Invalid offset 0 <= " + offsetAndTimestamp.offset() + " <= " + numMessages);
         // Timestamp of returned offset must be at >= searchTimestamp
         ctx.assertTrue(offsetAndTimestamp.timestamp() >= searchTimestamp);
         done.countDown();
@@ -703,9 +704,52 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       consumer.offsetsForTimes(topicPartition, searchTimestamp, ctx.asyncAssertSuccess(offsetAndTimestamp -> {
         // Offset must be somewhere between beginningOffset and endOffset
         ctx.assertTrue(offsetAndTimestamp.offset() >= 0L && offsetAndTimestamp.offset() <= (long) numMessages,
-          "Invalid offset 0 <= " + offsetAndTimestamp.offset() + " < " + numMessages);
+          "Invalid offset 0 <= " + offsetAndTimestamp.offset() + " <= " + numMessages);
         // Timestamp of returned offset must be at >= searchTimestamp
         ctx.assertTrue(offsetAndTimestamp.timestamp() >= searchTimestamp);
+        done.countDown();
+      }));
+    }));
+  }
+
+  @Test
+  // Test uses KafkaConsumer instead of KafkaReadStream to test the full API
+  public void testOffsetsForTimesWithTimestampInFuture(TestContext ctx) throws Exception {
+    String topicName = "testOffsetsForTimesWithTimestampInFuture";
+    String consumerId = topicName;
+    Async batch = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 10;
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch.awaitSuccess(20000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+    KafkaConsumer<Object, Object> wrappedConsumer = KafkaConsumer.create(vertx, config);
+    wrappedConsumer.exceptionHandler(ctx::fail);
+
+    io.vertx.kafka.client.common.TopicPartition topicPartition = new io.vertx.kafka.client.common.TopicPartition(topicName, 0);
+
+    Async done = ctx.async(2);
+    wrappedConsumer.handler(handler -> {
+      // nothing to do in this test
+    });
+
+    wrappedConsumer.subscribe(Collections.singleton(topicName), ctx.asyncAssertSuccess(subscribeRes -> {
+      // search by timestamp
+      // take a timestamp in the future, such that no offset exists
+      long searchTimestamp = System.currentTimeMillis();
+      wrappedConsumer.offsetsForTimes(topicPartition, searchTimestamp, ctx.asyncAssertSuccess(offsetAndTimestamp -> {
+        ctx.assertEquals(null, offsetAndTimestamp, "Must return null because no offset for a timestamp in the future can exist");
+        done.countDown();
+      }));
+
+      wrappedConsumer.offsetsForTimes(Collections.singletonMap(topicPartition, searchTimestamp), ctx.asyncAssertSuccess(offsetAndTimestamps -> {
+        io.vertx.kafka.client.consumer.OffsetAndTimestamp offsetAndTimestamp = offsetAndTimestamps.get(topicPartition);
+        ctx.assertEquals(0, offsetAndTimestamps.size(), "Must not return a result, because no Offset is found");
+        ctx.assertEquals(null, offsetAndTimestamp, "Must return null because no offset for a timestamp in the future can exist");
         done.countDown();
       }));
     }));

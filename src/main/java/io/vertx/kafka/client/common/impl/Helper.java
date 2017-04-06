@@ -115,17 +115,12 @@ public class Helper {
     );
   }
 
-  public static Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndTimestamp> toTopicPartitionOffsetAndTimestamp(Map<TopicPartition, OffsetAndTimestamp> topicPartitionOffsetAndTimestamps) {
-    return topicPartitionOffsetAndTimestamps.entrySet().stream().collect(Collectors.toMap(
-      e -> new org.apache.kafka.common.TopicPartition(e.getKey().getTopic(), e.getKey().getPartition()),
-      e -> new org.apache.kafka.clients.consumer.OffsetAndTimestamp(e.getValue().getOffset(), e.getValue().getTimestamp()))
-    );
-  }
-
   public static Map<TopicPartition, OffsetAndTimestamp> fromTopicPartitionOffsetAndTimestamp(Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndTimestamp> topicPartitionOffsetAndTimestamps) {
-    return topicPartitionOffsetAndTimestamps.entrySet().stream().collect(Collectors.toMap(
-      e -> new TopicPartition(e.getKey().topic(), e.getKey().partition()),
-      e -> new OffsetAndTimestamp(e.getValue().offset(), e.getValue().timestamp()))
-    );
+    return topicPartitionOffsetAndTimestamps.entrySet().stream()
+      .filter(e-> e.getValue() != null)
+      .collect(Collectors.toMap(
+        e -> new TopicPartition(e.getKey().topic(), e.getKey().partition()),
+        e ->new OffsetAndTimestamp(e.getValue().offset(), e.getValue().timestamp()))
+      );
   }
 }
