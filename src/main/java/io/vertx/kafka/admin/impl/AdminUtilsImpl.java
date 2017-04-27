@@ -22,7 +22,7 @@ public class AdminUtilsImpl implements AdminUtils {
   private final String zookeeper;
   private final boolean isSecure;
   private int connectionTimeoutMs;
-  private ZkClient zkClient;
+  private ZkUtils zkUtils;
   private boolean autoClose = false;
 
   public AdminUtilsImpl(Vertx vertx, String zookeeperHosts, int connectionTimeoutMs, boolean isSecure, boolean autoClose) {
@@ -58,13 +58,15 @@ public class AdminUtilsImpl implements AdminUtils {
       try {
         kafka.admin.AdminUtils.createTopic(initZkClientAndGetZkUtils(), topicName, partitionCount, replicationFactor, topicConfigProperties,
           kafka.admin.AdminUtils.createTopic$default$6());
+        // Note $default$6() retrieves the default parameter 6 from the Scala method createTopic -- RackAwareMode
+        // As of Kafka 0.10.1.1, this is equivalent to RackAwareMode.Disabled$.MODULE$
         completionHandler.handle(Future.succeededFuture());
       } catch(Exception e) {
         completionHandler.handle(Future.failedFuture(e.getLocalizedMessage()));
       }
       finally {
         if(autoClose) {
-          zkClient.close();
+          zkUtils.close();
         }
       }
     }, r -> {
@@ -85,7 +87,7 @@ public class AdminUtilsImpl implements AdminUtils {
       }
       finally {
         if(autoClose) {
-          zkClient.close();
+          zkUtils.close();
         }
       }
     }, r -> {
@@ -106,7 +108,7 @@ public class AdminUtilsImpl implements AdminUtils {
       }
       finally {
         if(autoClose) {
-          zkClient.close();
+          zkUtils.close();
         }
       }
     }, r -> {
@@ -128,7 +130,7 @@ public class AdminUtilsImpl implements AdminUtils {
       }
       finally {
         if(autoClose) {
-          zkClient.close();
+          zkUtils.close();
         }
       }
     }, r -> {
@@ -137,8 +139,8 @@ public class AdminUtilsImpl implements AdminUtils {
 
   public void close(Handler<AsyncResult<Void>> completionHandler) {
     vertx.executeBlocking(future -> {
-      if(zkClient != null)
-        zkClient.close();
+      if(zkUtils != null)
+        zkUtils.close();
 
       completionHandler.handle(Future.succeededFuture());
       future.complete();
@@ -149,19 +151,21 @@ public class AdminUtilsImpl implements AdminUtils {
   /*
     Utility method to create a ZKUtils instance with an attached Zookeeper client
    */
-  private ZkUtils initZkClientAndGetZkUtils() {
+  private synchronized ZkUtils initZkClientAndGetZkUtils() {
     int sessionTimeoutMs = 10 * 1000;
     // see http://stackoverflow.com/questions/16946778/how-can-we-create-a-topic-in-kafka-from-the-ide-using-api
     // Note: You must initialize the ZkClient with ZKStringSerializer.  If you don't, then
     // createTopic() will only seem to work (it will return without error).  The topic will exist in
     // only ZooKeeper and will be returned when listing topics, but Kafka itself does not create the
     // topic.
-    zkClient = new ZkClient(
-      zookeeper,
-      sessionTimeoutMs,
-      connectionTimeoutMs,
-      ZKStringSerializer$.MODULE$);
-
-    return new ZkUtils(zkClient, new ZkConnection(zookeeper), isSecure);
+    if (zkUtils == null) {
+      zkUtils = new ZkUtils(
+        new ZkClient(
+          zookeeper,
+          sessionTimeoutMs,
+          connectionTimeoutMs,
+          ZKStringSerializer$.MODULE$), new ZkConnection(zookeeper), isSecure);
+    }
+    return zkUtils;
   }
 }

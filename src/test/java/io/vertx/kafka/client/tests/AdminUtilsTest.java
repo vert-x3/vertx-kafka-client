@@ -36,7 +36,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, false);
 
     Async createAsync = ctx.async();
 
@@ -82,7 +82,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     Async async = ctx.async();
 
-    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, false);
 
     adminUtils.createTopic(topicName, 1, 1,
       ctx.asyncAssertSuccess(
@@ -115,7 +115,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     Async createAsync = ctx.async();
 
-    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, false);
 
     adminUtils.createTopic(topicName, 2, 1,
       ctx.asyncAssertSuccess(
@@ -157,7 +157,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     Async async = ctx.async();
 
-    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, false);
 
     adminUtils.createTopic(topicName, 1, 1,
       ctx.asyncAssertSuccess(
@@ -197,7 +197,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, false);
 
     Async createAsync = ctx.async();
 
@@ -229,7 +229,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, false);
 
     Async createAsync = ctx.async();
     adminUtils.createTopic(topicName, 2, 1,
@@ -248,5 +248,31 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
         async.complete();
       })
     );
+  }
+
+  @Test
+  public void testAutoClose(TestContext ctx) throws Exception {
+    final String topicName = "testAutoClose";
+    Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
+
+    Async async = ctx.async();
+
+    adminUtils.deleteTopic(topicName, ctx.asyncAssertFailure(deleteResponse -> {
+        ctx.assertEquals("Topic `"+topicName+"` to delete does not exist", deleteResponse.getLocalizedMessage(),
+          "Topic must not exist (not created before)");
+      adminUtils.deleteTopic(topicName, ctx.asyncAssertFailure(secondDeleteResponse -> {
+          ctx.assertEquals("ZkClient already closed!", secondDeleteResponse.getLocalizedMessage(),
+            "Client must be closed at that point, because autoClose = true");
+          async.complete();
+        })
+      );
+      })
+    );
+
+
   }
 }
