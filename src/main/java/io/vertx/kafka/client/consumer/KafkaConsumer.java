@@ -65,7 +65,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * Create a new KafkaConsumer instance
    *
    * @param vertx Vert.x instance to use
-   * @param config  Kafka producer configuration
+   * @param config Kafka consumer configuration
    * @return  an instance of the KafkaConsumer
    */
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config) {
@@ -92,7 +92,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * Create a new KafkaConsumer instance
    *
    * @param vertx Vert.x instance to use
-   * @param config  Kafka producer configuration
+   * @param config Kafka consumer configuration
    * @return  an instance of the KafkaConsumer
    */
   @GenIgnore
@@ -105,7 +105,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * Create a new KafkaConsumer instance
    *
    * @param vertx Vert.x instance to use
-   * @param config  Kafka consumer configuration
+   * @param config Kafka consumer configuration
    * @param keyType class type for the key deserialization
    * @param valueType class type for the value deserialization
    * @return  an instance of the KafkaConsumer
@@ -526,7 +526,8 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   void position(TopicPartition partition, Handler<AsyncResult<Long>> handler);
 
   /**
-   * Look up the offsets for the given partitions by timestamp.
+   * Look up the offsets for the given partitions by timestamp. Note: the result might be empty in case
+   * for the given timestamp no offset can be found -- e.g., when the timestamp refers to the future
    * @param topicPartitionTimestamps A map with pairs of (TopicPartition, Timestamp).
    * @param handler handler called on operation completed
    */
@@ -534,7 +535,8 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler);
 
   /**
-   * Look up the offset for the given partition by timestamp.
+   * Look up the offset for the given partition by timestamp. Note: the result might be null in case
+   * for the given timestamp no offset can be found -- e.g., when the timestamp refers to the future
    * @param topicPartition TopicPartition to query.
    * @param timestamp Timestamp to be used in the query.
    * @param handler handler called on operation completed

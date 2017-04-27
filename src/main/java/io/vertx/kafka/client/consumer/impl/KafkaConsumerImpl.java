@@ -421,11 +421,19 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
     this.stream.offsetsForTimes(Helper.toTopicPartitionTimes(topicPartitions), done -> {
       if(done.succeeded()) {
-        // We know that this will result in exactly one iteration
-        for(org.apache.kafka.clients.consumer.OffsetAndTimestamp offsetAndTimestamp : done.result().values()) {
-          OffsetAndTimestamp resultOffsetAndTimestamp = new OffsetAndTimestamp(offsetAndTimestamp.offset(), offsetAndTimestamp.timestamp());
-          handler.handle(Future.succeededFuture(resultOffsetAndTimestamp));
-          break;
+        if (done.result().values().size() == 1) {
+          org.apache.kafka.common.TopicPartition kTopicPartition = new org.apache.kafka.common.TopicPartition (topicPartition.getTopic(), topicPartition.getPartition());
+          org.apache.kafka.clients.consumer.OffsetAndTimestamp offsetAndTimestamp = done.result().get(kTopicPartition);
+          if(offsetAndTimestamp != null) {
+            OffsetAndTimestamp resultOffsetAndTimestamp = new OffsetAndTimestamp(offsetAndTimestamp.offset(), offsetAndTimestamp.timestamp());
+            handler.handle(Future.succeededFuture(resultOffsetAndTimestamp));
+          }
+          // offsetAndTimestamp is null, i.e., search by timestamp did not lead to a result
+          else {
+            handler.handle(Future.succeededFuture());
+          }
+        } else {
+            handler.handle(Future.failedFuture("offsetsForTimes should return exactly one OffsetAndTimestamp"));
         }
       } else {
         handler.handle(Future.failedFuture(done.cause()));
