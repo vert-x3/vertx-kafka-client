@@ -733,6 +733,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     io.vertx.kafka.client.common.TopicPartition topicPartition = new io.vertx.kafka.client.common.TopicPartition(topicName, 0);
 
     Async done = ctx.async(2);
+    done.handler(r -> wrappedConsumer.close());
     wrappedConsumer.handler(handler -> {
       // nothing to do in this test
     });
