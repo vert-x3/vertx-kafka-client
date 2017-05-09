@@ -755,7 +755,31 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       }));
     }));
   }
-
+  
+  @Test
+  public void testBatchHandler(TestContext ctx) throws Exception {
+    String topicName = "testBatchHandler";
+    String consumerId = topicName;
+    Async batch1 = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 500;
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
+        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch1.awaitSuccess(10000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumer = createConsumer(vertx, config);
+    Async batchHandler = ctx.async();
+    consumer.batchHandler(records -> {
+      ctx.assertEquals(numMessages, records.count());
+      batchHandler.complete();
+    });
+    consumer.exceptionHandler(ctx::fail);
+    consumer.handler(rec -> {});
+    consumer.subscribe(Collections.singleton(topicName));
+  }
+  
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {
