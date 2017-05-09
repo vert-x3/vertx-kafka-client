@@ -27,6 +27,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.After;
@@ -35,6 +36,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -475,6 +477,30 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         ctx.fail();
       }
 
+    });
+  }
+  
+  @Test
+  public void testPartitionsFor(TestContext ctx) throws Exception {
+    String topicName = "testPartitionsFor";
+    String consumerId = topicName;
+    kafkaCluster.createTopic(topicName, 2, 1);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+
+    Async done = ctx.async();
+
+    consumer.partitionsFor(topicName, ar -> {
+      if (ar.succeeded()) {
+        List<PartitionInfo> partitionInfo = ar.result();
+        ctx.assertEquals(2, partitionInfo.size());
+      } else {
+        ctx.fail();
+      }
+      done.complete();
     });
   }
 
