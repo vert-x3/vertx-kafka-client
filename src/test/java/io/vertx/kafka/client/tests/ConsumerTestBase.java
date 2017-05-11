@@ -21,7 +21,9 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
+
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
@@ -778,6 +780,42 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.exceptionHandler(ctx::fail);
     consumer.handler(rec -> {});
     consumer.subscribe(Collections.singleton(topicName));
+  }
+  
+  @Test
+  public void testConsumerBatchHandler(TestContext ctx) throws Exception {
+    String topicName = "testConsumerBatchHandler";
+    String consumerId = topicName;
+    Async batch1 = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 500;
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
+        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch1.awaitSuccess(10000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    
+    KafkaConsumer<Object, Object> wrappedConsumer = KafkaConsumer.create(vertx, config);
+    wrappedConsumer.exceptionHandler(ctx::fail);
+    AtomicInteger count = new AtomicInteger(numMessages);
+    Async batchHandler = ctx.async();
+    batchHandler.handler(ar -> wrappedConsumer.close());
+    wrappedConsumer.batchHandler(records -> {
+      ctx.assertEquals(numMessages, records.size());
+      for (int ii = 0; ii < records.size(); ii++) {
+        KafkaConsumerRecord<Object, Object> record = records.recordAt(ii);
+        int dec = count.decrementAndGet();
+        if (dec >= 0) {
+          ctx.assertEquals("key-" + (numMessages - dec - 1), record.key());
+        } else {
+          ctx.assertEquals("key-" + (-1 - dec), record.key());
+        }
+      }
+       batchHandler.complete();
+    });
+    wrappedConsumer.handler(rec -> {});
+    wrappedConsumer.subscribe(Collections.singleton(topicName));
   }
   
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
