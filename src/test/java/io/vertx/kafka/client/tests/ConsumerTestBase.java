@@ -771,7 +771,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    consumer = createConsumer(vertx, config);
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
     Async batchHandler = ctx.async();
     consumer.batchHandler(records -> {
       ctx.assertEquals(numMessages, records.count());
