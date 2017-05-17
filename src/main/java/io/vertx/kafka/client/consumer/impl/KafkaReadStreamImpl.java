@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,7 +56,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private final AtomicBoolean closed = new AtomicBoolean(true);
   private final Consumer<K, V> consumer;
 
-  private final AtomicBoolean paused = new AtomicBoolean(true);
+  private final AtomicBoolean consuming = new AtomicBoolean(false);
+  private final AtomicBoolean paused = new AtomicBoolean(false);
   private Handler<ConsumerRecord<K, V>> recordHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
   private Handler<Set<TopicPartition>> partitionsRevokedHandler;
@@ -97,10 +97,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   private <T> void start(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task, Handler<AsyncResult<T>> handler) {
     this.worker = Executors.newSingleThreadExecutor(r -> new Thread(r, "vert.x-kafka-consumer-thread-" + threadCount.getAndIncrement()));
-    this.submitTask(task, handler);
+    this.submitTaskWhenStarted(task, handler);
   }
-
-  private <T> void submitTask(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task, Handler<AsyncResult<T>> handler) {
+  
+  private <T> void submitTaskWhenStarted(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task, Handler<AsyncResult<T>> handler) {
+    if (worker == null) {
+      throw new IllegalStateException();
+    }
     this.worker.submit(() -> {
       Future<T> future;
       if (handler != null) {
@@ -136,7 +139,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   private void schedule(long delay) {
-    if (!this.paused.get()) {
+    if (this.consuming.get() && !this.paused.get()) {
 
       Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
       if (delay > 0) {
@@ -177,6 +180,15 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         }
       }
       this.schedule(0);
+    }
+  }
+
+  protected <T> void submitTask(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task,
+      Handler<AsyncResult<T>> handler) {
+    if (this.closed.compareAndSet(true, false)) {
+      this.start(task, handler);
+    } else {
+      this.submitTaskWhenStarted(task, handler);
     }
   }
 
@@ -320,7 +332,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
       this.start((consumer, future) -> {
         consumer.subscribe(topics, this.rebalanceListener);
-        this.resume();
+        this.startConsuming();
         if (future != null) {
           future.complete();
         }
@@ -386,7 +398,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
       this.start((consumer, future) -> {
         consumer.assign(partitions);
-        this.resume();
+        this.startConsuming();
         if (future != null) {
           future.complete();
         }
@@ -499,6 +511,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStreamImpl<K, V> resume() {
     if (this.paused.compareAndSet(true, false)) {
+      this.schedule(0);
+    }
+    return this;
+  }
+  
+  private KafkaReadStreamImpl<K, V> startConsuming() {
+    if (this.consuming.compareAndSet(false, true)) {
       this.schedule(0);
     }
     return this;
