@@ -502,6 +502,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    */
   @Fluent
   KafkaConsumer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
+  
+  /**
+   * Set the handler to be used when batches of messages are fetched 
+   * from the Kafka server
+   * @param handler handler called when batches of messages are fetched
+   * @return current KafkaConsumer instance
+   */
+  @Fluent
+  KafkaConsumer<K, V> batchHandler(Handler<KafkaConsumerRecords<K, V>> handler);
 
   /**
    * Close the consumer

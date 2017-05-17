@@ -28,6 +28,7 @@ import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecords;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -515,5 +516,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public Consumer<K, V> unwrap() {
     return this.stream.unwrap();
+  }
+
+  @Override
+  public KafkaConsumer<K, V> batchHandler(Handler<KafkaConsumerRecords<K, V>> handler) {
+    stream.batchHandler(records -> {
+      handler.handle(new KafkaConsumerRecordsImpl<>(records));
+    });
+    return this;
   }
 }

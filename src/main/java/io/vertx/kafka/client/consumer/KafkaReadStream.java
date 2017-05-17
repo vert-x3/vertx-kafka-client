@@ -24,6 +24,7 @@ import io.vertx.kafka.client.consumer.impl.KafkaReadStreamImpl;
 import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
@@ -408,5 +409,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return the underlying consumer
    */
   Consumer<K, V> unwrap();
+
+  /**
+   * Set the handler that will be called when a new batch of records is 
+   * returned from Kafka.
+   * 
+   * @param handler
+   * @return current KafkaReadStream instance
+   */
+  KafkaReadStream<K, V> batchHandler(Handler<ConsumerRecords<K, V>> handler);
 
 }

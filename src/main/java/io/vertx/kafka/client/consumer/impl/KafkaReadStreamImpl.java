@@ -21,6 +21,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.kafka.client.common.impl.Helper;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -60,6 +61,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private final AtomicBoolean paused = new AtomicBoolean(false);
   private Handler<ConsumerRecord<K, V>> recordHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
+  private Handler<ConsumerRecords<K, V>> batchHandler;
   private Handler<Set<TopicPartition>> partitionsRevokedHandler;
   private Handler<Set<TopicPartition>> partitionsAssignedHandler;
 
@@ -163,6 +165,9 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
         if (records != null && records.count() > 0) {
           this.current = records.iterator();
+          if (batchHandler != null) {
+            batchHandler.handle(records);
+          }
           this.schedule(0);
         } else {
           this.schedule(1);
@@ -626,5 +631,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public Consumer<K, V> unwrap() {
     return this.consumer;
+  }
+  
+  public KafkaReadStream batchHandler(Handler<ConsumerRecords<K, V>> handler) {
+    this.batchHandler = handler;
+    return this;
   }
 }
