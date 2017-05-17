@@ -509,6 +509,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param handler handler called when batches of messages are fetched
    * @return current KafkaConsumer instance
    */
+  @Fluent
   KafkaConsumer<K, V> batchHandler(Handler<KafkaConsumerRecords<K, V>> handler);
 
   /**

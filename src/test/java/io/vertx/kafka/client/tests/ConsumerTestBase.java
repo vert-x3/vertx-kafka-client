@@ -804,8 +804,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     batchHandler.handler(ar -> wrappedConsumer.close());
     wrappedConsumer.batchHandler(records -> {
       ctx.assertEquals(numMessages, records.size());
-      for (int ii = 0; ii < records.size(); ii++) {
-        KafkaConsumerRecord<Object, Object> record = records.recordAt(ii);
+      for (int i = 0; i < records.size(); i++) {
+        KafkaConsumerRecord<Object, Object> record = records.recordAt(i);
         int dec = count.decrementAndGet();
         if (dec >= 0) {
           ctx.assertEquals("key-" + (numMessages - dec - 1), record.key());
