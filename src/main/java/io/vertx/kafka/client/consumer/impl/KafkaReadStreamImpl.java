@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 /**
  * Kafka read stream implementation
@@ -337,24 +338,18 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       throw new IllegalStateException();
     }
 
+    BiConsumer<Consumer<K, V>, Future<Void>> handler = (consumer, future) -> {
+      consumer.subscribe(topics, this.rebalanceListener);
+      this.startConsuming();
+      if (future != null) {
+        future.complete();
+      }
+    };
+
     if (this.closed.compareAndSet(true, false)) {
-
-      this.start((consumer, future) -> {
-        consumer.subscribe(topics, this.rebalanceListener);
-        this.startConsuming();
-        if (future != null) {
-          future.complete();
-        }
-      }, completionHandler);
-
+      this.start(handler, completionHandler);
     } else {
-
-      this.submitTask((consumer, future) -> {
-        consumer.subscribe(topics, this.rebalanceListener);
-        if (future != null) {
-          future.complete();
-        }
-      }, completionHandler);
+      this.submitTask(handler, completionHandler);
     }
 
     return this;
@@ -403,24 +398,18 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       throw new IllegalStateException();
     }
 
+    BiConsumer<Consumer<K, V>, Future<Void>> handler = (consumer, future) -> {
+      consumer.assign(partitions);
+      this.startConsuming();
+      if (future != null) {
+        future.complete();
+      }
+    };
+
     if (this.closed.compareAndSet(true, false)) {
-
-      this.start((consumer, future) -> {
-        consumer.assign(partitions);
-        this.startConsuming();
-        if (future != null) {
-          future.complete();
-        }
-      }, completionHandler);
-
+      this.start(handler, completionHandler);
     } else {
-
-      this.submitTask((consumer, future) -> {
-        consumer.assign(partitions);
-        if (future != null) {
-          future.complete();
-        }
-      }, completionHandler);
+      this.submitTask(handler, completionHandler);
     }
 
     return this;
@@ -526,9 +515,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   private KafkaReadStreamImpl<K, V> startConsuming() {
-    if (this.consuming.compareAndSet(false, true)) {
-      this.schedule(0);
-    }
+    this.consuming.set(true);
+    this.schedule(0);
     return this;
   }
 
