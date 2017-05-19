@@ -101,7 +101,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     this.worker = Executors.newSingleThreadExecutor(r -> new Thread(r, "vert.x-kafka-consumer-thread-" + threadCount.getAndIncrement()));
     this.submitTaskWhenStarted(task, handler);
   }
-  
+
   private <T> void submitTaskWhenStarted(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task, Handler<AsyncResult<T>> handler) {
     if (worker == null) {
       throw new IllegalStateException();
@@ -178,6 +178,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
       int count = 0;
       while (this.current.hasNext() && count++ < 10) {
+
+        // to honor the Vert.x ReadStream contract, handler should not be called if stream is paused
+        if (this.paused.get())
+          break;
 
         ConsumerRecord<K, V> next = this.current.next();
         if (handler != null) {
@@ -520,7 +524,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     }
     return this;
   }
-  
+
   private KafkaReadStreamImpl<K, V> startConsuming() {
     if (this.consuming.compareAndSet(false, true)) {
       this.schedule(0);
@@ -632,7 +636,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   public Consumer<K, V> unwrap() {
     return this.consumer;
   }
-  
+
   public KafkaReadStream batchHandler(Handler<ConsumerRecords<K, V>> handler) {
     this.batchHandler = handler;
     return this;
