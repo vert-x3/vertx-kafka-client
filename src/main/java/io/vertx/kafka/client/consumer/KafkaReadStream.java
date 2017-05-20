@@ -412,10 +412,12 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
   /**
    * Set the handler that will be called when a new batch of records is 
-   * returned from Kafka.
+   * returned from Kafka. Batch handlers need to take care not to block 
+   * the event loop when dealing with large batches. It is better to process
+   * records individually using the {@link #handler(Handler) record handler}.
    * 
-   * @param handler
-   * @return current KafkaReadStream instance
+   * @param handler handler called each time Kafka returns a batch of records.
+   * @return current KafkaReadStream instance.
    */
   KafkaReadStream<K, V> batchHandler(Handler<ConsumerRecords<K, V>> handler);
 
