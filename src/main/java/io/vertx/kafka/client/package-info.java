@@ -31,9 +31,7 @@
  *
  * == Using the Vert.x Kafka client
  *
- * As component not yet officially released in the Vert.x stack, to use the Vert.x Kafka client current snapshot version,
- * add the following repository under the _repositories_ section and the following dependency to the _dependencies_ section
- * of your build descriptor:
+ * To use this component, add the following dependency to the dependencies section of your build descriptor:
  *
  * * Maven (in your `pom.xml`):
  *
@@ -55,7 +53,7 @@
  *
  * == Creating Kafka clients
  *
- * Creating consumers and sproducer is quite similar and on how it works using the native Kafka client library.
+ * Creating consumers and producers is quite similar and on how it works using the native Kafka client library.
  *
  * They need to be configured with a bunch of properties as described in the official
  * Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
@@ -117,7 +115,7 @@
  * {@link examples.VertxKafkaClientExamples#exampleSubscribe(io.vertx.kafka.client.consumer.KafkaConsumer)}
  * ----
  *
- * An handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
+ * A handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
  * is completed.
  *
  * [source,$lang]
