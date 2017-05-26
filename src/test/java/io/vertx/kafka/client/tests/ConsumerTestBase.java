@@ -441,6 +441,96 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     });
   }
+  
+  @Test
+  public void testSetHandlerThenAssign(TestContext ctx) throws Exception {
+    String topicName = "testSetHandlerThenAssign";
+    String consumerId = topicName;
+    kafkaCluster.createTopic(topicName, 1, 1);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    int numMessages = 1;
+    Async finished = ctx.async(numMessages + 2);
+    kafkaCluster.useTo().produceStrings(numMessages, finished::countDown,  () ->
+        new ProducerRecord<>(topicName, 0, "key", "value"));
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+
+    Async assigned = ctx.async();
+    Async handler = ctx.async();
+
+    consumer.handler(record -> {
+      ctx.assertTrue(handler.isCompleted() && assigned.isCompleted());
+      finished.countDown();
+    });
+    handler.complete();
+
+    consumer.batchHandler(records -> {
+      ctx.assertTrue(handler.isCompleted() && assigned.isCompleted());
+      finished.countDown();
+    });
+
+    TopicPartition partition = new TopicPartition(topicName, 0);
+
+    consumer.assign(Collections.singleton(partition), asyncResult -> {
+
+      if (asyncResult.succeeded()) {
+
+        assigned.complete();
+
+      } else {
+        ctx.fail();
+      }
+
+    });
+  }
+
+  @Test
+  public void testAssignThenSetHandler(TestContext ctx) throws Exception {
+    String topicName = "testAssignThenSetHandler";
+    String consumerId = topicName;
+    kafkaCluster.createTopic(topicName, 1, 1);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId,
+        OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    int numMessages = 1;
+    Async finished = ctx.async(numMessages + 2);
+    kafkaCluster.useTo().produceStrings(numMessages, finished::countDown,
+        () -> new ProducerRecord<>(topicName, 0, "key", "value"));
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+
+    Async assigned = ctx.async();
+    Async handler = ctx.async();
+
+    consumer.batchHandler(records -> {
+      ctx.assertTrue(handler.isCompleted() && assigned.isCompleted());
+      finished.countDown();
+    });
+
+    TopicPartition partition = new TopicPartition(topicName, 0);
+
+    consumer.assign(Collections.singleton(partition), asyncResult -> {
+
+      if (asyncResult.succeeded()) {
+
+        assigned.complete();
+
+      } else {
+        ctx.fail();
+      }
+
+    });
+
+    consumer.handler(record -> {
+      ctx.assertTrue(handler.isCompleted() && assigned.isCompleted());
+      finished.countDown();
+    });
+    handler.complete();
+
+  }
 
   @Test
   public void testListTopics(TestContext ctx) throws Exception {

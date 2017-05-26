@@ -107,13 +107,17 @@
  * {@link io.vertx.kafka.client.consumer.KafkaConsumer#subscribe(java.util.Set)} method for
  * subscribing to a set of topics being part of a consumer group (specified by the properties on creation).
  *
- * You need to register an handler for handling incoming messages using the
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#handler(io.vertx.core.Handler)}
+ * You also need to register a handler for handling incoming messages using the
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#handler(io.vertx.core.Handler)}.
  *
  * [source,$lang]
  * ----
  * {@link examples.VertxKafkaClientExamples#exampleSubscribe(io.vertx.kafka.client.consumer.KafkaConsumer)}
  * ----
+ *
+ * The handler can be registered before or after the call to `subscribe()`; messages won't be consumed until both
+ * methods have been called. This allows you to call `subscribe()`, then `seek()` and finally `handler()` in
+ * order to only consume messages starting from a particular offset, for example.
  *
  * A handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
  * is completed.
@@ -167,6 +171,11 @@
  * ----
  * {@link examples.VertxKafkaClientExamples#exampleConsumerAssignPartition}
  * ----
+ *
+ * As with `subscribe()`, the handler can be registered before or after the call to `assign()`;
+ * messages won't be consumed until both methods have been called. This allows you to call
+ * `assign()`, then `seek()` and finally `handler()` in
+ * order to only consume messages starting from a particular offset, for example.
  *
  * Calling {@link io.vertx.kafka.client.consumer.KafkaConsumer#assignment(io.vertx.core.Handler)} provides
  * the list of the current assigned partitions.

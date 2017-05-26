@@ -142,7 +142,9 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   private void schedule(long delay) {
-    if (this.consuming.get() && !this.paused.get()) {
+    if (this.consuming.get() 
+        && !this.paused.get()
+        && this.recordHandler != null) {
 
       Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
       if (delay > 0) {
@@ -334,10 +336,6 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler) {
 
-    if (this.recordHandler == null) {
-      throw new IllegalStateException();
-    }
-
     BiConsumer<Consumer<K, V>, Future<Void>> handler = (consumer, future) -> {
       consumer.subscribe(topics, this.rebalanceListener);
       this.startConsuming();
@@ -393,10 +391,6 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public KafkaReadStream<K, V> assign(Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
-
-    if (this.recordHandler == null) {
-      throw new IllegalStateException();
-    }
 
     BiConsumer<Consumer<K, V>, Future<Void>> handler = (consumer, future) -> {
       consumer.assign(partitions);
@@ -497,6 +491,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStreamImpl<K, V> handler(Handler<ConsumerRecord<K, V>> handler) {
     this.recordHandler = handler;
+    this.schedule(0);
     return this;
   }
 
