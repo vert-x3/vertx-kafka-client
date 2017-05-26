@@ -14,9 +14,7 @@ WARNING: this module has the tech preview status, this means the API can change 
 
 == Using the Vert.x Kafka client
 
-As component not yet officially released in the Vert.x stack, to use the Vert.x Kafka client current snapshot version,
-add the following repository under the _repositories_ section and the following dependency to the _dependencies_ section
-of your build descriptor:
+To use this component, add the following dependency to the dependencies section of your build descriptor:
 
 * Maven (in your `pom.xml`):
 
@@ -38,7 +36,7 @@ compile io.vertx:vertx-kafka-client:3.4.2-SNAPSHOT
 
 == Creating Kafka clients
 
-Creating consumers and sproducer is quite similar and on how it works using the native Kafka client library.
+Creating consumers and producers is quite similar and on how it works using the native Kafka client library.
 
 They need to be configured with a bunch of properties as described in the official
 Apache Kafka documentation, for the link:https://kafka.apache.org/documentation/#newconsumerconfigs[consumer] and
@@ -138,8 +136,8 @@ In order to start receiving messages from Kafka topics, the consumer can use the
 `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#subscribe[subscribe]` method for
 subscribing to a set of topics being part of a consumer group (specified by the properties on creation).
 
-You need to register an handler for handling incoming messages using the
-`link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#handler[handler]`
+You also need to register a handler for handling incoming messages using the
+`link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#handler[handler]`.
 
 [source,js]
 ----
@@ -161,7 +159,11 @@ consumer.subscribe("a-single-topic");
 
 ----
 
-An handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
+The handler can be registered before or after the call to `subscribe()`; messages won't be consumed until both
+methods have been called. This allows you to call `subscribe()`, then `seek()` and finally `handler()` in
+order to only consume messages starting from a particular offset, for example.
+
+A handler can also be passed during subscription to be aware of the subscription result and being notified when the operation
 is completed.
 
 [source,js]
@@ -316,6 +318,11 @@ consumer.assign(topicPartitions, function (done, done_err) {
 });
 
 ----
+
+As with `subscribe()`, the handler can be registered before or after the call to `assign()`;
+messages won't be consumed until both methods have been called. This allows you to call
+`assign()`, then `seek()` and finally `handler()` in
+order to only consume messages starting from a particular offset, for example.
 
 Calling `link:../../jsdoc/module-vertx-kafka-client-js_kafka_consumer-KafkaConsumer.html#assignment[assignment]` provides
 the list of the current assigned partitions.
