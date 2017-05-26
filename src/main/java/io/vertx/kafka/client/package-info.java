@@ -180,6 +180,16 @@
  * Calling {@link io.vertx.kafka.client.consumer.KafkaConsumer#assignment(io.vertx.core.Handler)} provides
  * the list of the current assigned partitions.
  *
+ * == Changing the subscription or assignment
+ * 
+ * You can change the subscribed topics, or assigned partitions after you have started to consume messages, simply 
+ * by calling `subscribe()` or `assign()` again. 
+ * 
+ * Note that due to internal buffering of messages it is possible that the record handler will continue to 
+ * observe messages from the old subscription or assignment _after_ the `subscribe()` or `assign()` 
+ * method's completion handler has been called. This is not the case for messages observed by the batch handler: 
+ * Once the completion handler has been called it will only observe messages read from the subscription or assignment.
+ *
  * == Getting topic partition information
  *
  * You can call the {@link io.vertx.kafka.client.consumer.KafkaConsumer#partitionsFor} to get information about
@@ -242,6 +252,11 @@
  * {@link examples.VertxKafkaClientExamples#exampleSeekToEnd}
  * ----
  *
+ * Note that due to internal buffering of messages it is possible that the record handler will continue to 
+ * observe messages read from the original offset for a time _after_ the `seek*()` method's completion 
+ * handler has been called. This is not the case for messages observed by the batch handler: Once the
+ * `seek*()` completion handler has been called it will only observe messages read from the new offset.
+ *
  * == Offset lookup
  *
  * You can use the beginningOffsets API introduced in Kafka 0.10.1.1 to get the first offset
@@ -277,7 +292,13 @@
  * to continue message processing.
  *
  * To achieve that you can use {@link io.vertx.kafka.client.consumer.KafkaConsumer#pause} and
- * {@link io.vertx.kafka.client.consumer.KafkaConsumer#resume}
+ * {@link io.vertx.kafka.client.consumer.KafkaConsumer#resume}.
+ * 
+ * In the case of the partition-specific pause and resume it is possible that the record handler will continue to 
+ * observe messages from a paused partition for a time _after_ the `pause()` method's completion 
+ * handler has been called. This is not the case for messages observed by the batch handler: Once the
+ * `pause()` completion handler has been called it will only observe messages from those partitions which 
+ * rare not paused.
  *
  * [source,$lang]
  * ----
