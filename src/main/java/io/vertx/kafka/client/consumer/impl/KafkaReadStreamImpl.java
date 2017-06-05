@@ -111,7 +111,14 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       Future<T> future;
       if (handler != null) {
         future = Future.future();
-        future.setHandler(handler);
+        future.setHandler(event-> {
+          // When we've executed the task on the worker thread, 
+          // run the callback on the eventloop thread
+          this.context.runOnContext(v-> {
+            handler.handle(event);
+            });
+          });
+        
       } else {
         future = null;
       }
