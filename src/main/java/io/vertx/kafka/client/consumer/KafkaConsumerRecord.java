@@ -71,5 +71,5 @@ public interface KafkaConsumerRecord<K, V> {
    * @return  the native Kafka consumer record with backed information
    */
   @GenIgnore
-  ConsumerRecord record();
+  ConsumerRecord<K, V> record();
 }
