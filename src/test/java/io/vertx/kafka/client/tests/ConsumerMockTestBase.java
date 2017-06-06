@@ -65,9 +65,11 @@ public abstract class ConsumerMockTestBase {
       consumer.close(v -> doneLatch.complete());
     });
     consumer.subscribe(Collections.singleton("the_topic"), v -> {
-      mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
-      mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "abc", "def"));
-      mock.seek(new TopicPartition("the_topic", 0), 0);
+      mock.schedulePollTask(()-> {
+        mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
+        mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "abc", "def"));
+        mock.seek(new TopicPartition("the_topic", 0), 0L);
+      });
     });
   }
 
