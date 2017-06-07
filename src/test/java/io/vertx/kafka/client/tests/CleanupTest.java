@@ -164,7 +164,7 @@ public class CleanupTest extends KafkaClusterTestBase {
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
-    Async async = ctx.async();
+    Async async = ctx.async(2);
     Async produceLatch = ctx.async();
     vertx.deployVerticle(new AbstractVerticle() {
       @Override
@@ -184,7 +184,7 @@ public class CleanupTest extends KafkaClusterTestBase {
                 ctx.fail("Was expecting the consumer to be closed");
               }
             });
-            async.complete();
+            async.countDown();
           }));
         });
         consumer.assign(new TopicPartition(topicName, 0), fut);
@@ -193,7 +193,7 @@ public class CleanupTest extends KafkaClusterTestBase {
     ));
     produceLatch.awaitSuccess(10000);
     kafkaCluster.useTo().produce("testCleanupInConsumer_producer", 100,
-      new StringSerializer(), new StringSerializer(), () -> {
-    }, () -> new ProducerRecord<>(topicName, "the_value"));
+      new StringSerializer(), new StringSerializer(), async::countDown, 
+      () -> new ProducerRecord<>(topicName, "the_value"));
   }
 }
