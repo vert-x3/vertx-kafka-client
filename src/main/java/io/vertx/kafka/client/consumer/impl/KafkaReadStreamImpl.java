@@ -480,12 +480,21 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStreamImpl<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
 
-    this.submitTask((consumer, future) -> {
-      List<PartitionInfo> partitions = consumer.partitionsFor(topic);
-      if (future != null) {
-        future.complete(partitions);
-      }
-    }, handler);
+    if (this.closed.compareAndSet(true, false)) {
+      this.start((consumer, future) -> {
+        List<PartitionInfo> partitions = consumer.partitionsFor(topic);
+        if (future != null) {
+          future.complete(partitions);
+        }
+      }, handler);
+    } else {
+      this.submitTask((consumer, future) -> {
+        List<PartitionInfo> partitions = consumer.partitionsFor(topic);
+        if (future != null) {
+          future.complete(partitions);
+        }
+      }, handler);
+    }
 
     return this;
   }
