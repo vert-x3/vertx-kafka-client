@@ -856,21 +856,20 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       // nothing to do in this test
     });
 
-    wrappedConsumer.subscribe(Collections.singleton(topicName), ctx.asyncAssertSuccess(subscribeRes -> {
-      // search by timestamp
-      // take a timestamp in the future, such that no offset exists
-      long searchTimestamp = System.currentTimeMillis();
-      wrappedConsumer.offsetsForTimes(topicPartition, searchTimestamp, ctx.asyncAssertSuccess(offsetAndTimestamp -> {
-        ctx.assertEquals(null, offsetAndTimestamp, "Must return null because no offset for a timestamp in the future can exist");
-        done.countDown();
-      }));
+    // Note offsetsForTimes doesn't require a subscription or assignment
+    // search by timestamp
+    // take a timestamp in the future, such that no offset exists
+    long searchTimestamp = System.currentTimeMillis();
+    wrappedConsumer.offsetsForTimes(topicPartition, searchTimestamp, ctx.asyncAssertSuccess(offsetAndTimestamp -> {
+      ctx.assertEquals(null, offsetAndTimestamp, "Must return null because no offset for a timestamp in the future can exist");
+      done.countDown();
+    }));
 
-      wrappedConsumer.offsetsForTimes(Collections.singletonMap(topicPartition, searchTimestamp), ctx.asyncAssertSuccess(offsetAndTimestamps -> {
-        io.vertx.kafka.client.consumer.OffsetAndTimestamp offsetAndTimestamp = offsetAndTimestamps.get(topicPartition);
-        ctx.assertEquals(0, offsetAndTimestamps.size(), "Must not return a result, because no Offset is found");
-        ctx.assertEquals(null, offsetAndTimestamp, "Must return null because no offset for a timestamp in the future can exist");
-        done.countDown();
-      }));
+    wrappedConsumer.offsetsForTimes(Collections.singletonMap(topicPartition, searchTimestamp), ctx.asyncAssertSuccess(offsetAndTimestamps -> {
+      io.vertx.kafka.client.consumer.OffsetAndTimestamp offsetAndTimestamp = offsetAndTimestamps.get(topicPartition);
+      ctx.assertEquals(0, offsetAndTimestamps.size(), "Must not return a result, because no Offset is found");
+      ctx.assertEquals(null, offsetAndTimestamp, "Must return null because no offset for a timestamp in the future can exist");
+      done.countDown();
     }));
   }
   

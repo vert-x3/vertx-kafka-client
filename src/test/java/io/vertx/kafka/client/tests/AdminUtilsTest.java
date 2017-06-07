@@ -95,7 +95,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     adminUtils.createTopic(topicName, 1, 1,
       ctx.asyncAssertFailure(
         res -> {
-          ctx.assertEquals("Topic \""+topicName+"\" already exists.", res.getLocalizedMessage(),
+          ctx.assertEquals("Topic '"+topicName+"' already exists.", res.getLocalizedMessage(),
             "Topic must already exist");
           create2Async.complete();
         }));

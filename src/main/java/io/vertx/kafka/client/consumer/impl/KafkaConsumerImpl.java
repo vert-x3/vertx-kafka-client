@@ -433,8 +433,10 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
           else {
             handler.handle(Future.succeededFuture());
           }
+        } else if (done.result().values().size() == 0) {
+          handler.handle(Future.succeededFuture());
         } else {
-            handler.handle(Future.failedFuture("offsetsForTimes should return exactly one OffsetAndTimestamp"));
+          handler.handle(Future.failedFuture("offsetsForTimes should return exactly one OffsetAndTimestamp"));
         }
       } else {
         handler.handle(Future.failedFuture(done.cause()));
