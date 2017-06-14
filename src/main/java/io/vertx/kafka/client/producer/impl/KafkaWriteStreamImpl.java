@@ -160,13 +160,6 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
     AtomicBoolean done = new AtomicBoolean();
 
-    // TODO: should be this timeout related to the Kafka producer property "metadata.fetch.timeout.ms" ?
-    this.context.owner().setTimer(2000, id -> {
-      if (done.compareAndSet(false, true)) {
-        handler.handle(Future.failedFuture("Kafka connect timeout"));
-      }
-    });
-
     this.context.executeBlocking(future -> {
 
       List<PartitionInfo> partitions = this.producer.partitionsFor(topic);
