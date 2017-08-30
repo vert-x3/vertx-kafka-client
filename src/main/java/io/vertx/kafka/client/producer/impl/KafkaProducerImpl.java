@@ -58,16 +58,16 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config, keyType, valueType));
   }
 
-  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config, Serializer<K> keyType, Serializer<V> valueType) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config, keyType, valueType));
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config, keySerializer, valueSerializer));
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Class<K> keyType, Class<V> valueType) {
     return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config), keyType, valueType));
   }
 
-  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Serializer<K> keyType, Serializer<V> valueType) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config), keyType, valueType));
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config), keySerializer, valueSerializer));
   }
 
   private static class SharedProducer extends HashMap<Object, KafkaProducer> {
