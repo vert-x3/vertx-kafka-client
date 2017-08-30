@@ -28,6 +28,7 @@ import io.vertx.core.streams.WriteStream;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -73,12 +74,42 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
    * @param config  Kafka producer configuration
+   * @param keySerializer key serializer
+   * @param valueSerializer value serializer
+   * @return  an instance of the KafkaProducer
+   */
+  @GenIgnore
+  static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return KafkaProducerImpl.createShared(vertx, name, config, keySerializer, valueSerializer);
+  }
+
+  /**
+   * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   *
+   * @param vertx Vert.x instance to use
+   * @param name the producer name to identify it
+   * @param config  Kafka producer configuration
    * @param keyType class type for the key serialization
    * @param valueType class type for the value serialization
    * @return  an instance of the KafkaProducer
    */
   static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Class<K> keyType, Class<V> valueType) {
     return KafkaProducerImpl.createShared(vertx, name, config, keyType, valueType);
+  }
+
+  /**
+   * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   *
+   * @param vertx Vert.x instance to use
+   * @param name the producer name to identify it
+   * @param config  Kafka producer configuration
+   * @param keySerializer key serializer
+   * @param valueSerializer value serializer
+   * @return  an instance of the KafkaProducer
+   */
+  @GenIgnore
+  static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return KafkaProducerImpl.createShared(vertx, name, config, keySerializer, valueSerializer);
   }
 
   /**
@@ -126,6 +157,21 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    *
    * @param vertx Vert.x instance to use
    * @param config  Kafka producer configuration
+   * @param keySerializer key serializer
+   * @param valueSerializer value serializer
+   * @return  an instance of the KafkaProducer
+   */
+  @GenIgnore
+  static <K, V> KafkaProducer<K, V> create(Vertx vertx, Map<String, String> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, new HashMap<>(config), keySerializer, valueSerializer);
+    return new KafkaProducerImpl<>(stream).registerCloseHook();
+  }
+
+  /**
+   * Create a new KafkaProducer instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka producer configuration
    * @param keyType class type for the key serialization
    * @param valueType class type for the value serialization
    * @return  an instance of the KafkaProducer
@@ -160,6 +206,21 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @GenIgnore
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, config, keyType, valueType);
+    return new KafkaProducerImpl<>(stream).registerCloseHook();
+  }
+
+  /**
+   * Create a new KafkaProducer instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka producer configuration
+   * @param keySerializer key serializer
+   * @param valueSerializer value serializer
+   * @return  an instance of the KafkaProducer
+   */
+  @GenIgnore
+  static <K, V> KafkaProducer<K, V> create(Vertx vertx, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, config, keySerializer, valueSerializer);
     return new KafkaProducerImpl<>(stream).registerCloseHook();
   }
 

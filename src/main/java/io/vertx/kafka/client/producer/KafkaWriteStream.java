@@ -21,10 +21,12 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.WriteStream;
 import io.vertx.kafka.client.producer.impl.KafkaWriteStreamImpl;
+import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.List;
 import java.util.Map;
@@ -61,7 +63,22 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @return  an instance of the KafkaWriteStream
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
-    return KafkaWriteStreamImpl.create(vertx, config, keyType, valueType);
+    Serializer<K> keySerializer = VertxSerdes.serdeFrom(keyType).serializer();
+    Serializer<V> valueSerializer = VertxSerdes.serdeFrom(valueType).serializer();
+    return KafkaWriteStreamImpl.create(vertx, config, keySerializer, valueSerializer);
+  }
+
+  /**
+   * Create a new KafkaWriteStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka producer configuration
+   * @param keySerializer key serializer
+   * @param valueSerializer value serializer
+   * @return  an instance of the KafkaWriteStream
+   */
+  static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return KafkaWriteStreamImpl.create(vertx, config, keySerializer, valueSerializer);
   }
 
   /**
@@ -85,7 +102,22 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @return  an instance of the KafkaWriteStream
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
-    return KafkaWriteStreamImpl.create(vertx, config, keyType, valueType);
+    Serializer<K> keySerializer = VertxSerdes.serdeFrom(keyType).serializer();
+    Serializer<V> valueSerializer = VertxSerdes.serdeFrom(valueType).serializer();
+    return KafkaWriteStreamImpl.create(vertx, config, keySerializer, valueSerializer);
+  }
+
+  /**
+   * Create a new KafkaWriteStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka producer configuration
+   * @param keySerializer key serializer
+   * @param valueSerializer value serializer
+   * @return  an instance of the KafkaWriteStream
+   */
+  static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Map<String, Object> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return KafkaWriteStreamImpl.create(vertx, config, keySerializer, valueSerializer);
   }
 
   /**
