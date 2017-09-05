@@ -123,6 +123,30 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
+  public KafkaWriteStream<K, V> initTransactions() {
+    this.producer.initTransactions();
+    return this;
+  }
+
+  @Override
+  public KafkaWriteStream<K, V> beginTransaction() {
+    this.producer.beginTransaction();
+    return this;
+  }
+
+  @Override
+  public KafkaWriteStream<K, V> commitTransaction() {
+    this.producer.commitTransaction();
+    return this;
+  }
+
+  @Override
+  public KafkaWriteStream<K, V> abortTransaction() {
+    this.producer.abortTransaction();
+    return this;
+  }
+
+  @Override
   public KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record) {
 
     return this.write(record, null);

@@ -164,6 +164,18 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   }
 
   @Fluent
+  KafkaProducer<K, V> initTransactions();
+
+  @Fluent
+  KafkaProducer<K, V> beginTransaction();
+
+  @Fluent
+  KafkaProducer<K, V> commitTransaction();
+
+  @Fluent
+  KafkaProducer<K, V> abortTransaction();
+
+  @Fluent
   @Override
   KafkaProducer<K, V> exceptionHandler(Handler<Throwable> handler);
 

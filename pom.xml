@@ -30,7 +30,7 @@
 
   <properties>
     <stack.version>3.5.0-SNAPSHOT</stack.version>
-    <kafka.version>0.10.2.1</kafka.version>
+    <kafka.version>0.11.0.0</kafka.version>
     <debezium.version>0.5.1</debezium.version>
   </properties>
 
