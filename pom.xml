@@ -107,6 +107,12 @@
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka_2.12</artifactId>
       <version>${kafka.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-library</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Kafka requires these dependencies: declare this dependency to force vertx-kafka-client to use this one. These are the versions used by vert.x -->
