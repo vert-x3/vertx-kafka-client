@@ -361,6 +361,39 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   @Test
+  public void testSeekAfterConsume(TestContext ctx) throws Exception {
+    String topic = "testSeekAfterConsume";
+    kafkaCluster.createTopic(topic, 1, 1);
+
+    Properties config = kafkaCluster.useTo().getConsumerProperties(topic, topic, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+    Async batch1 = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    kafkaCluster.useTo().produceStrings(5000, batch1::complete,  () ->
+      new ProducerRecord<>(topic, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch1.awaitSuccess(10000);
+    Async done = ctx.async();
+
+    TopicPartition topicPartition = new TopicPartition(topic, 0);
+    consumer.assign(Collections.singleton(topicPartition), assignRes -> {
+      // We set a handler => consumer starts polling
+      consumer.handler(record -> {
+        // Nothing to do ...
+      });
+      // Seek to offset 0
+      consumer.seekToBeginning(Collections.singleton(topicPartition), res -> {
+        consumer.position(topicPartition, ctx.asyncAssertSuccess(posRes -> {
+          ctx.assertEquals(0L, posRes, "Expecting offset 0 after seek to 0");
+          done.complete();
+        }));
+      });
+    });
+  }
+
+  @Test
   public void testSubscription(TestContext ctx) throws Exception {
     String topicName = "testSubscription";
     String consumerId = topicName;
@@ -441,7 +474,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     });
   }
-  
+
   @Test
   public void testSetHandlerThenAssign(TestContext ctx) throws Exception {
     String topicName = "testSetHandlerThenAssign";
@@ -571,7 +604,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     });
   }
-  
+
   @Test
   public void testPartitionsFor(TestContext ctx) throws Exception {
     String topicName = "testPartitionsFor";
@@ -872,7 +905,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       done.countDown();
     }));
   }
-  
+
   @Test
   public void testBatchHandler(TestContext ctx) throws Exception {
     String topicName = "testBatchHandler";
@@ -897,7 +930,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.handler(rec -> {});
     consumer.subscribe(Collections.singleton(topicName));
   }
-  
+
   @Test
   public void testConsumerBatchHandler(TestContext ctx) throws Exception {
     String topicName = "testConsumerBatchHandler";
@@ -911,7 +944,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    
+
     KafkaConsumer<Object, Object> wrappedConsumer = KafkaConsumer.create(vertx, config);
     wrappedConsumer.exceptionHandler(ctx::fail);
     AtomicInteger count = new AtomicInteger(numMessages);
@@ -933,7 +966,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     wrappedConsumer.handler(rec -> {});
     wrappedConsumer.subscribe(Collections.singleton(topicName));
   }
-  
+
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {
