@@ -112,13 +112,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       if (handler != null) {
         future = Future.future();
         future.setHandler(event-> {
-          // When we've executed the task on the worker thread, 
+          // When we've executed the task on the worker thread,
           // run the callback on the eventloop thread
           this.context.runOnContext(v-> {
             handler.handle(event);
             });
           });
-        
+
       } else {
         future = null;
       }
@@ -149,7 +149,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   private void schedule(long delay) {
-    if (this.consuming.get() 
+    if (this.consuming.get()
         && !this.paused.get()
         && this.recordHandler != null) {
 
@@ -529,7 +529,6 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
-
     if (this.closed.compareAndSet(false, true)) {
       this.worker.submit(() -> {
         this.consumer.close();
@@ -541,6 +540,11 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         });
       });
       this.consumer.wakeup();
+    }
+    else {
+      if (completionHandler != null) {
+        completionHandler.handle(Future.succeededFuture());
+      }
     }
   }
 
