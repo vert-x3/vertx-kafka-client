@@ -154,11 +154,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         && this.recordHandler != null) {
 
       Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
-      if (delay > 0) {
-        this.context.owner().setTimer(delay, v -> this.context.runOnContext(v2 -> run(handler)));
-      } else {
-        this.context.runOnContext(v -> run(handler));
-      }
+      this.context.runOnContext(v1 -> {
+        if (delay > 0) {
+          this.context.owner().setTimer(delay, v2 -> run(handler));
+        } else {
+          run(handler);
+        }
+      });
     }
   }
 
