@@ -339,7 +339,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public void commit(Handler<AsyncResult<Void>> completionHandler) {
-    this.stream.commit(completionHandler != null ? ar -> ar.map((Object) null) : null);
+    this.stream.commit(completionHandler != null ? AsyncResult::mapEmpty : null);
   }
 
   @Override
