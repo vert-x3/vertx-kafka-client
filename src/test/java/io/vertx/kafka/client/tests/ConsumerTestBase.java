@@ -36,11 +36,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -378,17 +374,31 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async done = ctx.async();
 
     TopicPartition topicPartition = new TopicPartition(topic, 0);
+    List<String> keys = new ArrayList<>();
     consumer.assign(Collections.singleton(topicPartition), assignRes -> {
       // We set a handler => consumer starts polling
+      AtomicBoolean seek = new AtomicBoolean();
       consumer.handler(record -> {
-        // Nothing to do ...
-      });
-      // Seek to offset 0
-      consumer.seekToBeginning(Collections.singleton(topicPartition), res -> {
-        consumer.position(topicPartition, ctx.asyncAssertSuccess(posRes -> {
-          ctx.assertEquals(0L, posRes, "Expecting offset 0 after seek to 0");
-          done.complete();
-        }));
+        if (seek.compareAndSet(false, true)) {
+          ctx.assertEquals("key-0", record.key());
+          // Need to pause the consumer as it's currently delivering a batch of 10 elements
+          consumer.pause();
+          // Seek to offset 0
+          consumer.seekToBeginning(Collections.singleton(topicPartition), res -> {
+            consumer.position(topicPartition, ctx.asyncAssertSuccess(posRes -> {
+              ctx.assertEquals(0L, posRes, "Expecting offset 0 after seek to 0");
+              consumer.resume();
+            }));
+          });
+        } else {
+          keys.add(record.key());
+          if (keys.size() == 5000) {
+            for (int i = 0;i < 5000;i++) {
+              ctx.assertEquals("key-" + i, keys.get(i));
+            }
+            done.complete();
+          }
+        }
       });
     });
   }
