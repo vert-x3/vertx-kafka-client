@@ -529,8 +529,8 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> pollingTimeout(long timeout) {
-    this.stream.pollingTimeout(timeout);
+  public KafkaConsumer<K, V> pollTimeout(long timeout) {
+    this.stream.pollTimeout(timeout);
     return this;
   }
 }

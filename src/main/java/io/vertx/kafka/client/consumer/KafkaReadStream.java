@@ -422,7 +422,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   KafkaReadStream<K, V> batchHandler(Handler<ConsumerRecords<K, V>> handler);
 
   /**
-   * Sets the polling timeout (in ms) for the underlying native Kafka Consumer. Defaults to 1000.
+   * Sets the poll timeout (in ms) for the underlying native Kafka Consumer. Defaults to 1000.
    * Setting timeout to a lower value results in a more 'responsive' client, because it will block for a shorter period
    * if no data is available in the assigned partition and therefore allows subsequent actions to be executed with a shorter
    * delay. At the same time, the client will poll more frequently and thus will potentially create a higher load on the Kafka Broker.
@@ -431,5 +431,5 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * If 0, returns immediately with any records that are available currently in the native Kafka consumer's buffer,
    * else returns empty. Must not be negative.
    */
-  void pollingTimeout(long timeout);
+  void pollTimeout(long timeout);
 }
