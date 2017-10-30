@@ -60,6 +60,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private final AtomicBoolean consuming = new AtomicBoolean(false);
   private final AtomicBoolean paused = new AtomicBoolean(false);
   private Handler<ConsumerRecord<K, V>> recordHandler;
+  private Handler<Throwable> exceptionHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
   private Handler<ConsumerRecords<K, V>> batchHandler;
   private Handler<Set<TopicPartition>> partitionsRevokedHandler;
@@ -143,6 +144,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
             schedule(0);
           }
         } catch (WakeupException ignore) {
+        } catch (Exception e) {
+          exceptionHandler.handle(e);
         }
       }
     });
@@ -501,6 +504,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public KafkaReadStreamImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
+    this.exceptionHandler = handler;
     return this;
   }
 
