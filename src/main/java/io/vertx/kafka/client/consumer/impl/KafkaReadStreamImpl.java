@@ -145,7 +145,9 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
           }
         } catch (WakeupException ignore) {
         } catch (Exception e) {
-          exceptionHandler.handle(e);
+          if(exceptionHandler != null) {
+            exceptionHandler.handle(e);
+          }
         }
       }
     });
