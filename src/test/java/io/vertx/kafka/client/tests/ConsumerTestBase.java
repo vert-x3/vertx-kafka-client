@@ -31,6 +31,7 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.InvalidGroupIdException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.After;
 import org.junit.Before;
@@ -975,6 +976,21 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     });
     wrappedConsumer.handler(rec -> {});
     wrappedConsumer.subscribe(Collections.singleton(topicName));
+  }
+
+  @Test
+  public void testPollExceptionHandler(TestContext ctx) throws Exception {
+    Properties config = kafkaCluster.useTo().getConsumerProperties("someRandomGroup", "someRandomClientID", OffsetResetStrategy.EARLIEST);
+    config.remove("group.id");
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumer = createConsumer(vertx, config);
+    Async done = ctx.async();
+    consumer.exceptionHandler(ex -> {
+      ctx.assertTrue(ex instanceof InvalidGroupIdException);
+      done.complete();
+    });
+    consumer.subscribe(Collections.singleton("someTopic")).handler(System.out::println);
   }
 
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
