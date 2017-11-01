@@ -653,7 +653,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStreamImpl<K, V> pollTimeout(long timeout) {
+  public KafkaReadStream<K, V> pollTimeout(long timeout) {
     this.pollTimeout = timeout;
     return this;
   }
