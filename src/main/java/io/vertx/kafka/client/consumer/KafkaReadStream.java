@@ -411,14 +411,25 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   Consumer<K, V> unwrap();
 
   /**
-   * Set the handler that will be called when a new batch of records is 
-   * returned from Kafka. Batch handlers need to take care not to block 
+   * Set the handler that will be called when a new batch of records is
+   * returned from Kafka. Batch handlers need to take care not to block
    * the event loop when dealing with large batches. It is better to process
    * records individually using the {@link #handler(Handler) record handler}.
-   * 
+   *
    * @param handler handler called each time Kafka returns a batch of records.
    * @return current KafkaReadStream instance.
    */
   KafkaReadStream<K, V> batchHandler(Handler<ConsumerRecords<K, V>> handler);
 
+  /**
+   * Sets the poll timeout (in ms) for the underlying native Kafka Consumer. Defaults to 1000.
+   * Setting timeout to a lower value results in a more 'responsive' client, because it will block for a shorter period
+   * if no data is available in the assigned partition and therefore allows subsequent actions to be executed with a shorter
+   * delay. At the same time, the client will poll more frequently and thus will potentially create a higher load on the Kafka Broker.
+   *
+   * @param timeout The time, in milliseconds, spent waiting in poll if data is not available in the buffer.
+   * If 0, returns immediately with any records that are available currently in the native Kafka consumer's buffer,
+   * else returns empty. Must not be negative.
+   */
+  KafkaReadStream<K, V> pollTimeout(long timeout);
 }

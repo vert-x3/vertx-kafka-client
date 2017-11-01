@@ -993,6 +993,33 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.subscribe(Collections.singleton("someTopic")).handler(System.out::println);
   }
 
+  @Test
+  public void testPollTimeout(TestContext ctx) throws Exception {
+    Async async = ctx.async();
+    String topicName = "testPollTimeout";
+    Properties config = kafkaCluster.useTo().getConsumerProperties(topicName, topicName, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+    io.vertx.kafka.client.common.TopicPartition topicPartition = new io.vertx.kafka.client.common.TopicPartition(topicName, 0);
+    KafkaConsumer<Object, Object> consumerWithCustomTimeout = KafkaConsumer.create(vertx, config);
+
+    int pollingTimeout = 1500;
+    // Set the polling timeout to 1500 ms (default is 1000)
+    consumerWithCustomTimeout.pollTimeout(pollingTimeout);
+    // Subscribe to the empty topic (we want the poll() call to timeout!)
+    consumerWithCustomTimeout.subscribe(topicName, subscribeRes -> {
+      consumerWithCustomTimeout.handler(rec -> {}); // Consumer will now immediately poll once
+      long beforeSeek = System.currentTimeMillis();
+      consumerWithCustomTimeout.seekToBeginning(topicPartition, seekRes -> {
+        long durationWShortTimeout = System.currentTimeMillis() - beforeSeek;
+        ctx.assertTrue(durationWShortTimeout >= pollingTimeout, "Operation must take at least as long as the polling timeout");
+        consumerWithCustomTimeout.close();
+        async.countDown();
+      });
+    });
+  }
+
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {

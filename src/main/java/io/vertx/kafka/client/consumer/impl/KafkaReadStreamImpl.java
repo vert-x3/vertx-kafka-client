@@ -65,6 +65,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private Handler<ConsumerRecords<K, V>> batchHandler;
   private Handler<Set<TopicPartition>> partitionsRevokedHandler;
   private Handler<Set<TopicPartition>> partitionsAssignedHandler;
+  private long pollTimeout = 1000L;
 
   private ExecutorService worker;
 
@@ -136,7 +137,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     this.worker.submit(() -> {
       if (!this.closed.get()) {
         try {
-          ConsumerRecords<K, V> records = this.consumer.poll(1000);
+          ConsumerRecords<K, V> records = this.consumer.poll(pollTimeout);
           if (records != null && records.count() > 0) {
             this.context.runOnContext(v -> handler.handle(records));
           } else {
@@ -648,6 +649,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   public KafkaReadStream batchHandler(Handler<ConsumerRecords<K, V>> handler) {
     this.batchHandler = handler;
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> pollTimeout(long timeout) {
+    this.pollTimeout = timeout;
     return this;
   }
 }
