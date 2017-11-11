@@ -193,7 +193,30 @@ public class CleanupTest extends KafkaClusterTestBase {
     ));
     produceLatch.awaitSuccess(10000);
     kafkaCluster.useTo().produce("testCleanupInConsumer_producer", 100,
-      new StringSerializer(), new StringSerializer(), async::countDown, 
+      new StringSerializer(), new StringSerializer(), async::countDown,
       () -> new ProducerRecord<>(topicName, "the_value"));
+  }
+
+  @Test
+  // Regression test for ISS-73: undeployment of a verticle with unassigned consumer fails
+  public void testUndeployUnassignedConsumer(TestContext ctx) throws Exception {
+    Properties config = kafkaCluster.useTo().getConsumerProperties("testUndeployUnassignedConsumer_consumer",
+      "testUndeployUnassignedConsumer_consumer", OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+    Async async = ctx.async(1);
+    vertx.deployVerticle(new AbstractVerticle() {
+      @Override
+      public void start() throws Exception {
+        KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+        vertx.setTimer(20, record -> {
+          // Very rarely, this throws a AlreadyUndedeployed error
+          vertx.undeploy(context.deploymentID(), ctx.asyncAssertSuccess(ar -> {
+            async.complete();
+          }));
+        });
+      }
+    }, ctx.asyncAssertSuccess());
   }
 }

@@ -31,16 +31,13 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.InvalidGroupIdException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -361,6 +358,53 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   @Test
+  public void testSeekAfterConsume(TestContext ctx) throws Exception {
+    String topic = "testSeekAfterConsume";
+    kafkaCluster.createTopic(topic, 1, 1);
+
+    Properties config = kafkaCluster.useTo().getConsumerProperties(topic, topic, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    Context context = vertx.getOrCreateContext();
+    consumer = createConsumer(context, config);
+    Async batch1 = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    kafkaCluster.useTo().produceStrings(5000, batch1::complete,  () ->
+      new ProducerRecord<>(topic, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch1.awaitSuccess(10000);
+    Async done = ctx.async();
+
+    TopicPartition topicPartition = new TopicPartition(topic, 0);
+    List<String> keys = new ArrayList<>();
+    consumer.assign(Collections.singleton(topicPartition), assignRes -> {
+      // We set a handler => consumer starts polling
+      AtomicBoolean seek = new AtomicBoolean();
+      consumer.handler(record -> {
+        if (seek.compareAndSet(false, true)) {
+          ctx.assertEquals("key-0", record.key());
+          // Need to pause the consumer as it's currently delivering a batch of 10 elements
+          consumer.pause();
+          // Seek to offset 0
+          consumer.seekToBeginning(Collections.singleton(topicPartition), res -> {
+            consumer.position(topicPartition, ctx.asyncAssertSuccess(posRes -> {
+              ctx.assertEquals(0L, posRes, "Expecting offset 0 after seek to 0");
+              consumer.resume();
+            }));
+          });
+        } else {
+          keys.add(record.key());
+          if (keys.size() == 5000) {
+            for (int i = 0;i < 5000;i++) {
+              ctx.assertEquals("key-" + i, keys.get(i));
+            }
+            done.complete();
+          }
+        }
+      });
+    });
+  }
+
+  @Test
   public void testSubscription(TestContext ctx) throws Exception {
     String topicName = "testSubscription";
     String consumerId = topicName;
@@ -441,7 +485,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     });
   }
-  
+
   @Test
   public void testSetHandlerThenAssign(TestContext ctx) throws Exception {
     String topicName = "testSetHandlerThenAssign";
@@ -571,7 +615,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     });
   }
-  
+
   @Test
   public void testPartitionsFor(TestContext ctx) throws Exception {
     String topicName = "testPartitionsFor";
@@ -872,7 +916,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       done.countDown();
     }));
   }
-  
+
   @Test
   public void testBatchHandler(TestContext ctx) throws Exception {
     String topicName = "testBatchHandler";
@@ -897,7 +941,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.handler(rec -> {});
     consumer.subscribe(Collections.singleton(topicName));
   }
-  
+
   @Test
   public void testConsumerBatchHandler(TestContext ctx) throws Exception {
     String topicName = "testConsumerBatchHandler";
@@ -911,7 +955,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    
+
     KafkaConsumer<Object, Object> wrappedConsumer = KafkaConsumer.create(vertx, config);
     wrappedConsumer.exceptionHandler(ctx::fail);
     AtomicInteger count = new AtomicInteger(numMessages);
@@ -933,7 +977,49 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     wrappedConsumer.handler(rec -> {});
     wrappedConsumer.subscribe(Collections.singleton(topicName));
   }
-  
+
+  @Test
+  public void testPollExceptionHandler(TestContext ctx) throws Exception {
+    Properties config = kafkaCluster.useTo().getConsumerProperties("someRandomGroup", "someRandomClientID", OffsetResetStrategy.EARLIEST);
+    config.remove("group.id");
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumer = createConsumer(vertx, config);
+    Async done = ctx.async();
+    consumer.exceptionHandler(ex -> {
+      ctx.assertTrue(ex instanceof InvalidGroupIdException);
+      done.complete();
+    });
+    consumer.subscribe(Collections.singleton("someTopic")).handler(System.out::println);
+  }
+
+  @Test
+  public void testPollTimeout(TestContext ctx) throws Exception {
+    Async async = ctx.async();
+    String topicName = "testPollTimeout";
+    Properties config = kafkaCluster.useTo().getConsumerProperties(topicName, topicName, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+    io.vertx.kafka.client.common.TopicPartition topicPartition = new io.vertx.kafka.client.common.TopicPartition(topicName, 0);
+    KafkaConsumer<Object, Object> consumerWithCustomTimeout = KafkaConsumer.create(vertx, config);
+
+    int pollingTimeout = 1500;
+    // Set the polling timeout to 1500 ms (default is 1000)
+    consumerWithCustomTimeout.pollTimeout(pollingTimeout);
+    // Subscribe to the empty topic (we want the poll() call to timeout!)
+    consumerWithCustomTimeout.subscribe(topicName, subscribeRes -> {
+      consumerWithCustomTimeout.handler(rec -> {}); // Consumer will now immediately poll once
+      long beforeSeek = System.currentTimeMillis();
+      consumerWithCustomTimeout.seekToBeginning(topicPartition, seekRes -> {
+        long durationWShortTimeout = System.currentTimeMillis() - beforeSeek;
+        ctx.assertTrue(durationWShortTimeout >= pollingTimeout, "Operation must take at least as long as the polling timeout");
+        consumerWithCustomTimeout.close();
+        async.countDown();
+      });
+    });
+  }
+
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {

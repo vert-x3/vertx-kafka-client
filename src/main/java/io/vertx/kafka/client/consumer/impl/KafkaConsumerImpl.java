@@ -339,7 +339,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public void commit(Handler<AsyncResult<Void>> completionHandler) {
-    this.stream.commit(completionHandler != null ? ar -> ar.map((Object) null) : null);
+    this.stream.commit(completionHandler != null ? ar -> completionHandler.handle(ar.mapEmpty()) : null);
   }
 
   @Override
@@ -525,6 +525,12 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
     stream.batchHandler(records -> {
       handler.handle(new KafkaConsumerRecordsImpl<>(records));
     });
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> pollTimeout(long timeout) {
+    this.stream.pollTimeout(timeout);
     return this;
   }
 }

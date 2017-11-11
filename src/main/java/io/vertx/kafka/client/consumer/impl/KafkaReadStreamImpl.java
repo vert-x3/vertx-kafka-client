@@ -21,7 +21,6 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.kafka.client.common.impl.Helper;
-import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -61,10 +60,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private final AtomicBoolean consuming = new AtomicBoolean(false);
   private final AtomicBoolean paused = new AtomicBoolean(false);
   private Handler<ConsumerRecord<K, V>> recordHandler;
+  private Handler<Throwable> exceptionHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
   private Handler<ConsumerRecords<K, V>> batchHandler;
   private Handler<Set<TopicPartition>> partitionsRevokedHandler;
   private Handler<Set<TopicPartition>> partitionsAssignedHandler;
+  private long pollTimeout = 1000L;
 
   private ExecutorService worker;
 
@@ -112,13 +113,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       if (handler != null) {
         future = Future.future();
         future.setHandler(event-> {
-          // When we've executed the task on the worker thread, 
+          // When we've executed the task on the worker thread,
           // run the callback on the eventloop thread
           this.context.runOnContext(v-> {
             handler.handle(event);
             });
           });
-        
+
       } else {
         future = null;
       }
@@ -136,29 +137,36 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     this.worker.submit(() -> {
       if (!this.closed.get()) {
         try {
-          ConsumerRecords<K, V> records = this.consumer.poll(1000);
+          ConsumerRecords<K, V> records = this.consumer.poll(pollTimeout);
           if (records != null && records.count() > 0) {
             this.context.runOnContext(v -> handler.handle(records));
           } else {
-            this.pollRecords(handler);
+            // Don't call pollRecords directly, but use schedule() to actually pause when the readStream is paused
+            schedule(0);
           }
         } catch (WakeupException ignore) {
+        } catch (Exception e) {
+          if (exceptionHandler != null) {
+            exceptionHandler.handle(e);
+          }
         }
       }
     });
   }
 
   private void schedule(long delay) {
-    if (this.consuming.get() 
+    if (this.consuming.get()
         && !this.paused.get()
         && this.recordHandler != null) {
 
       Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
-      if (delay > 0) {
-        this.context.owner().setTimer(delay, v -> run(handler));
-      } else {
-        this.context.runOnContext(v -> run(handler));
-      }
+      this.context.runOnContext(v1 -> {
+        if (delay > 0) {
+          this.context.owner().setTimer(delay, v2 -> run(handler));
+        } else {
+          run(handler);
+        }
+      });
     }
   }
 
@@ -276,14 +284,16 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public KafkaReadStream<K, V> seekToEnd(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    this.context.runOnContext(r -> {
+      current = null;
 
-    this.submitTask((consumer, future) -> {
-      consumer.seekToEnd(topicPartitions);
-      if (future != null) {
-        future.complete();
-      }
-    }, completionHandler);
-
+      this.submitTask((consumer, future) -> {
+        consumer.seekToEnd(topicPartitions);
+        if (future != null) {
+          future.complete();
+        }
+      }, completionHandler);
+    });
     return this;
   }
 
@@ -294,14 +304,16 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public KafkaReadStream<K, V> seekToBeginning(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
+    this.context.runOnContext(r -> {
+      current = null;
 
-    this.submitTask((consumer, future) -> {
-      consumer.seekToBeginning(topicPartitions);
-      if (future != null) {
-        future.complete();
-      }
-    }, completionHandler);
-
+      this.submitTask((consumer, future) -> {
+        consumer.seekToBeginning(topicPartitions);
+        if (future != null) {
+          future.complete();
+        }
+      }, completionHandler);
+    });
     return this;
   }
 
@@ -312,13 +324,16 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler) {
+    this.context.runOnContext(r -> {
+      current = null;
 
-    this.submitTask((consumer, future) -> {
-      consumer.seek(topicPartition, offset);
-      if (future != null) {
-        future.complete();
-      }
-    }, completionHandler);
+      this.submitTask((consumer, future) -> {
+        consumer.seek(topicPartition, offset);
+        if (future != null) {
+          future.complete();
+        }
+      }, completionHandler);
+    });
 
     return this;
   }
@@ -492,6 +507,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public KafkaReadStreamImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
+    this.exceptionHandler = handler;
     return this;
   }
 
@@ -529,7 +545,6 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
-
     if (this.closed.compareAndSet(false, true)) {
       this.worker.submit(() -> {
         this.consumer.close();
@@ -541,6 +556,11 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         });
       });
       this.consumer.wakeup();
+    }
+    else {
+      if (completionHandler != null) {
+        completionHandler.handle(Future.succeededFuture());
+      }
     }
   }
 
@@ -629,6 +649,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   public KafkaReadStream batchHandler(Handler<ConsumerRecords<K, V>> handler) {
     this.batchHandler = handler;
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> pollTimeout(long timeout) {
+    this.pollTimeout = timeout;
     return this;
   }
 }
