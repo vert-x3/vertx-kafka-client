@@ -77,7 +77,7 @@ public class KafkaConsumerRecordImpl<K, V> implements KafkaConsumerRecord<K, V> 
   }
 
   @Override
-  public ConsumerRecord record() {
+  public ConsumerRecord<K, V> record() {
     return this.record;
   }
 }
