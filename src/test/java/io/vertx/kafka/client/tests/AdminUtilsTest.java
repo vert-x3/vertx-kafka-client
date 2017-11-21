@@ -244,7 +244,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     properties.put("this.does.not.exist", "1024L");
 
     adminUtils.changeTopicConfig(topicName, properties, ctx.asyncAssertFailure(res -> {
-        ctx.assertEquals("Unknown Log configuration this.does.not.exist.", res.getLocalizedMessage());
+        ctx.assertEquals("Unknown topic config name: this.does.not.exist", res.getLocalizedMessage());
         async.complete();
       })
     );
