@@ -94,7 +94,11 @@ public class Helper {
   }
 
   public static OffsetAndMetadata from(org.apache.kafka.clients.consumer.OffsetAndMetadata offsetAndMetadata) {
-    return new OffsetAndMetadata(offsetAndMetadata.offset(), offsetAndMetadata.metadata());
+    if (offsetAndMetadata != null) {
+      return new OffsetAndMetadata(offsetAndMetadata.offset(), offsetAndMetadata.metadata());
+    } else {
+      return null;
+    }
   }
 
   public static org.apache.kafka.clients.consumer.OffsetAndMetadata to(OffsetAndMetadata offsetAndMetadata) {
