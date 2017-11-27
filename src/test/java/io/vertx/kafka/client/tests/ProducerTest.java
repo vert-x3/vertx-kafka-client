@@ -20,6 +20,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -28,6 +30,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -106,4 +109,19 @@ public class ProducerTest extends KafkaClusterTestBase {
     producer = producer(Vertx.vertx(), props);
     producer.write(new ProducerRecord<>("testBrokerConnectionError", 0, "key", "value"), ctx.asyncAssertFailure());
   }
+
+  @Test
+  public void testExceptionHandler(TestContext ctx) throws Exception {
+    Async async = ctx.async();
+    Properties props = new Properties();
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+    Date invalidValue = new Date();
+    KafkaProducer.create(Vertx.vertx(), props).
+      exceptionHandler(exception -> async.complete()).
+      write(KafkaProducerRecord.create("topic", "key", invalidValue));
+  }
+
 }
