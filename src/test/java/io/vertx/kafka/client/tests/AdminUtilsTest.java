@@ -53,6 +53,28 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
   }
 
   @Test
+  public void testCreateTopicWithZeroReplicas(TestContext ctx) throws Exception {
+    final String topicName = "testCreateTopicWithZeroReplicas";
+    Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    Async async = ctx.async();
+
+    AdminUtils adminUtils = AdminUtils.create(vertx, zookeeperHosts, true);
+
+    adminUtils.createTopic(topicName, 1, 0,
+      ctx.asyncAssertFailure(
+        res -> {
+          ctx.assertEquals("Replication factor must be larger than 0.", res.getLocalizedMessage(),
+            "Topic creation must fail: one Broker present, but zero replicas requested");
+          async.complete();
+        })
+    );
+
+    async.awaitSuccess(10000);
+  }
+
+  @Test
   public void testCreateTopicWithTooManyReplicas(TestContext ctx) throws Exception {
     final String topicName = "testCreateTopicWithTooManyReplicas";
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
@@ -65,7 +87,7 @@ public class AdminUtilsTest extends KafkaClusterTestBase {
     adminUtils.createTopic(topicName, 1, 2,
       ctx.asyncAssertFailure(
         res -> {
-          ctx.assertEquals("replication factor: 2 larger than available brokers: 1", res.getLocalizedMessage(),
+          ctx.assertEquals("Replication factor: 2 larger than available brokers: 1.", res.getLocalizedMessage(),
             "Topic creation must fail: only one Broker present, but two replicas requested");
           async.complete();
         })
