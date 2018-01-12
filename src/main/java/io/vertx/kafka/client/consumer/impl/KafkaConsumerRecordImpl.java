@@ -80,4 +80,17 @@ public class KafkaConsumerRecordImpl<K, V> implements KafkaConsumerRecord<K, V> 
   public ConsumerRecord<K, V> record() {
     return this.record;
   }
+
+  @Override
+  public String toString() {
+
+    return "KafkaConsumerRecord{" +
+      "topic=" + this.record.topic() +
+      ",partition=" + this.record.partition() +
+      ",offset=" + this.record.offset() +
+      ",timestamp=" + this.record.timestamp() +
+      ",key=" + this.record.key() +
+      ",value=" + this.record.value() +
+      "}";
+  }
 }
