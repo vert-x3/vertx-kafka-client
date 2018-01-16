@@ -1020,6 +1020,36 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     });
   }
 
+  @Test
+  public void testNotCommitted(TestContext ctx) throws Exception {
+
+    String topicName = "testNotCommitted";
+    String consumerId = topicName;
+    kafkaCluster.createTopic(topicName, 1, 1);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+    Async done = ctx.async();
+
+    KafkaConsumer<Object, Object> consumer = KafkaConsumer.create(vertx, config);
+    consumer.handler(rec -> {});
+    consumer.partitionsAssignedHandler(partitions -> {
+      for (io.vertx.kafka.client.common.TopicPartition partition: partitions) {
+        consumer.committed(partition, ar -> {
+          if (ar.succeeded()) {
+            ctx.assertNull(ar.result());
+          } else {
+            ctx.fail(ar.cause());
+          }
+        });
+      }
+      done.complete();
+    });
+
+    consumer.subscribe(Collections.singleton(topicName));
+  }
+
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {

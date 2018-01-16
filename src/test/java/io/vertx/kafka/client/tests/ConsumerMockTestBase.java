@@ -97,7 +97,7 @@ public abstract class ConsumerMockTestBase {
         mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
         mock.seek(new TopicPartition("the_topic", 0), 0);
         for (int i = 0;i < num;i++) {
-          mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "key-" + i, "value-" + i));
+          mock.addRecord(new ConsumerRecord<>("the_topic", 0, i, "key-" + i, "value-" + i));
         }
       });
     });

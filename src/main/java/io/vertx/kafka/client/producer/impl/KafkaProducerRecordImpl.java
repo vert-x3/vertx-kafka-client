@@ -105,4 +105,16 @@ public class KafkaProducerRecordImpl<K, V> implements KafkaProducerRecord<K, V> 
   public ProducerRecord record() {
     return this.record;
   }
+
+  @Override
+  public String toString() {
+
+    return "KafkaProducerRecord{" +
+      "topic=" + this.record.topic() +
+      ",partition=" + this.record.partition() +
+      ",timestamp=" + this.record.timestamp() +
+      ",key=" + this.record.key() +
+      ",value=" + this.record.value() +
+      "}";
+  }
 }

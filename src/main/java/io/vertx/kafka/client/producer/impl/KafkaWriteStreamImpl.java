@@ -88,35 +88,39 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     int len = this.len(record.value());
     this.pending += len;
     this.context.<RecordMetadata>executeBlocking(fut -> {
-      this.producer.send(record, (metadata, err) -> {
+      try {
+        this.producer.send(record, (metadata, err) -> {
 
-        // callback from IO thread
-        this.context.runOnContext(v1 -> {
-          synchronized (KafkaWriteStreamImpl.this) {
+          // callback from IO thread
+          this.context.runOnContext(v1 -> {
+            synchronized (KafkaWriteStreamImpl.this) {
 
-            // if exception happens, no record written
-            if (err != null) {
+              // if exception happens, no record written
+              if (err != null) {
 
-              if (this.exceptionHandler != null) {
-                Handler<Throwable> exceptionHandler = this.exceptionHandler;
-                this.context.runOnContext(v2 -> exceptionHandler.handle(err));
+                if (this.exceptionHandler != null) {
+                  Handler<Throwable> exceptionHandler = this.exceptionHandler;
+                  this.context.runOnContext(v2 -> exceptionHandler.handle(err));
+                }
+              }
+
+              long lowWaterMark = this.maxSize / 2;
+              this.pending -= len;
+              if (this.pending < lowWaterMark && this.drainHandler != null) {
+                Handler<Void> drainHandler = this.drainHandler;
+                this.drainHandler = null;
+                this.context.runOnContext(drainHandler);
               }
             }
 
-            long lowWaterMark = this.maxSize / 2;
-            this.pending -= len;
-            if (this.pending < lowWaterMark && this.drainHandler != null) {
-              Handler<Void> drainHandler = this.drainHandler;
-              this.drainHandler = null;
-              this.context.runOnContext(drainHandler);
+            if (handler != null) {
+              handler.handle(err != null ? Future.failedFuture(err) : Future.succeededFuture(metadata));
             }
-          }
-
-          if (handler != null) {
-            handler.handle(err != null ? Future.failedFuture(err) : Future.succeededFuture(metadata));
-          }
+          });
         });
-      });
+      } catch (Throwable e) {
+        exceptionHandler.handle(e);
+      }
     }, null);
 
     return this;
