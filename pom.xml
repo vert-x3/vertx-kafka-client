@@ -131,11 +131,6 @@
       <artifactId>log4j</artifactId>
       <version>1.2.16</version>
     </dependency>
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-      <version>2.12.3</version>
-    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
@@ -159,6 +154,12 @@
       <artifactId>debezium-core</artifactId>
       <version>${debezium.version}</version>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.12.4</version>
       <scope>test</scope>
     </dependency>
 
