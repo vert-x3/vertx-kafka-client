@@ -1,6 +1,5 @@
 package io.vertx.kafka.client.tests;
 
-import io.debezium.kafka.KafkaCluster;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -12,8 +11,6 @@ import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import io.vertx.kafka.client.producer.KafkaWriteStream;
-import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -29,7 +26,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -48,11 +44,15 @@ public class CleanupTest extends KafkaClusterTestBase {
     vertx.close(ctx.asyncAssertSuccess());
   }
 
-  private long countProducerThreads() {
-    return Thread.getAllStackTraces().keySet()
+  private int countThreads(String match) {
+    return (int) Thread.getAllStackTraces().keySet()
       .stream()
-      .filter(t -> t.getName().contains("kafka-producer-network-thread"))
+      .filter(t -> t.getName().contains(match))
       .count();
+  }
+
+  private void assertNoThreads(TestContext ctx, String match) {
+    ctx.assertEquals(0, countThreads(match));
   }
 
   @Test
@@ -74,7 +74,7 @@ public class CleanupTest extends KafkaClusterTestBase {
     Async async = ctx.async();
     kafkaCluster.useTo().consumeStrings("the_topic", num, 10, TimeUnit.SECONDS, () -> {
       close(ctx, producers, () -> {
-        ctx.assertEquals(0L, countProducerThreads());
+        ctx.assertEquals(0, countThreads("kafka-producer-network-thread"));
         async.complete();
       });
     });
@@ -82,7 +82,7 @@ public class CleanupTest extends KafkaClusterTestBase {
 
   private void close(TestContext ctx, LinkedList<KafkaProducer<String, String>> producers, Runnable doneHandler) {
     if (producers.size() > 0) {
-      ctx.assertEquals(1L, countProducerThreads());
+      ctx.assertEquals(1, countThreads("kafka-producer-network-thread"));
       KafkaProducer<String, String> producer = producers.removeFirst();
       producer.close(ctx.asyncAssertSuccess(v -> {
         close(ctx, producers, doneHandler);
@@ -119,7 +119,7 @@ public class CleanupTest extends KafkaClusterTestBase {
     Async async = ctx.async();
     kafkaCluster.useTo().consumeStrings("the_topic", num, 10, TimeUnit.SECONDS, () -> {
       vertx.undeploy(deploymentID.get(), ctx.asyncAssertSuccess(v -> {
-        ctx.assertEquals(0L, countProducerThreads());
+        ctx.assertEquals(0, countThreads("kafka-producer-network-thread"));
         async.complete();
       }));
     });
@@ -146,18 +146,17 @@ public class CleanupTest extends KafkaClusterTestBase {
 
     kafkaCluster.useTo().consumeStrings("the_topic", 1, 10, TimeUnit.SECONDS, () -> {
       vertx.undeploy(deploymentRef.get(), ctx.asyncAssertSuccess(v -> {
-        Thread.getAllStackTraces().forEach((t, s) -> {
-          if (t.getName().contains("kafka-producer-network-thread")) {
-            ctx.fail("Was expecting the producer to be closed");
-          }
-        });
+        assertNoThreads(ctx, "kafka-producer-network-thread");
         async.complete();
       }));
     });
   }
 
   @Test
-  public void testCleanupInConsumer(TestContext ctx) throws Exception {
+  public void testCleanupInConsumer(TestContext ctx) {
+    // Check before so we don't report false negative
+    assertNoThreads(ctx, "vert.x-kafka-consumer-thread");
+
     String topicName = "testCleanupInConsumer";
     Properties config = kafkaCluster.useTo().getConsumerProperties("testCleanupInConsumer_consumer",
       "testCleanupInConsumer_consumer", OffsetResetStrategy.EARLIEST);
@@ -179,11 +178,7 @@ public class CleanupTest extends KafkaClusterTestBase {
             } catch (InterruptedException e) {
               e.printStackTrace();
             }
-            Thread.getAllStackTraces().forEach((t, s) -> {
-              if (t.getName().contains("vert.x-kafka-consumer-thread")) {
-                ctx.fail("Was expecting the consumer to be closed");
-              }
-            });
+            assertNoThreads(ctx, "vert.x-kafka-consumer-thread");
             async.countDown();
           }));
         });
