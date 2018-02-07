@@ -157,7 +157,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Subscribe to the given topic to get dynamically assigned partitions.
-   *
+   * <p>
+   * Due to internal buffering of messages, when changing the subscribed topic  
+   * the old topic may remain in effect 
+   * (as observed by the {@linkplain #handler(Handler)} record handler}) 
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new topic.
+   * 
    * @param topic  topic to subscribe to
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -167,7 +175,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Subscribe to the given list of topics to get dynamically assigned partitions.
-   *
+   * <p>
+   * Due to internal buffering of messages, when changing the subscribed topics  
+   * the old set of topics may remain in effect 
+   * (as observed by the {@linkplain #handler(Handler)} record handler}) 
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new set of topics.
+   * 
    * @param topics  topics to subscribe to
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -195,7 +211,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Manually assign a partition to this consumer.
-   *
+   * <p>
+   * Due to internal buffering of messages, when reassigning
+   * the old partition may remain in effect 
+   * (as observed by the {@linkplain #handler(Handler)} record handler)} 
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new partition.
+   * 
    * @param topicPartition  partition which want assigned
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -205,7 +229,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Manually assign a list of partition to this consumer.
-   *
+   * <p>
+   * Due to internal buffering of messages, when reassigning
+   * the old set of partitions may remain in effect 
+   * (as observed by the {@linkplain #handler(Handler)} record handler)} 
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new set of partitions.
+   * 
    * @param topicPartitions  partitions which want assigned
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -278,7 +310,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Suspend fetching from the requested partition.
-   *
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will 
+   * continue to observe messages from the given {@code topicParation} 
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will not see messages 
+   * from the given {@code topicParation}.
+   * 
    * @param topicPartition topic partition from which suspend fetching
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -288,7 +328,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Suspend fetching from the requested partitions.
-   *
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will 
+   * continue to observe messages from the given {@code topicParations} 
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will not see messages 
+   * from the given {@code topicParations}.
+   * 
    * @param topicPartitions topic partition from which suspend fetching
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -371,7 +419,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Overrides the fetch offsets that the consumer will use on the next poll.
-   *
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will 
+   * continue to observe messages fetched with respect to the old offset  
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new offset.
+   * 
    * @param topicPartition  topic partition for which seek
    * @param offset  offset to seek inside the topic partition
    * @param completionHandler handler called on operation completed
@@ -400,7 +456,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Seek to the first offset for each of the given partition.
-   *
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will 
+   * continue to observe messages fetched with respect to the old offset  
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new offset.
+   * 
    * @param topicPartition topic partition for which seek
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -410,7 +474,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Seek to the first offset for each of the given partitions.
-   *
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will 
+   * continue to observe messages fetched with respect to the old offset  
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new offset.
+   * 
    * @param topicPartitions topic partition for which seek
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -438,7 +510,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Seek to the last offset for each of the given partition.
-   *
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will 
+   * continue to observe messages fetched with respect to the old offset  
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new offset.
+   * 
    * @param topicPartition topic partition for which seek
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
@@ -448,7 +528,15 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
 
   /**
    * Seek to the last offset for each of the given partitions.
-   *
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will 
+   * continue to observe messages fetched with respect to the old offset  
+   * until some time <em>after</em> the given {@code completionHandler} 
+   * is called. In contrast, the once the given {@code completionHandler} 
+   * is called the {@link #batchHandler(Handler)} will only see messages 
+   * consistent with the new offset.
+   * 
    * @param topicPartitions topic partition for which seek
    * @param completionHandler handler called on operation completed
    * @return  current KafkaConsumer instance
