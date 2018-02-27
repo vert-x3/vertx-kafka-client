@@ -436,14 +436,7 @@ Or in a producer
 endif::[]
 
 ifdef::java[]
-== RxJava API
-
-The Kafka client provides an Rxified version of the original API.
-
-[source,$lang]
-----
-{@link examples.RxExamples#consumer(io.vertx.rxjava.kafka.client.consumer.KafkaConsumer)}
-----
+include::override/rx.adoc[]
 endif::[]
 
 ifdef::java,groovy,kotlin[]

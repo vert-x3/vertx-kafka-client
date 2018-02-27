@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package examples;
+package examples.override;
 
 import io.vertx.docgen.Source;
 import io.vertx.rxjava.kafka.client.consumer.KafkaConsumer;
