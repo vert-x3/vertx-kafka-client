@@ -82,11 +82,6 @@
       <artifactId>vertx-rx-java2</artifactId>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-lang-ruby</artifactId>
-      <optional>true</optional>
-    </dependency>
 
     <dependency>
       <groupId>org.apache.kafka</groupId>
