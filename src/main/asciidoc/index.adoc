@@ -435,9 +435,7 @@ Or in a producer
 
 endif::[]
 
-ifdef::java[]
-include::override/rx.adoc[]
-endif::[]
+include::override/rxjava.adoc[]
 
 ifdef::java,groovy,kotlin[]
 == Stream implementation and native Kafka objects
