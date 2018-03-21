@@ -118,4 +118,23 @@ public class TopicPartition {
       ", partition=" + this.partition +
       "}";
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TopicPartition that = (TopicPartition) o;
+
+    if (partition != that.partition) return false;
+    return topic != null ? topic.equals(that.topic) : that.topic == null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 1;
+    result = 31 * result + partition;
+    result = 31 * result + (topic != null ? topic.hashCode() : 0);
+    return result;
+  }
 }
