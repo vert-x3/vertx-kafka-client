@@ -16,8 +16,13 @@
 
 package io.vertx.kafka.client.producer.impl;
 
+import io.vertx.kafka.client.producer.KafkaHeader;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+
+import java.util.List;
+
+import static io.vertx.kafka.client.producer.impl.KafkaHeaderImpl.toHeaderList;
 
 /**
  * Vert.x Kafka producer record implementation
@@ -76,6 +81,60 @@ public class KafkaProducerRecordImpl<K, V> implements KafkaProducerRecord<K, V> 
     this.record = new ProducerRecord<>(topic, value);
   }
 
+  /**
+   * Constructor
+   *
+   * @param topic the topic this record is being sent to
+   * @param key the key (or null if no key is specified)
+   * @param value the value
+   * @param timestamp the timestamp of this record
+   * @param partition the partition to which the record will be sent (or null if no partition was specified)
+   * @param kafkaHeaders list of the {@link KafkaHeader}
+   */
+  public KafkaProducerRecordImpl(String topic, K key, V value, Long timestamp, Integer partition, List<KafkaHeader> kafkaHeaders) {
+
+    this.record = new ProducerRecord<>(topic, partition, timestamp, key, value, toHeaderList(kafkaHeaders));
+  }
+
+  /**
+   * Constructor
+   *
+   * @param topic the topic this record is being sent to
+   * @param key the key (or null if no key is specified)
+   * @param value the value
+   * @param partition the partition to which the record will be sent (or null if no partition was specified)
+   * @param kafkaHeaders list of the {@link KafkaHeader}
+   */
+  public KafkaProducerRecordImpl(String topic, K key, V value, Integer partition, List<KafkaHeader> kafkaHeaders) {
+
+    this.record = new ProducerRecord<>(topic, partition, key, value, toHeaderList(kafkaHeaders));
+  }
+
+  /**
+   * Constructor
+   *
+   * @param topic the topic this record is being sent to
+   * @param key the key (or null if no key is specified)
+   * @param value the value
+   * @param kafkaHeaders list of the {@link KafkaHeader}
+   */
+  public KafkaProducerRecordImpl(String topic, K key, V value, List<KafkaHeader> kafkaHeaders) {
+
+    this.record = new ProducerRecord<>(topic, null, key, value, toHeaderList(kafkaHeaders));
+  }
+
+  /**
+   * Constructor
+   *
+   * @param topic the topic this record is being sent to
+   * @param value the value
+   * @param kafkaHeaders list of the {@link KafkaHeader}
+   */
+  public KafkaProducerRecordImpl(String topic, V value, List<KafkaHeader> kafkaHeaders) {
+
+    this.record = new ProducerRecord<K, V>(topic, null, null, value, toHeaderList(kafkaHeaders));
+  }
+
   @Override
   public String topic() {
     return this.record.topic();
@@ -107,6 +166,11 @@ public class KafkaProducerRecordImpl<K, V> implements KafkaProducerRecord<K, V> 
   }
 
   @Override
+  public List<KafkaHeader> headers() {
+    return KafkaHeaderImpl.fromHeaders(this.record.headers());
+  }
+
+  @Override
   public String toString() {
 
     return "KafkaProducerRecord{" +
@@ -115,6 +179,7 @@ public class KafkaProducerRecordImpl<K, V> implements KafkaProducerRecord<K, V> 
       ",timestamp=" + this.record.timestamp() +
       ",key=" + this.record.key() +
       ",value=" + this.record.value() +
+      ",headers=" + this.record.headers() +
       "}";
   }
 }
