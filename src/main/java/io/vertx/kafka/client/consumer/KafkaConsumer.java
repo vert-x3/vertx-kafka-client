@@ -144,6 +144,60 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  KafkaConsumer<K, V> topic(String topic);
+
+  /**
+   * Subscribe to the given list of topics to get dynamically assigned partitions.
+   *
+   * @param topics  topics to subscribe to
+   * @return  current KafkaConsumer instance
+   */
+  @Fluent
+  KafkaConsumer<K, V> topic(Set<String> topics);
+
+  /**
+   * Subscribe to the given topic to get dynamically assigned partitions.
+   * <p>
+   * Due to internal buffering of messages, when changing the subscribed topic
+   * the old topic may remain in effect
+   * (as observed by the {@linkplain #handler(Handler)} record handler})
+   * until some time <em>after</em> the given {@code completionHandler}
+   * is called. In contrast, the once the given {@code completionHandler}
+   * is called the {@link #batchHandler(Handler)} will only see messages
+   * consistent with the new topic.
+   *
+   * @param topic  topic to subscribe to
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaConsumer instance
+   */
+  @Fluent
+  KafkaConsumer<K, V> topic(String topic, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Subscribe to the given list of topics to get dynamically assigned partitions.
+   * <p>
+   * Due to internal buffering of messages, when changing the subscribed topics
+   * the old set of topics may remain in effect
+   * (as observed by the {@linkplain #handler(Handler)} record handler})
+   * until some time <em>after</em> the given {@code completionHandler}
+   * is called. In contrast, the once the given {@code completionHandler}
+   * is called the {@link #batchHandler(Handler)} will only see messages
+   * consistent with the new set of topics.
+   *
+   * @param topics  topics to subscribe to
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaConsumer instance
+   */
+  @Fluent
+  KafkaConsumer<K, V> topic(Set<String> topics, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Subscribe to the given topic to get dynamically assigned partitions.
+   *
+   * @param topic  topic to subscribe to
+   * @return  current KafkaConsumer instance
+   */
+  @Fluent
   KafkaConsumer<K, V> subscribe(String topic);
 
   /**

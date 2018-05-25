@@ -150,6 +150,27 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public KafkaConsumer<K, V> topic(String topic) {
+    return this.topic(Collections.singleton(topic));
+  }
+
+  @Override
+  public KafkaConsumer<K, V> topic(Set<String> topics) {
+    return this.topic(topics, null);
+  }
+
+  @Override
+  public KafkaConsumer<K, V> topic(String topic, Handler<AsyncResult<Void>> completionHandler) {
+    return this.topic(Collections.singleton(topic), completionHandler);
+  }
+
+  @Override
+  public KafkaConsumer<K, V> topic(Set<String> topics, Handler<AsyncResult<Void>> completionHandler) {
+    this.stream.subscribe(topics, completionHandler);
+    return this;
+  }
+
+  @Override
   public KafkaConsumer<K, V> subscribe(String topic) {
     return this.subscribe(Collections.singleton(topic));
   }
