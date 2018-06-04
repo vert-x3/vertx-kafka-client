@@ -16,8 +16,11 @@
 
 package io.vertx.kafka.client.producer;
 
+import io.vertx.codegen.annotations.CacheReturn;
+import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
@@ -93,73 +96,6 @@ public interface KafkaProducerRecord<K, V> {
   }
 
   /**
-   * Create a concrete instance of a Vert.x producer record
-   *
-   * @param topic the topic this record is being sent to
-   * @param key the key (or null if no key is specified)
-   * @param value the value
-   * @param timestamp the timestamp of this record
-   * @param partition the partition to which the record will be sent (or null if no partition was specified)
-   * @param kafkaHeaders list of the {@link KafkaHeader}
-   * @param <K> key type
-   * @param <V> value type
-   * @return  Vert.x producer record
-   */
-  static <K, V> KafkaProducerRecord<K, V> create(String topic, K key, V value, Long timestamp, Integer partition, List<KafkaHeader> kafkaHeaders) {
-
-    return new KafkaProducerRecordImpl<>(topic, key, value, timestamp, partition, kafkaHeaders);
-  }
-
-  /**
-   * Create a concrete instance of a Vert.x producer record
-   *
-   * @param topic the topic this record is being sent to
-   * @param key the key (or null if no key is specified)
-   * @param value the value
-   * @param partition the partition to which the record will be sent (or null if no partition was specified)
-   * @param kafkaHeaders list of the {@link KafkaHeader}
-   * @param <K> key type
-   * @param <V> value type
-   * @return  Vert.x producer record
-   */
-  @GenIgnore
-  static <K, V> KafkaProducerRecord<K, V> create(String topic, K key, V value, Integer partition, List<KafkaHeader> kafkaHeaders) {
-
-    return new KafkaProducerRecordImpl<>(topic, key, value, partition, kafkaHeaders);
-  }
-
-  /**
-   * Create a concrete instance of a Vert.x producer record
-   *
-   * @param topic the topic this record is being sent to
-   * @param key the key (or null if no key is specified)
-   * @param value the value
-   * @param kafkaHeaders list of the {@link KafkaHeader}
-   * @param <K> key type
-   * @param <V> value type
-   * @return  Vert.x producer record
-   */
-  static <K, V> KafkaProducerRecord<K, V> create(String topic, K key, V value, List<KafkaHeader> kafkaHeaders) {
-
-    return new KafkaProducerRecordImpl<>(topic, key, value, kafkaHeaders);
-  }
-
-  /**
-   * Create a concrete instance of a Vert.x producer record
-   *
-   * @param topic the topic this record is being sent to
-   * @param value the value
-   * @param <K> key type
-   * @param <V> value type
-   * @param kafkaHeaders list of the {@link KafkaHeader}
-   * @return  Vert.x producer record
-   */
-  static <K, V> KafkaProducerRecord<K, V> create(String topic, V value, List<KafkaHeader> kafkaHeaders) {
-
-    return new KafkaProducerRecordImpl<>(topic, value, kafkaHeaders);
-  }
-
-  /**
    * @return  the topic this record is being sent to
    */
   String topic();
@@ -185,13 +121,45 @@ public interface KafkaProducerRecord<K, V> {
   Integer partition();
 
   /**
-   * @return  the native Kafka producer record with backed information
+   * Like {@link #addHeader(KafkaHeader)} but with a key/value pair
    */
-  @GenIgnore
-  ProducerRecord record();
+  @Fluent
+  KafkaProducerRecord<K, V> addHeader(String key, String value);
+
+  /**
+   * Like {@link #addHeader(KafkaHeader)} but with a key/value pair
+   */
+  @Fluent
+  KafkaProducerRecord<K, V> addHeader(String key, Buffer value);
+
+  /**
+   * Add an header to this record.
+   *
+   * @param header the header
+   * @return  current KafkaProducerRecord instance
+   */
+  @Fluent
+  KafkaProducerRecord<K, V> addHeader(KafkaHeader header);
+
+  /**
+   * Add a list of headers to this record.
+   *
+   * @param headers the headers
+   * @return  current KafkaProducerRecord instance
+   */
+  @Fluent
+  KafkaProducerRecord<K, V> addHeaders(List<KafkaHeader> headers);
 
   /**
    * @return  the headers of this record
    */
+  @CacheReturn
   List<KafkaHeader> headers();
+
+  /**
+   * @return a created native Kafka producer record with backed information
+   */
+  @GenIgnore
+  ProducerRecord record();
+
 }
