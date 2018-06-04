@@ -24,12 +24,12 @@
   </parent>
 
   <artifactId>vertx-kafka-client</artifactId>
-  <version>3.5.2-SNAPSHOT</version>
+  <version>3.5.2</version>
 
   <name>Vert.x Kafka Client</name>
 
   <properties>
-    <stack.version>3.5.2-SNAPSHOT</stack.version>
+    <stack.version>3.5.2</stack.version>
     <kafka.version>1.0.0</kafka.version>
     <debezium.version>0.7.1</debezium.version>
   </properties>
