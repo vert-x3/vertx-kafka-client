@@ -26,6 +26,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.apache.kafka.common.record.TimestampType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,9 +69,36 @@ public abstract class ConsumerMockTestBase {
       consumer.close(v -> doneLatch.complete());
     });
     consumer.subscribe(Collections.singleton("the_topic"), v -> {
-      mock.schedulePollTask(()-> {
+      mock.schedulePollTask(() -> {
         mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
         mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "abc", "def"));
+        mock.seek(new TopicPartition("the_topic", 0), 0L);
+      });
+    });
+  }
+
+  @Test
+  public void testConsumeWithHeader(TestContext ctx) {
+    MockConsumer<String, String> mock = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+    KafkaReadStream<String, String> consumer = createConsumer(vertx, mock);
+    Async doneLatch = ctx.async();
+    consumer.handler(record -> {
+      ctx.assertEquals("the_topic", record.topic());
+      ctx.assertEquals(0, record.partition());
+      ctx.assertEquals("abc", record.key());
+      ctx.assertEquals("def", record.value());
+      Header[] headers = record.headers().toArray();
+      ctx.assertEquals(1, headers.length);
+      Header header = headers[0];
+      ctx.assertEquals("header_key", header.key());
+      ctx.assertEquals("header_value", new String(header.value()));
+      consumer.close(v -> doneLatch.complete());
+    });
+    consumer.subscribe(Collections.singleton("the_topic"), v -> {
+      mock.schedulePollTask(() -> {
+        mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
+        mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, 0L, TimestampType.NO_TIMESTAMP_TYPE, 0L, 0, 0, "abc", "def",
+          new RecordHeaders(Collections.singletonList(new RecordHeader("header_key", "header_value".getBytes())))));
         mock.seek(new TopicPartition("the_topic", 0), 0L);
       });
     });
@@ -96,7 +127,7 @@ public abstract class ConsumerMockTestBase {
       mock.schedulePollTask(() -> {
         mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
         mock.seek(new TopicPartition("the_topic", 0), 0);
-        for (int i = 0;i < num;i++) {
+        for (int i = 0; i < num; i++) {
           mock.addRecord(new ConsumerRecord<>("the_topic", 0, i, "key-" + i, "value-" + i));
         }
       });

@@ -32,6 +32,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.InvalidGroupIdException;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.After;
 import org.junit.Before;
@@ -78,8 +80,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 1000;
-    kafkaCluster.useTo().produceStrings(numMessages, batch::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch.awaitSuccess(20000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -97,6 +99,38 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   @Test
+  public void testConsumeWithHeader(TestContext ctx) {
+    final String topicName = "testConsumeWithHeader";
+    String consumerId = topicName;
+    Async batch = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 1000;
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.get(),
+        Collections.singletonList(new RecordHeader("header_key" + index.get(), ("header_value" + index.getAndIncrement()).getBytes()))));
+    batch.awaitSuccess(20000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumer = createConsumer(vertx, config);
+    Async done = ctx.async();
+    AtomicInteger count = new AtomicInteger(numMessages);
+    AtomicInteger headerIndex = new AtomicInteger();
+    consumer.exceptionHandler(ctx::fail);
+    consumer.handler(rec -> {
+      Header[] headers = rec.headers().toArray();
+      ctx.assertEquals(1, headers.length);
+      Header header = headers[0];
+      ctx.assertEquals("header_key" + headerIndex.get(), header.key());
+      ctx.assertEquals("header_value" + headerIndex.getAndIncrement(), new String(header.value()));
+      if (count.decrementAndGet() == 0) {
+        done.complete();
+      }
+    });
+    consumer.subscribe(Collections.singleton(topicName));
+  }
+
+  @Test
   public void testPause(TestContext ctx) throws Exception {
     final String topicName = "testPause";
     final String consumerId = topicName;
@@ -104,8 +138,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 1000;
-    kafkaCluster.useTo().produceStrings(numMessages, batch::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch.awaitSuccess(20000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -141,8 +175,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 5_000;
-    kafkaCluster.useTo().produceStrings(numMessages, batch::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch.awaitSuccess(20_000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -182,8 +216,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 500;
-    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -209,8 +243,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.assign(Collections.singleton(new TopicPartition(topicName, 0)));
     commited.awaitSuccess(10000);
     Async batch2 = ctx.async();
-    kafkaCluster.useTo().produceStrings(numMessages, batch2::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch2::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch2.awaitSuccess(10000);
     consumer = createConsumer(vertx, config);
     consumer.exceptionHandler(ctx::fail);
@@ -235,8 +269,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 500;
-    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -251,7 +285,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         case 101:
           TopicPartition the_topic = new TopicPartition(topicName, 0);
           consumer.commit(Collections.singletonMap(the_topic, new OffsetAndMetadata(rec.offset())),
-                  ctx.asyncAssertSuccess(v -> commited.countDown()));
+            ctx.asyncAssertSuccess(v -> commited.countDown()));
           break;
         case 500:
           commited.countDown();
@@ -382,8 +416,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer = createConsumer(context, config);
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
-    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
-        new ProducerRecord<>(topic, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete, () ->
+      new ProducerRecord<>(topic, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
     AtomicInteger count = new AtomicInteger(numMessages);
     Async done = ctx.async();
@@ -416,7 +450,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer = createConsumer(context, config);
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
-    kafkaCluster.useTo().produceStrings(5000, batch1::complete,  () ->
+    kafkaCluster.useTo().produceStrings(5000, batch1::complete, () ->
       new ProducerRecord<>(topic, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
     Async done = ctx.async();
@@ -441,7 +475,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         } else {
           keys.add(record.key());
           if (keys.size() == 5000) {
-            for (int i = 0;i < 5000;i++) {
+            for (int i = 0; i < 5000; i++) {
               ctx.assertEquals("key-" + i, keys.get(i));
             }
             done.complete();
@@ -543,8 +577,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     int numMessages = 1;
     Async finished = ctx.async(numMessages + 2);
-    kafkaCluster.useTo().produceStrings(numMessages, finished::countDown,  () ->
-        new ProducerRecord<>(topicName, 0, "key", "value"));
+    kafkaCluster.useTo().produceStrings(numMessages, finished::countDown, () ->
+      new ProducerRecord<>(topicName, 0, "key", "value"));
     Context context = vertx.getOrCreateContext();
     consumer = createConsumer(context, config);
 
@@ -583,13 +617,13 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId,
-        OffsetResetStrategy.EARLIEST);
+      OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     int numMessages = 1;
     Async finished = ctx.async(numMessages + 2);
     kafkaCluster.useTo().produceStrings(numMessages, finished::countDown,
-        () -> new ProducerRecord<>(topicName, 0, "key", "value"));
+      () -> new ProducerRecord<>(topicName, 0, "key", "value"));
     Context context = vertx.getOrCreateContext();
     consumer = createConsumer(context, config);
 
@@ -634,8 +668,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     int numMessages = 5_000;
     Async finished = ctx.async(numMessages);
     AtomicInteger index = new AtomicInteger();
-    kafkaCluster.useTo().produceStrings(numMessages, finished::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, finished::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     finished.await();
     Context context = vertx.getOrCreateContext();
     consumer = createConsumer(context, config);
@@ -650,37 +684,37 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async async = ctx.async();
     consumer.batchHandler(records -> {
       switch (state.get()) {
-      case 0: // seek not yet called
-      case 1: // seek called but not completed
-        break;
-      case 2: // seek completed
-        for (ConsumerRecord record : records) {
-          long offset = record.offset();
-          if (offset > 5
+        case 0: // seek not yet called
+        case 1: // seek called but not completed
+          break;
+        case 2: // seek completed
+          for (ConsumerRecord record : records) {
+            long offset = record.offset();
+            if (offset > 5
               && !async.isCompleted()) {
-            ctx.fail();
+              ctx.fail();
+            }
+            if (record.offset() == 0) {
+              async.complete();
+            }
           }
-          if (record.offset() == 0) {
-            async.complete();
-          }
-        }
-        break;
+          break;
       }
 
     });
     consumer.handler(record -> {
       long offset = record.offset();
       switch (state.get()) {
-      case 0: // seek not yet called
-      case 1: // seek called but not completed
-        if (offset == 5) {
-          state.set(1);
-          consumer.seek(partition, 0, ar -> {
-            state.set(2);
-            ctx.assertTrue(ar.succeeded());
-          });
-        }
-        break;
+        case 0: // seek not yet called
+        case 1: // seek called but not completed
+          if (offset == 5) {
+            state.set(1);
+            consumer.seek(partition, 0, ar -> {
+              state.set(2);
+              ctx.assertTrue(ar.succeeded());
+            });
+          }
+          break;
       }
 
     });
@@ -701,10 +735,10 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     int numMessages = 5_000;
     Async finished = ctx.async(2);
     AtomicInteger index = new AtomicInteger();
-    kafkaCluster.useTo().produceStrings(numMessages, finished::countDown,  () ->
-        new ProducerRecord<>(topicName1, 0, "1key-" + index.get(), "1value-" + index.getAndIncrement()));
-    kafkaCluster.useTo().produceStrings(numMessages, finished::countDown,  () ->
-    new ProducerRecord<>(topicName2, 0, "2key-" + index.get(), "2value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, finished::countDown, () ->
+      new ProducerRecord<>(topicName1, 0, "1key-" + index.get(), "1value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, finished::countDown, () ->
+      new ProducerRecord<>(topicName2, 0, "2key-" + index.get(), "2value-" + index.getAndIncrement()));
     finished.await();
 
     Context context = vertx.getOrCreateContext();
@@ -719,40 +753,40 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     //state: 0=1st time, 1=seek called, 2=seek executed, 3=offset 0 for 2nd time
     AtomicInteger state = new AtomicInteger(0);
     Async async = ctx.async();
-    consumer.batchHandler(records-> {
+    consumer.batchHandler(records -> {
       switch (state.get()) {
-      case 0://inital assignment, not started reassignment
-      case 1://inital assignment, started reassignment, but not done yet
-        break;
-      case 2:
-        for (ConsumerRecord record : records) {
-          long offset = record.offset();
-          if (record.topic().equals(topicName1)) {
-            ctx.fail("Seen a " + topicName1 + " message after reassignment");
+        case 0://inital assignment, not started reassignment
+        case 1://inital assignment, started reassignment, but not done yet
+          break;
+        case 2:
+          for (ConsumerRecord record : records) {
+            long offset = record.offset();
+            if (record.topic().equals(topicName1)) {
+              ctx.fail("Seen a " + topicName1 + " message after reassignment");
+            }
+            if (offset == numMessages - 1) {
+              async.complete();
+            }
           }
-          if (offset == numMessages-1) {
-            async.complete();
-          }
-        }
       }
     });
 
     consumer.handler(record -> {
       long offset = record.offset();
       switch (state.get()) {
-      case 0://inital assignment, not started reassignment
-      case 1://inital assignment, started reassignment, but not done yet
-        if (record.topic().equals(topicName2)) {
-          ctx.fail("Seen a " + topicName2 + " message before reassignment");
-        }
-        if (offset == 5) {
-          state.set(1);
-          consumer.assign(Collections.singleton(partition2), ar -> {
-            state.set(2);
-            ctx.assertTrue(ar.succeeded());
-          });
-        }
-        break;
+        case 0://inital assignment, not started reassignment
+        case 1://inital assignment, started reassignment, but not done yet
+          if (record.topic().equals(topicName2)) {
+            ctx.fail("Seen a " + topicName2 + " message before reassignment");
+          }
+          if (offset == 5) {
+            state.set(1);
+            consumer.assign(Collections.singleton(partition2), ar -> {
+              state.set(2);
+              ctx.assertTrue(ar.succeeded());
+            });
+          }
+          break;
       }
     });
 
@@ -876,7 +910,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     AtomicInteger index = new AtomicInteger();
     int numMessages = 1000;
     kafkaCluster.useTo().produceStrings(numMessages, batch::complete, ()
-            -> new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+      -> new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch.awaitSuccess(20000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -919,7 +953,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
    */
   @Test
   public void testBeginningOffset(TestContext ctx) throws Exception {
-   testBeginningEndOffset(ctx, true);
+    testBeginningEndOffset(ctx, true);
   }
 
   /*
@@ -934,7 +968,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
    Tests test beginningOffset or endOffset, depending on beginningOffset = true or false
   */
   public void testBeginningEndOffset(TestContext ctx, boolean beginningOffset) throws Exception {
-    String topicName = "testBeginningEndOffset_"+ (beginningOffset ? "beginning" : "end");
+    String topicName = "testBeginningEndOffset_" + (beginningOffset ? "beginning" : "end");
     String consumerId = topicName;
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -953,7 +987,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.exceptionHandler(ctx::fail);
 
     Set<TopicPartition> topicPartitions = new HashSet<>();
-    TopicPartition topicPartition= new TopicPartition(topicName, 0);
+    TopicPartition topicPartition = new TopicPartition(topicName, 0);
     topicPartitions.add(topicPartition);
 
     // Test contains two sub-tests
@@ -963,39 +997,39 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     });
 
     consumer.subscribe(Collections.singleton(topicName), ctx.asyncAssertSuccess(subscribeRes -> {
-          if(beginningOffset) {
-            consumer.beginningOffsets(topicPartitions, beginningOffsetResult -> {
-              ctx.assertTrue(beginningOffsetResult.succeeded());
-              // expect one result
-              ctx.assertEquals(1, beginningOffsetResult.result().size());
-              // beginning offset must be 0
-              ctx.assertEquals(0L, beginningOffsetResult.result().get(topicPartition));
-              done.countDown();
-            });
-            consumer.beginningOffsets(topicPartition, beginningOffsetResult -> {
-                ctx.assertTrue(beginningOffsetResult.succeeded());
-                // beginning offset must be 0
-                ctx.assertEquals(0L, beginningOffsetResult.result());
-                done.countDown();
-              });
-          }
-          // Tests for endOffset
-          else {
-            consumer.endOffsets(topicPartitions, endOffsetResult -> {
-              ctx.assertTrue(endOffsetResult.succeeded());
-              ctx.assertEquals(1, endOffsetResult.result().size());
-              // endOffset must be equal to the number of ingested messages
-              ctx.assertEquals((long) numMessages, endOffsetResult.result().get(topicPartition));
-              done.countDown();
-            });
+        if (beginningOffset) {
+          consumer.beginningOffsets(topicPartitions, beginningOffsetResult -> {
+            ctx.assertTrue(beginningOffsetResult.succeeded());
+            // expect one result
+            ctx.assertEquals(1, beginningOffsetResult.result().size());
+            // beginning offset must be 0
+            ctx.assertEquals(0L, beginningOffsetResult.result().get(topicPartition));
+            done.countDown();
+          });
+          consumer.beginningOffsets(topicPartition, beginningOffsetResult -> {
+            ctx.assertTrue(beginningOffsetResult.succeeded());
+            // beginning offset must be 0
+            ctx.assertEquals(0L, beginningOffsetResult.result());
+            done.countDown();
+          });
+        }
+        // Tests for endOffset
+        else {
+          consumer.endOffsets(topicPartitions, endOffsetResult -> {
+            ctx.assertTrue(endOffsetResult.succeeded());
+            ctx.assertEquals(1, endOffsetResult.result().size());
+            // endOffset must be equal to the number of ingested messages
+            ctx.assertEquals((long) numMessages, endOffsetResult.result().get(topicPartition));
+            done.countDown();
+          });
 
-            consumer.endOffsets(topicPartition, endOffsetResult -> {
-              ctx.assertTrue(endOffsetResult.succeeded());
-              // endOffset must be equal to the number of ingested messages
-              ctx.assertEquals((long) numMessages, endOffsetResult.result());
-              done.countDown();
-            });
-          }
+          consumer.endOffsets(topicPartition, endOffsetResult -> {
+            ctx.assertTrue(endOffsetResult.succeeded());
+            // endOffset must be equal to the number of ingested messages
+            ctx.assertEquals((long) numMessages, endOffsetResult.result());
+            done.countDown();
+          });
+        }
       }
     ));
   }
@@ -1106,8 +1140,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 500;
-    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -1131,8 +1165,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
     int numMessages = 500;
-    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete,  () ->
-        new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch1::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -1154,7 +1188,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
           ctx.assertEquals("key-" + (-1 - dec), record.key());
         }
       }
-       batchHandler.complete();
+      batchHandler.complete();
     });
     wrappedConsumer.handler(rec -> {});
     wrappedConsumer.subscribe(Collections.singleton(topicName));
@@ -1217,7 +1251,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     KafkaConsumer<Object, Object> consumer = KafkaConsumer.create(vertx, config);
     consumer.handler(rec -> {});
     consumer.partitionsAssignedHandler(partitions -> {
-      for (io.vertx.kafka.client.common.TopicPartition partition: partitions) {
+      for (io.vertx.kafka.client.common.TopicPartition partition : partitions) {
         consumer.committed(partition, ar -> {
           if (ar.succeeded()) {
             ctx.assertNull(ar.result());
