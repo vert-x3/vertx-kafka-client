@@ -23,6 +23,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -30,6 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -55,24 +57,47 @@ public class ProducerTest extends KafkaClusterTestBase {
   }
 
   @Test
-  public void testProduce(TestContext ctx) throws Exception {
-   String topicName = "testProduce";
-    Properties config = kafkaCluster.useTo().getProducerProperties("testProduce_producer");
+  public void testStreamProduce(TestContext ctx) throws Exception {
+    String topicName = "testStreamProduce";
+    Properties config = kafkaCluster.useTo().getProducerProperties("testStreamProduce_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producer = producer(Vertx.vertx(), config);
     producer.exceptionHandler(ctx::fail);
     int numMessages = 100000;
     for (int i = 0;i < numMessages;i++) {
-      producer.write(new ProducerRecord<>(topicName, 0, "key-" + i, "value-" + i));
+      ProducerRecord<String, String> record = new ProducerRecord<>(topicName, 0, "key-" + i, "value-" + i);
+      record.headers().add("header_key", ("header_value-" + i).getBytes());
+      producer.write(record);
     }
+    assertReceiveMessages(ctx, topicName, numMessages);
+  }
+
+  @Test
+  public void testProducerProduce(TestContext ctx) throws Exception {
+    String topicName = "testProducerProduce";
+    Properties config = kafkaCluster.useTo().getProducerProperties("testProducerProduce_producer");
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    producer = producer(Vertx.vertx(), config);
+    producer.exceptionHandler(ctx::fail);
+    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.producer);
+    int numMessages = 100000;
+    for (int i = 0;i < numMessages;i++) {
+      producer.write(KafkaProducerRecord.create(topicName, "key-" + i, "value-" + i, 0)
+        .addHeader("header_key", "header_value-" + i));
+    }
+    assertReceiveMessages(ctx, topicName, numMessages);
+  }
+
+  private void assertReceiveMessages(TestContext ctx, String topicName, int numMessages) {
     Async done = ctx.async();
     AtomicInteger seq = new AtomicInteger();
-    kafkaCluster.useTo().consumeStrings(topicName, numMessages, 10, TimeUnit.SECONDS, done::complete, (key, value) -> {
+    kafkaCluster.useTo().consumeStrings(() -> seq.get() < numMessages, done::complete, Collections.singleton(topicName), record -> {
       int count = seq.getAndIncrement();
-      ctx.assertEquals("key-" + count, key);
-      ctx.assertEquals("value-" + count, value);
-      return true;
+      ctx.assertEquals("key-" + count, record.key());
+      ctx.assertEquals("value-" + count, record.value());
+      ctx.assertEquals("header_value-" + count, new String(record.headers().headers("header_key").iterator().next().value()));
     });
   }
 

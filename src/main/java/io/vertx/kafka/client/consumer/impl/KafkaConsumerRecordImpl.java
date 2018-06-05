@@ -17,8 +17,14 @@
 package io.vertx.kafka.client.consumer.impl;
 
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import io.vertx.kafka.client.producer.KafkaHeader;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.record.TimestampType;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Vert.x Kafka consumer record implementation
@@ -26,6 +32,7 @@ import org.apache.kafka.common.record.TimestampType;
 public class KafkaConsumerRecordImpl<K, V> implements KafkaConsumerRecord<K, V> {
 
   private final ConsumerRecord<K, V> record;
+  private List<KafkaHeader> headers;
 
   /**
    * Constructor
@@ -82,6 +89,21 @@ public class KafkaConsumerRecordImpl<K, V> implements KafkaConsumerRecord<K, V> 
   }
 
   @Override
+  public List<KafkaHeader> headers() {
+    if (headers == null) {
+      if (record.headers() == null) {
+        headers = Collections.emptyList();
+      } else {
+        headers = new ArrayList<>();
+        for (Header header : record.headers()) {
+          headers.add(KafkaHeader.header(header.key(), header.value()));
+        }
+      }
+    }
+    return headers;
+  }
+
+  @Override
   public String toString() {
 
     return "KafkaConsumerRecord{" +
@@ -91,6 +113,7 @@ public class KafkaConsumerRecordImpl<K, V> implements KafkaConsumerRecord<K, V> 
       ",timestamp=" + this.record.timestamp() +
       ",key=" + this.record.key() +
       ",value=" + this.record.value() +
+      ",headers=" + this.record.headers() +
       "}";
   }
 }

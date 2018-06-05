@@ -16,15 +16,8 @@
 
 package io.vertx.kafka.client.producer.impl;
 
+import io.vertx.core.buffer.Buffer;
 import io.vertx.kafka.client.producer.KafkaHeader;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.header.internals.RecordHeader;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Vert.x Kafka producer record header implementation
@@ -32,15 +25,15 @@ import java.util.stream.Stream;
 public class KafkaHeaderImpl implements KafkaHeader {
 
   private String key;
-  private byte[] value;
+  private Buffer value;
 
-  public KafkaHeaderImpl(String key, byte[] value) {
+  public KafkaHeaderImpl(String key, Buffer value) {
     this.key = key;
     this.value = value;
   }
 
   public KafkaHeaderImpl(String key, String value) {
-    this(key, value.getBytes());
+    this(key, Buffer.buffer(value));
   }
 
   @Override
@@ -49,37 +42,8 @@ public class KafkaHeaderImpl implements KafkaHeader {
   }
 
   @Override
-  public byte[] value() {
+  public Buffer value() {
     return value;
   }
 
-  /**
-   * Convert {@link Headers} to a list of {@link KafkaHeader}
-   *
-   * @param headers Headers from the Apache Kafka Client
-   * @return a list of {@link KafkaHeader}
-   */
-  public static List<KafkaHeader> fromHeaders(Headers headers) {
-
-    if (headers == null || headers.toArray().length == 0) {
-      return Collections.emptyList();
-    }
-
-    return Stream.of(headers.toArray()).map(header -> new KafkaHeaderImpl(header.key(), header.value())).collect(Collectors.toList());
-  }
-
-  /**
-   * Convert a list of {@link KafkaHeader} to a list of {@link Header}
-   *
-   * @param kafkaHeaders list of {@link KafkaHeader}
-   * @return a list of {@link Header} from the Apache Kafka Client
-   */
-  public static List<Header> toHeaderList(List<KafkaHeader> kafkaHeaders) {
-
-    if (kafkaHeaders == null || kafkaHeaders.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    return kafkaHeaders.stream().map(kafkaHeader -> new RecordHeader(kafkaHeader.key(), kafkaHeader.value())).collect(Collectors.toList());
-  }
 }

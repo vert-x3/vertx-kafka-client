@@ -23,6 +23,8 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
+import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
+import io.vertx.kafka.client.producer.KafkaHeader;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -99,19 +101,10 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   @Test
-  public void testConsumeWithHeader(TestContext ctx) {
-    final String topicName = "testConsumeWithHeader";
-    String consumerId = topicName;
-    Async batch = ctx.async();
-    AtomicInteger index = new AtomicInteger();
+  public void testStreamWithHeader(TestContext ctx) {
     int numMessages = 1000;
-    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
-      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.get(),
-        Collections.singletonList(new RecordHeader("header_key" + index.get(), ("header_value" + index.getAndIncrement()).getBytes()))));
-    batch.awaitSuccess(20000);
-    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
-    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    String topicName = "testStreamWithHeader";
+    Properties config = setupConsumeWithHeaders(ctx, numMessages, topicName);
     consumer = createConsumer(vertx, config);
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
@@ -128,6 +121,43 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       }
     });
     consumer.subscribe(Collections.singleton(topicName));
+  }
+
+  @Test
+  public void testConsumerWithHeader(TestContext ctx) {
+    int numMessages = 1000;
+    String topicName = "testConsumerWithHeader";
+    Properties config = setupConsumeWithHeaders(ctx, numMessages, topicName);
+    consumer = createConsumer(vertx, config);
+    KafkaConsumer<String, String> consumer = new KafkaConsumerImpl<>(this.consumer);
+    Async done = ctx.async();
+    AtomicInteger count = new AtomicInteger(numMessages);
+    AtomicInteger headerIndex = new AtomicInteger();
+    consumer.exceptionHandler(ctx::fail);
+    consumer.handler(rec -> {
+      List<KafkaHeader> headers = rec.headers();
+      ctx.assertEquals(1, headers.size());
+      KafkaHeader header = headers.get(0);
+      ctx.assertEquals("header_key" + headerIndex.get(), header.key());
+      ctx.assertEquals("header_value" + headerIndex.getAndIncrement(), header.value().toString());
+      if (count.decrementAndGet() == 0) {
+        done.complete();
+      }
+    });
+    consumer.subscribe(Collections.singleton(topicName));
+  }
+
+  private Properties setupConsumeWithHeaders(TestContext ctx, int numMessages, String topicName) {
+    Async batch = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.get(),
+        Collections.singletonList(new RecordHeader("header_key" + index.get(), ("header_value" + index.getAndIncrement()).getBytes()))));
+    batch.awaitSuccess(20000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(topicName, topicName, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    return config;
   }
 
   @Test

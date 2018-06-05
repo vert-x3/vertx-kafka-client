@@ -16,7 +16,11 @@
 
 package io.vertx.kafka.client.producer;
 
+import io.vertx.codegen.annotations.CacheReturn;
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.kafka.client.producer.impl.KafkaHeaderImpl;
 
 /**
  * Vert.x Kafka producer record header.
@@ -24,8 +28,29 @@ import io.vertx.codegen.annotations.VertxGen;
 @VertxGen
 public interface KafkaHeader {
 
+  static KafkaHeader header(String key, Buffer value) {
+    return new KafkaHeaderImpl(key, value);
+  }
+
+  static KafkaHeader header(String key, String value) {
+    return new KafkaHeaderImpl(key, value);
+  }
+
+  @GenIgnore
+  static KafkaHeader header(String key, byte[] value) {
+    return new KafkaHeaderImpl(key, Buffer.buffer(value));
+  }
+
+  /**
+   * @return the buffer key
+   */
+  @CacheReturn
   String key();
 
-  byte[] value();
+  /**
+   * @return the buffer value
+   */
+  @CacheReturn
+  Buffer value();
 
 }

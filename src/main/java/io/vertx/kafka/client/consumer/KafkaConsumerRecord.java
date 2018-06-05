@@ -18,8 +18,11 @@ package io.vertx.kafka.client.consumer;
 
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.kafka.client.producer.KafkaHeader;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.record.TimestampType;
+
+import java.util.List;
 
 /**
  * Vert.x Kafka consumer record
@@ -66,6 +69,11 @@ public interface KafkaConsumerRecord<K, V> {
    * @return  the value
    */
   V value();
+
+  /**
+   * @return the list of consumer record headers
+   */
+  List<KafkaHeader> headers();
 
   /**
    * @return  the native Kafka consumer record with backed information
