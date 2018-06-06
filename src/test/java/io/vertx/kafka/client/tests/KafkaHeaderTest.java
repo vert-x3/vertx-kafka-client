@@ -18,11 +18,6 @@ package io.vertx.kafka.client.tests;
 
 import io.vertx.kafka.client.producer.KafkaHeader;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import io.vertx.kafka.client.producer.impl.KafkaHeaderImpl;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.header.internals.RecordHeader;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -35,67 +30,31 @@ import static org.junit.Assert.assertNotNull;
 public class KafkaHeaderTest {
 
   @Test
-  public void testfromHeaders_withNull() {
+  public void testEmptyHeaders() {
     List<KafkaHeader> kafkaHeaders = KafkaProducerRecord.create("topic", "key", "value").headers();
     assertEquals(Collections.emptyList(), kafkaHeaders);
   }
 
-  /*
   @Test
-  public void testfromHeaders_withHeaders() {
-    // Given
-    Header recordHeader1 = new RecordHeader("key1", "value1".getBytes());
-    Header recordHeader2 = new RecordHeader("key2", "value2".getBytes());
-    Headers headers = new RecordHeaders(Arrays.asList(recordHeader1, recordHeader2));
+  public void testRecordWithHeaders() {
+    List<KafkaHeader> headers = Arrays.asList(
+      KafkaHeader.header("key1", "value1"),
+      KafkaHeader.header("key2", "value2")
+    );
 
-    // When
-    List<KafkaHeader> kafkaHeaders = KafkaHeaderImpl.fromHeaders(headers);
+    List<KafkaHeader> recordHeaders =
+      KafkaProducerRecord.create("mytopic", "mykey", "myvalue").addHeaders(headers).headers();
 
-    // Then
-    assertNotNull(kafkaHeaders);
-    assertEquals(2, kafkaHeaders.size());
+    assertNotNull(recordHeaders);
+    assertEquals(2, recordHeaders.size());
 
-    KafkaHeader kafkaHeader1 = kafkaHeaders.get(0);
+    KafkaHeader kafkaHeader1 = recordHeaders.get(0);
     assertEquals("key1", kafkaHeader1.key());
     assertEquals("value1", kafkaHeader1.value().toString());
 
-    KafkaHeader kafkaHeader2 = kafkaHeaders.get(1);
+    KafkaHeader kafkaHeader2 = recordHeaders.get(1);
     assertEquals("key2", kafkaHeader2.key());
     assertEquals("value2", kafkaHeader2.value().toString());
   }
 
-  @Test
-  public void testtoHeaderList_withEmptyList() {
-    // Given
-    List<KafkaHeader> kafkaHeaders = Collections.emptyList();
-
-    // When
-    List<Header> headers = KafkaHeaderImpl.toHeaderList(kafkaHeaders);
-
-    // Then
-    assertEquals(Collections.emptyList(), headers);
-  }
-
-  @Test
-  public void testtoHeaderList_withKafkaHeaders() {
-    KafkaHeader kafkaHeader1 = KafkaHeader.header("key1", "value1");
-    KafkaHeader kafkaHeader2 = KafkaHeader.header("key2", "value2");
-    List<KafkaHeader> kafkaHeaders = Arrays.asList(kafkaHeader1, kafkaHeader2);
-
-    // When
-    List<Header> headers = KafkaProducerRecord.create("topic", "key", "value").addHeaders(kafkaHeaders).record().headers();
-
-    // Then
-    assertNotNull(headers);
-    assertEquals(2, headers.size());
-
-    Header header1 = headers.get(0);
-    assertEquals("key1", header1.key());
-    assertEquals("value1", new String(header1.value()));
-
-    Header header2 = headers.get(1);
-    assertEquals("key2", header2.key());
-    assertEquals("value2", new String(header2.value()));
-  }
-  */
 }
