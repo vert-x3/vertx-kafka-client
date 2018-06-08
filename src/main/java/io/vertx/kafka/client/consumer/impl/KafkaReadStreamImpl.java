@@ -657,4 +657,20 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     this.pollTimeout = timeout;
     return this;
   }
+
+  @Override
+  public void poll(long timeout, Handler<AsyncResult<ConsumerRecords<K, V>>> handler) {
+    this.worker.submit(() -> {
+      if (!this.closed.get()) {
+        Future fut;
+        try {
+          ConsumerRecords<K, V> records = this.consumer.poll(timeout);
+          this.context.runOnContext(v -> handler.handle(Future.succeededFuture(records)));
+        } catch (WakeupException ignore) {
+        } catch (Exception e) {
+          this.context.runOnContext(v -> handler.handle(Future.failedFuture(e)));
+        }
+      }
+    });
+  }
 }

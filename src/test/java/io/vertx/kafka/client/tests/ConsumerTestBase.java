@@ -1296,6 +1296,84 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.subscribe(Collections.singleton(topicName));
   }
 
+  @Test
+  public void testConsumeWithPoll(TestContext ctx) {
+    final String topicName = "testConsumeWithPoll";
+    final String groupId = "group-id";
+    Async batch = ctx.async();
+    int numMessages = 1000;
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, "value")
+    );
+    batch.awaitSuccess(20000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(groupId, null, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+    Async done = ctx.async();
+    AtomicInteger count = new AtomicInteger(numMessages);
+
+    consumer.subscribe(Collections.singleton(topicName), subscribeResult -> {
+
+      if (subscribeResult.succeeded()) {
+
+        vertx.setPeriodic(1000, t -> {
+          consumer.poll(100, pollResult -> {
+            if (pollResult.succeeded()) {
+              if (count.updateAndGet(o -> count.get() - pollResult.result().size()) == 0) {
+                vertx.cancelTimer(t);
+                done.complete();
+              }
+            } else {
+              ctx.fail();
+            }
+          });
+        });
+
+      } else {
+        ctx.fail();
+      }
+    });
+  }
+
+  @Test
+  public void testConsumeWithPollNoMessages(TestContext ctx) {
+    final String topicName = "testConsumeWithPollNoMessages";
+    final String groupId = "group-id";
+    Properties config = kafkaCluster.useTo().getConsumerProperties(groupId, null, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+    Async done = ctx.async();
+    AtomicInteger count = new AtomicInteger(5);
+
+    consumer.subscribe(Collections.singleton(topicName), subscribeResult -> {
+
+      if (subscribeResult.succeeded()) {
+
+        vertx.setPeriodic(1000, t -> {
+          consumer.poll(100, pollResult -> {
+            if (pollResult.succeeded()) {
+              if (pollResult.result().size() > 0) {
+                ctx.fail();
+              } else {
+                if (count.decrementAndGet() == 0) {
+                  vertx.cancelTimer(t);
+                  done.complete();
+                }
+              }
+            } else {
+              ctx.fail();
+            }
+          });
+        });
+
+      } else {
+        ctx.fail();
+      }
+    });
+  }
+
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {
