@@ -71,6 +71,7 @@ public class RecordMetadata {
   /**
    * @return  the checksum (CRC32) of the record.
    */
+  @Deprecated
   public long checksum() {
     return this.checksum;
   }
