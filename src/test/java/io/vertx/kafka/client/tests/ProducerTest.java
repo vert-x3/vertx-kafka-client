@@ -34,7 +34,6 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -110,14 +109,14 @@ public class ProducerTest extends KafkaClusterTestBase {
     }).listen(port, ctx.asyncAssertSuccess(v -> serverAsync.complete()));
     serverAsync.awaitSuccess(10000);
     Properties props = new Properties();
-    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:"+port);
-    props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:" + port);
+    props.setProperty(ProducerConfig.ACKS_CONFIG, "1");
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
 
     producer = producer(Vertx.vertx(), props);
-    producer.write(new ProducerRecord<>("testBlockkingBroker", 0, "key", "value"), ctx.asyncAssertFailure());
+    producer.write(new ProducerRecord<>("testBlockingBroker", 0, "key", "value"), ctx.asyncAssertFailure());
   }
 
   @Test
@@ -126,7 +125,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     Properties props = new Properties();
     // use a wrong port on purpose, because Broker IS running
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9091");
-    props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+    props.setProperty(ProducerConfig.ACKS_CONFIG, "1");
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
