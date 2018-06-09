@@ -58,6 +58,7 @@ public interface KafkaConsumerRecord<K, V> {
   /**
    * @return  the checksum (CRC32) of the record.
    */
+  @Deprecated
   long checksum();
 
   /**

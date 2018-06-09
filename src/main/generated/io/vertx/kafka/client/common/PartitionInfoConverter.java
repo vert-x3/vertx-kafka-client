@@ -2,6 +2,7 @@ package io.vertx.kafka.client.common;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import java.util.Objects;
 
 /**
  * Converter for {@link io.vertx.kafka.client.common.PartitionInfo}.
@@ -74,4 +75,5 @@ public class PartitionInfoConverter {
       json.put("topic", obj.getTopic());
     }
   }
+
 }
