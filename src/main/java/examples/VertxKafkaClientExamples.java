@@ -21,6 +21,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.docgen.Source;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecords;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -294,6 +296,42 @@ public class VertxKafkaClientExamples {
         map.forEach((topic, partitions) -> {
           System.out.println("topic = " + topic);
           System.out.println("partitions = " + map.get(topic));
+        });
+      }
+    });
+  }
+
+  /**
+   * Example about how it's possible to get messages from Kafka
+   * doing poll at application level instead of using the internal
+   * one in the client
+   *
+   * @param vertx
+   * @param consumer
+   */
+  public void exampleConsumerWithPoll(Vertx vertx, KafkaConsumer<String, String> consumer) {
+
+    // subscribes to the topic
+    consumer.subscribe("test", ar -> {
+
+      if (ar.succeeded()) {
+        System.out.println("Consumer subscribed");
+
+        vertx.setPeriodic(1000, timerId -> {
+
+          consumer.poll(100, ar1 -> {
+
+            if (ar1.succeeded()) {
+
+              KafkaConsumerRecords<String, String> records = ar1.result();
+              for (int i = 0; i < records.size(); i++) {
+                KafkaConsumerRecord<String, String> record = records.recordAt(i);
+                System.out.println("key=" + record.key() + ",value=" + record.value() +
+                  ",partition=" + record.partition() + ",offset=" + record.offset());
+              }
+            }
+          });
+
         });
       }
     });

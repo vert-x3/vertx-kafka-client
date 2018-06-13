@@ -533,4 +533,15 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
     this.stream.pollTimeout(timeout);
     return this;
   }
+
+  @Override
+  public void poll(long timeout, Handler<AsyncResult<KafkaConsumerRecords<K, V>>> handler) {
+    stream.poll(timeout, done -> {
+      if (done.succeeded()) {
+        handler.handle(Future.succeededFuture(new KafkaConsumerRecordsImpl<>(done.result())));
+      } else {
+        handler.handle(Future.failedFuture(done.cause()));
+      }
+    });
+  }
 }

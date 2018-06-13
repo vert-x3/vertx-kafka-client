@@ -161,6 +161,22 @@ order to only consume messages starting from a particular offset, for example.
 Calling {@link io.vertx.kafka.client.consumer.KafkaConsumer#assignment(io.vertx.core.Handler)} provides
 the list of the current assigned partitions.
 
+== Receiving messages with explicit polling
+
+Other than using the internal polling mechanism in order to receive messages from Kafka, the client can subscribe to a
+topic, avoiding to register the handler for getting the messages and then using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#poll(long, io.vertx.core.Handler)} method.
+
+In this way, the user application is in charge to execute the poll for getting messages when it needs, for example after processing
+the previous ones.
+
+[source,$lang]
+----
+{@link examples.VertxKafkaClientExamples#exampleConsumerWithPoll}
+----
+
+After subscribing successfully, the application start a periodic timer in order to execute the poll and getting messages
+from Kafka periodically.
+
 == Changing the subscription or assignment
 
 You can change the subscribed topics, or assigned partitions after you have started to consume messages, simply
