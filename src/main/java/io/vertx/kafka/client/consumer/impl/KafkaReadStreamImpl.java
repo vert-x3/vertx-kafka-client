@@ -34,6 +34,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -667,6 +668,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
           ConsumerRecords<K, V> records = this.consumer.poll(timeout);
           this.context.runOnContext(v -> handler.handle(Future.succeededFuture(records)));
         } catch (WakeupException ignore) {
+          this.context.runOnContext(v -> handler.handle(Future.succeededFuture(ConsumerRecords.empty())));
         } catch (Exception e) {
           this.context.runOnContext(v -> handler.handle(Future.failedFuture(e)));
         }
