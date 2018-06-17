@@ -1299,14 +1299,14 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testConsumeWithPoll(TestContext ctx) {
     final String topicName = "testConsumeWithPoll";
-    final String groupId = "group-id";
+    final String consumerId = topicName;
     Async batch = ctx.async();
     int numMessages = 1000;
     kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
       new ProducerRecord<>(topicName, "value")
     );
     batch.awaitSuccess(20000);
-    Properties config = kafkaCluster.useTo().getConsumerProperties(groupId, null, OffsetResetStrategy.EARLIEST);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
@@ -1339,8 +1339,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testConsumeWithPollNoMessages(TestContext ctx) {
     final String topicName = "testConsumeWithPollNoMessages";
-    final String groupId = "group-id";
-    Properties config = kafkaCluster.useTo().getConsumerProperties(groupId, null, OffsetResetStrategy.EARLIEST);
+    final String consumerId = topicName;
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
