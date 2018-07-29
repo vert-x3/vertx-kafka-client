@@ -20,7 +20,6 @@ import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;

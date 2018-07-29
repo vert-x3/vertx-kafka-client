@@ -313,11 +313,11 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * <p>
    * Due to internal buffering of messages,
    * the {@linkplain #handler(Handler) record handler} will
-   * continue to observe messages from the given {@code topicParation}
+   * continue to observe messages from the given {@code topicPartition}
    * until some time <em>after</em> the given {@code completionHandler}
    * is called. In contrast, the once the given {@code completionHandler}
    * is called the {@link #batchHandler(Handler)} will not see messages
-   * from the given {@code topicParation}.
+   * from the given {@code topicPartition}.
    *
    * @param topicPartition topic partition from which suspend fetching
    * @param completionHandler handler called on operation completed
@@ -331,11 +331,11 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * <p>
    * Due to internal buffering of messages,
    * the {@linkplain #handler(Handler) record handler} will
-   * continue to observe messages from the given {@code topicParations}
+   * continue to observe messages from the given {@code topicPartitions}
    * until some time <em>after</em> the given {@code completionHandler}
    * is called. In contrast, the once the given {@code completionHandler}
    * is called the {@link #batchHandler(Handler)} will not see messages
-   * from the given {@code topicParations}.
+   * from the given {@code topicPartitions}.
    *
    * @param topicPartitions topic partition from which suspend fetching
    * @param completionHandler handler called on operation completed

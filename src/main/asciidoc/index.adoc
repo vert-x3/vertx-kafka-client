@@ -411,7 +411,7 @@ Errors handling (e.g timeout) between a Kafka client (consumer or producer) and 
 If you’re creating consumers and producer from inside verticles, those consumers and producers will be automatically
 closed when the verticle is undeployed.
 
-== Using Vert.x serializers/deserizaliers
+== Using Vert.x serializers/deserializers
 
 Vert.x Kafka client comes out of the box with serializers and deserializers for buffers, json object
 and json array.
@@ -431,7 +431,7 @@ Or in a producer
 ----
 
 ifdef::java,groovy,kotlin[]
-You can also specify the serizalizers/deserializers at creation time:
+You can also specify the serializers/deserializers at creation time:
 
 In a consumer
 

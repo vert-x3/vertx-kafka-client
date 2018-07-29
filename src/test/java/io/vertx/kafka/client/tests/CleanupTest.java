@@ -186,7 +186,7 @@ public class CleanupTest extends KafkaClusterTestBase {
       public void start(Future<Void> fut) throws Exception {
         KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
         consumer.handler(record -> {
-          // Very rarely, this throws a AlreadyUndedeployed error
+          // Very rarely, this throws a AlreadyUndeployed error
           vertx.undeploy(context.deploymentID(), ctx.asyncAssertSuccess(ar -> {
             try {
               // Race condition? Without a sleep, test fails sometimes

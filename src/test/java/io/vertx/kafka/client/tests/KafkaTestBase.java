@@ -64,7 +64,7 @@ public class KafkaTestBase {
   }
 
 
-  static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Properties config) throws Exception {
+  static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Properties config) {
     return KafkaWriteStream.create(vertx, config);
   }
 

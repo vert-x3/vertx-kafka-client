@@ -162,7 +162,7 @@ public class ProducerMockTest {
     String topic = "abc-def";
 
     Properties producerProps = new Properties();
-    producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");;
+    producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
 //    props.put(ProducerConfig.ACKS_CONFIG, "all");
     KafkaWriteStream<String, String> producer = ProducerTest.producer(vertx, producerProps);
     for (int i = 0;i < numMsg;i++) {
@@ -174,7 +174,7 @@ public class ProducerMockTest {
 
 
     Map<String, Object> consumerProps = new HashMap<>();
-    consumerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");;
+    consumerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     consumerProps.put("zookeeper.connect", "localhost:2181");
     consumerProps.put("group.id", "test_group_2");
     consumerProps.put("enable.auto.commit", "false");

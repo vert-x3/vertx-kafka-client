@@ -47,7 +47,7 @@ public class VertxKafkaClientExamples {
 
   /**
    * Example about Kafka consumer and producer creation
-   * @param vertx
+   * @param vertx Vert.x instance
    */
   public void exampleCreateConsumerJava(Vertx vertx) {
 
@@ -66,7 +66,7 @@ public class VertxKafkaClientExamples {
 
   /**
    * Example about Kafka consumer and producer creation
-   * @param vertx
+   * @param vertx Vert.x instance
    */
   public void exampleCreateConsumer(Vertx vertx) {
 
@@ -98,7 +98,7 @@ public class VertxKafkaClientExamples {
 
   /**
    * Example about Kafka consumer and producer creation
-   * @param vertx
+   * @param vertx Vert.x instance
    */
   public void createProducerJava(Vertx vertx) {
 
@@ -164,7 +164,7 @@ public class VertxKafkaClientExamples {
   /**
    * Example about how Kafka consumer receives messages
    * from a topic being part of a consumer group
-   * @param consumer
+   * @param consumer KafkaConsumer instance
    */
   public void exampleConsumerPartitionsNotifs(KafkaConsumer<String, String> consumer) {
 
@@ -211,7 +211,7 @@ public class VertxKafkaClientExamples {
   /**
    * Example about how Kafka consumer can leave
    * a previous joined consumer group
-   * @param consumer
+   * @param consumer KafkaConsumer instance
    */
   public void exampleUnsubscribeWithCallback(KafkaConsumer<String, String> consumer) {
 
@@ -229,7 +229,7 @@ public class VertxKafkaClientExamples {
   /**
    * Example about how Kafka consumer receives messages
    * from a topic requesting a specific partition for that
-   * @param consumer
+   * @param consumer KafkaConsumer instance
    */
   public void exampleConsumerAssignPartition(KafkaConsumer<String, String> consumer) {
 
@@ -269,7 +269,7 @@ public class VertxKafkaClientExamples {
    * Example about how it's possible to get information
    * on partitions for a specified topic (valid for both
    * Kafka consumer and producer instances)
-   * @param consumer
+   * @param consumer KafkaConsumer instance
    */
   public void exampleConsumerPartitionsFor(KafkaConsumer<String, String> consumer) {
 
@@ -306,8 +306,8 @@ public class VertxKafkaClientExamples {
    * doing poll at application level instead of using the internal
    * one in the client
    *
-   * @param vertx
-   * @param consumer
+   * @param vertx Vert.x instance
+   * @param consumer KafkaConsumer instance
    */
   public void exampleConsumerWithPoll(Vertx vertx, KafkaConsumer<String, String> consumer) {
 
@@ -354,7 +354,7 @@ public class VertxKafkaClientExamples {
   /**
    * Example about how Kafka consumer can handle manual commit
    * of the current offset for a topic partition
-   * @param consumer
+   * @param consumer KafkaConsumer instance
    */
   public void exampleConsumerManualOffsetCommit(KafkaConsumer<String, String> consumer) {
 
@@ -403,7 +403,7 @@ public class VertxKafkaClientExamples {
   /**
    * Example about how Kafka consumer can seek in the partition
    * changing the offset from which starting to read messages
-   * @param consumer
+   * @param consumer KafkaConsumer instance
    */
   public void exampleSeekToEnd(KafkaConsumer<String, String> consumer) {
 
@@ -522,8 +522,8 @@ public class VertxKafkaClientExamples {
   /**
    * Example about how Kafka consumer can pause reading from a topic partition
    * and then resume read operation for continuing to get messages
-   * @param vertx
-   * @param consumer
+   * @param vertx Vert.x instance
+   * @param consumer KafkaConsumer instance
    */
   public void exampleConsumerFlowControl(Vertx vertx, KafkaConsumer<String, String> consumer) {
 
@@ -549,7 +549,7 @@ public class VertxKafkaClientExamples {
             // resume read operation after a specific time
             vertx.setTimer(5000, timeId -> {
 
-              // resumi read operations
+              // resume read operations
               consumer.resume(topicPartition);
             });
           }
@@ -584,7 +584,7 @@ public class VertxKafkaClientExamples {
   /**
    * Example about how Kafka producer sends message to topic
    * partitions in a round robin fashion
-   * @param producer
+   * @param producer KafkaProducer instance
    */
   public void exampleProducerWriteWithAck(KafkaProducer<String, String> producer) {
 
@@ -612,7 +612,7 @@ public class VertxKafkaClientExamples {
   /**
    * Example about how Kafka producer sends messages to a
    * specified topic partition
-   * @param producer
+   * @param producer KafkaProducer instance
    */
   public void exampleProducerWriteWithSpecificPartition(KafkaProducer<String, String> producer) {
 
@@ -630,7 +630,7 @@ public class VertxKafkaClientExamples {
    * Example about how Kafka producer sends messages
    * specifying a key hashed internally for defining
    * the destination partition
-   * @param producer
+   * @param producer KafkaProducer instance
    */
   public void exampleProducerWriteWithSpecificKey(KafkaProducer<String, String> producer) {
 
@@ -670,7 +670,7 @@ public class VertxKafkaClientExamples {
    * Example about how Kafka client (producer or consumer)
    * can handle errors and exception during communication
    * with the Kafka cluster
-   * @param consumer
+   * @param consumer KafkaProducer instance
    */
   public void exampleErrorHandling(KafkaConsumer<String, String> consumer) {
 

@@ -254,7 +254,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumer = createConsumer(vertx, config);
     consumer.exceptionHandler(ctx::fail);
-    Async commited = ctx.async();
+    Async committed = ctx.async();
     AtomicInteger count = new AtomicInteger();
     consumer.handler(rec -> {
       int idx = count.getAndIncrement();
@@ -263,7 +263,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       if (idx == numMessages - 1) {
         consumer.commit(ctx.asyncAssertSuccess(v1 -> {
           consumer.close(v2 -> {
-            commited.complete();
+            committed.complete();
           });
         }));
       }
@@ -271,7 +271,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     //consumer.subscribe(Collections.singleton(topicName));
     // Using assign instead of subscribe makes the test _much_ faster (2,5 seconds vs 10,5 seconds)
     consumer.assign(Collections.singleton(new TopicPartition(topicName, 0)));
-    commited.awaitSuccess(10000);
+    committed.awaitSuccess(10000);
     Async batch2 = ctx.async();
     kafkaCluster.useTo().produceStrings(numMessages, batch2::complete, () ->
       new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
@@ -294,7 +294,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testCommitWithOffsets(TestContext ctx) throws Exception {
-    String topicName = "testCommitWithOffets";
+    String topicName = "testCommitWithOffsets";
     String consumerId = topicName;
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -307,7 +307,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumer = createConsumer(vertx, config);
     consumer.exceptionHandler(ctx::fail);
-    Async commited = ctx.async(2);
+    Async committed = ctx.async(2);
     AtomicInteger count = new AtomicInteger();
     consumer.handler(rec -> {
       int val = count.incrementAndGet();
@@ -315,10 +315,10 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         case 101:
           TopicPartition the_topic = new TopicPartition(topicName, 0);
           consumer.commit(Collections.singletonMap(the_topic, new OffsetAndMetadata(rec.offset())),
-            ctx.asyncAssertSuccess(v -> commited.countDown()));
+            ctx.asyncAssertSuccess(v -> committed.countDown()));
           break;
         case 500:
-          commited.countDown();
+          committed.countDown();
           break;
       }
     });
@@ -326,7 +326,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     // Assign is much faster than subscribe
     consumer.assign(Collections.singleton(new TopicPartition(topicName, 0)));
 
-    commited.awaitSuccess(10000);
+    committed.awaitSuccess(10000);
     Async closed = ctx.async();
     consumer.close(v -> closed.complete());
     closed.awaitSuccess(10000);
@@ -785,8 +785,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async async = ctx.async();
     consumer.batchHandler(records -> {
       switch (state.get()) {
-        case 0://inital assignment, not started reassignment
-        case 1://inital assignment, started reassignment, but not done yet
+        case 0://initial assignment, not started reassignment
+        case 1://initial assignment, started reassignment, but not done yet
           break;
         case 2:
           for (ConsumerRecord record : records) {
@@ -804,8 +804,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.handler(record -> {
       long offset = record.offset();
       switch (state.get()) {
-        case 0://inital assignment, not started reassignment
-        case 1://inital assignment, started reassignment, but not done yet
+        case 0://initial assignment, not started reassignment
+        case 1://initial assignment, started reassignment, but not done yet
           if (record.topic().equals(topicName2)) {
             ctx.fail("Seen a " + topicName2 + " message before reassignment");
           }
@@ -987,7 +987,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   /*
-    Teste endOffset (boolean parameter = false)
+    Tests endOffset (boolean parameter = false)
    */
   @Test
   public void testEndOffset(TestContext ctx) throws Exception {
