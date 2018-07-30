@@ -155,11 +155,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   private void schedule(long delay) {
+    Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
+    
     if (this.consuming.get()
         && !this.paused.get()
-        && this.recordHandler != null) {
+        && handler != null) {
 
-      Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
       this.context.runOnContext(v1 -> {
         if (delay > 0) {
           this.context.owner().setTimer(delay, v2 -> run(handler));
@@ -202,9 +203,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
           break;
 
         ConsumerRecord<K, V> next = this.current.next();
-        if (handler != null) {
-          handler.handle(next);
-        }
+        handler.handle(next);
       }
       this.schedule(0);
     }
