@@ -66,6 +66,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private Handler<Set<TopicPartition>> partitionsRevokedHandler;
   private Handler<Set<TopicPartition>> partitionsAssignedHandler;
   private long pollTimeout = 1000L;
+  private boolean polling = false;
 
   private ExecutorService worker;
 
@@ -134,23 +135,32 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   private void pollRecords(Handler<ConsumerRecords<K, V>> handler) {
+    if (this.polling){
+        schedule(1);
+        return;
+    }
+    this.polling = true;
     this.worker.submit(() -> {
-      if (!this.closed.get()) {
-        try {
-          ConsumerRecords<K, V> records = this.consumer.poll(pollTimeout);
-          if (records != null && records.count() > 0) {
-            this.context.runOnContext(v -> handler.handle(records));
-          } else {
-            // Don't call pollRecords directly, but use schedule() to actually pause when the readStream is paused
-            schedule(0);
+       try {
+          if (!this.closed.get()) {
+            try {
+              ConsumerRecords<K, V> records = this.consumer.poll(pollTimeout);
+              if (records != null && records.count() > 0) {
+                this.context.runOnContext(v -> handler.handle(records));
+              } else {
+                // Don't call pollRecords directly, but use schedule() to actually pause when the readStream is paused
+                schedule(0);
+              }
+            } catch (WakeupException ignore) {
+            } catch (Exception e) {
+              if (exceptionHandler != null) {
+                exceptionHandler.handle(e);
+              }
+            }
           }
-        } catch (WakeupException ignore) {
-        } catch (Exception e) {
-          if (exceptionHandler != null) {
-            exceptionHandler.handle(e);
-          }
-        }
-      }
+       } finally {
+           this.polling = false;
+       }
     });
   }
 
