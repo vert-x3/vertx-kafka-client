@@ -51,6 +51,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Base class for consumer tests
@@ -194,6 +195,48 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         done.complete();
       }
     });
+    consumer.subscribe(Collections.singleton(topicName));
+  }
+
+  @Test
+  public void testFetch(TestContext ctx) throws Exception {
+    final String topicName = "testPause";
+    final String consumerId = topicName;
+
+    Async batch = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 1000;
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch.awaitSuccess(20000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumer = createConsumer(vertx, config);
+    Async done = ctx.async();
+    AtomicInteger count = new AtomicInteger(numMessages);
+    consumer.exceptionHandler(ctx::fail);
+    AtomicLong demand = new AtomicLong();
+    long batchSize = 200L;
+    consumer.handler(rec -> {
+      long remaining = demand.decrementAndGet();
+      ctx.assertTrue(remaining >= 0L);
+      if (remaining == 0L) {
+        vertx.setTimer(500, id -> {
+          demand.set(batchSize);
+          consumer.fetch(batchSize);
+        });
+      }
+      int val = count.decrementAndGet();
+      if (val == 0) {
+        done.complete();
+      }
+    });
+
+    consumer.pause();
+    demand.set(batchSize);
+    consumer.fetch(batchSize);
+
     consumer.subscribe(Collections.singleton(topicName));
   }
 

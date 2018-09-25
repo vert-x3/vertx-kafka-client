@@ -21,6 +21,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
@@ -90,6 +91,12 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public KafkaConsumer<K, V> resume() {
     this.stream.resume();
+    return this;
+  }
+
+  @Override
+  public ReadStream<KafkaConsumerRecord<K, V>> fetch(long amount) {
+    this.stream.fetch(amount);
     return this;
   }
 

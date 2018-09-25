@@ -20,6 +20,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -44,7 +45,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.function.LongUnaryOperator;
 
 /**
  * Kafka read stream implementation
@@ -58,7 +61,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private final Consumer<K, V> consumer;
 
   private final AtomicBoolean consuming = new AtomicBoolean(false);
-  private final AtomicBoolean paused = new AtomicBoolean(false);
+  private final AtomicLong demand = new AtomicLong(Long.MAX_VALUE);
   private Handler<ConsumerRecord<K, V>> recordHandler;
   private Handler<Throwable> exceptionHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
@@ -156,9 +159,9 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   private void schedule(long delay) {
     Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
-    
+
     if (this.consuming.get()
-        && !this.paused.get()
+        && this.demand.get() > 0L
         && handler != null) {
 
       this.context.runOnContext(v1 -> {
@@ -196,11 +199,18 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     } else {
 
       int count = 0;
+      out:
       while (this.current.hasNext() && count++ < 10) {
 
         // to honor the Vert.x ReadStream contract, handler should not be called if stream is paused
-        if (this.paused.get())
-          break;
+        while (true) {
+          long v = this.demand.get();
+          if (v <= 0L) {
+            break out;
+          } else if (v == Long.MAX_VALUE || this.demand.compareAndSet(v, v - 1)) {
+            break;
+          }
+        }
 
         ConsumerRecord<K, V> next = this.current.next();
         handler.handle(next);
@@ -519,13 +529,29 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public KafkaReadStreamImpl<K, V> pause() {
-    this.paused.set(true);
+    this.demand.set(0L);
     return this;
   }
 
   @Override
   public KafkaReadStreamImpl<K, V> resume() {
-    if (this.paused.compareAndSet(true, false)) {
+    return fetch(Long.MAX_VALUE);
+  }
+
+  @Override
+  public KafkaReadStreamImpl<K, V> fetch(long amount) {
+    if (amount < 0) {
+      throw new IllegalArgumentException("Invalid claim " + amount);
+    }
+    ;
+    long op = this.demand.updateAndGet(val -> {
+      val += amount;
+      if (val < 0L) {
+        val = Long.MAX_VALUE;
+      }
+      return val;
+    });
+    if (op > 0L) {
       this.schedule(0);
     }
     return this;
