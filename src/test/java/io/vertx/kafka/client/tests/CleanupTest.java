@@ -147,6 +147,7 @@ public class CleanupTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
+    Async deployLatch = ctx.async();
     AtomicReference<KafkaProducer<String, String>> producerRef = new AtomicReference<>();
     AtomicReference<String> deploymentRef = new AtomicReference<>();
     vertx.deployVerticle(new AbstractVerticle() {
@@ -156,14 +157,18 @@ public class CleanupTest extends KafkaClusterTestBase {
         producerRef.set(producer);
         producer.write(KafkaProducerRecord.create("the_topic", "the_value"), ctx.asyncAssertSuccess());
       }
-    }, ctx.asyncAssertSuccess(deploymentRef::set));
+    }, ctx.asyncAssertSuccess(id -> {
+      deploymentRef.set(id);
+      deployLatch.complete();
+    }));
 
-    Async async = ctx.async();
+    deployLatch.awaitSuccess(15000);
+    Async undeployLatch = ctx.async();
 
     kafkaCluster.useTo().consumeStrings("the_topic", 1, 10, TimeUnit.SECONDS, () -> {
       vertx.undeploy(deploymentRef.get(), ctx.asyncAssertSuccess(v -> {
         assertNoThreads(ctx, "kafka-producer-network-thread");
-        async.complete();
+        undeployLatch.complete();
       }));
     });
   }
