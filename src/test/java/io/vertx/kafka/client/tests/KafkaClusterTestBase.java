@@ -46,13 +46,13 @@ public class KafkaClusterTestBase extends KafkaTestBase {
   }
 
   @BeforeClass
-  public static void setUp(TestContext ctx) throws IOException {
+  public static void setUp() throws IOException {
     kafkaCluster = kafkaCluster().deleteDataPriorToStartup(true).addBrokers(1).startup();
   }
 
 
   @AfterClass
-  public static void tearDown(TestContext ctx) {
+  public static void tearDown() {
     if (kafkaCluster != null) {
       kafkaCluster.shutdown();
       kafkaCluster = null;

@@ -42,6 +42,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -49,10 +52,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CleanupTest extends KafkaClusterTestBase {
 
   private Vertx vertx;
+  private int numKafkaProducerNetworkThread;
+  private int numKafkaConsumerNetworkThread;
+  private int numVertxKafkaConsumerThread;
 
   @Before
   public void beforeTest() {
     vertx = Vertx.vertx();
+
+    // Capture thread counts, so tests that don't cleanup properly won't fail correct tests
+    numKafkaProducerNetworkThread = countThreads("kafka-producer-network-thread");
+    numKafkaConsumerNetworkThread = countThreads("kafka-consumer-network-thread");
+    numKafkaConsumerNetworkThread = countThreads("vert.x-kafka-consumer-thread");
   }
 
   @After
@@ -71,8 +82,19 @@ public class CleanupTest extends KafkaClusterTestBase {
     ctx.assertEquals(0, countThreads(match));
   }
 
+  private void waitUntil(BooleanSupplier supplier) {
+    waitUntil(null, supplier);
+  }
+
+  private void waitUntil(String msg, BooleanSupplier supplier) {
+    long now = System.currentTimeMillis();
+    while (!supplier.getAsBoolean()) {
+      assertTrue(msg, (System.currentTimeMillis() - now) < 10000);
+    }
+  }
+
   @Test
-  public void testSharedProducer(TestContext ctx) throws Exception {
+  public void testSharedProducer(TestContext ctx) {
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -89,16 +111,19 @@ public class CleanupTest extends KafkaClusterTestBase {
     sentLatch.awaitSuccess(10000);
     Async async = ctx.async();
     kafkaCluster.useTo().consumeStrings("the_topic", num, 10, TimeUnit.SECONDS, () -> {
-      close(ctx, producers, () -> {
-        ctx.assertEquals(0, countThreads("kafka-producer-network-thread"));
-        async.complete();
-      });
+      close(ctx, producers, async::complete);
     });
+    async.awaitSuccess(10000);
+    waitUntil(() -> countThreads("kafka-producer-network-thread") == numKafkaProducerNetworkThread);
   }
 
   private void close(TestContext ctx, LinkedList<KafkaProducer<String, String>> producers, Runnable doneHandler) {
+    close(numKafkaProducerNetworkThread, ctx, producers, doneHandler);
+  }
+
+  private void close(int numNetworkProducerThread, TestContext ctx, LinkedList<KafkaProducer<String, String>> producers, Runnable doneHandler) {
     if (producers.size() > 0) {
-      ctx.assertEquals(1, countThreads("kafka-producer-network-thread"));
+      ctx.assertEquals(numNetworkProducerThread + 1, countThreads("kafka-producer-network-thread"));
       KafkaProducer<String, String> producer = producers.removeFirst();
       producer.close(ctx.asyncAssertSuccess(v -> {
         close(ctx, producers, doneHandler);
@@ -119,7 +144,7 @@ public class CleanupTest extends KafkaClusterTestBase {
   }
 
   @Test
-  public void testSharedProducerCleanupInVerticle(TestContext ctx) throws Exception {
+  public void testSharedProducerCleanupInVerticle(TestContext ctx) {
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -134,15 +159,14 @@ public class CleanupTest extends KafkaClusterTestBase {
     sentLatch.awaitSuccess(10000);
     Async async = ctx.async();
     kafkaCluster.useTo().consumeStrings("the_topic", num, 10, TimeUnit.SECONDS, () -> {
-      vertx.undeploy(deploymentID.get(), ctx.asyncAssertSuccess(v -> {
-        ctx.assertEquals(0, countThreads("kafka-producer-network-thread"));
-        async.complete();
-      }));
+      vertx.undeploy(deploymentID.get(), ctx.asyncAssertSuccess(v -> async.complete()));
     });
+    async.awaitSuccess(10000);
+    waitUntil(() -> countThreads("kafka-producer-network-thread") == numKafkaProducerNetworkThread);
   }
 
   @Test
-  public void testCleanupInProducer(TestContext ctx) throws Exception {
+  public void testCleanupInProducer(TestContext ctx) {
     Properties config = kafkaCluster.useTo().getProducerProperties("the_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -167,17 +191,16 @@ public class CleanupTest extends KafkaClusterTestBase {
 
     kafkaCluster.useTo().consumeStrings("the_topic", 1, 10, TimeUnit.SECONDS, () -> {
       vertx.undeploy(deploymentRef.get(), ctx.asyncAssertSuccess(v -> {
-        assertNoThreads(ctx, "kafka-producer-network-thread");
         undeployLatch.complete();
       }));
     });
+
+    undeployLatch.awaitSuccess(10000);
+    waitUntil(() -> countThreads("kafka-producer-network-thread") == numKafkaProducerNetworkThread);
   }
 
   @Test
   public void testCleanupInConsumer(TestContext ctx) {
-    // Check before so we don't report false negative
-    assertNoThreads(ctx, "vert.x-kafka-consumer-thread");
-
     String topicName = "testCleanupInConsumer";
     Properties config = kafkaCluster.useTo().getConsumerProperties("testCleanupInConsumer_consumer",
       "testCleanupInConsumer_consumer", OffsetResetStrategy.EARLIEST);
@@ -187,35 +210,32 @@ public class CleanupTest extends KafkaClusterTestBase {
     Async async = ctx.async(2);
     Async produceLatch = ctx.async();
     vertx.deployVerticle(new AbstractVerticle() {
+      boolean deployed = false;
       @Override
-      public void start(Future<Void> fut) throws Exception {
+      public void start(Future<Void> fut) {
         KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+        deployed = true;
         consumer.handler(record -> {
-          // Very rarely, this throws a AlreadyUndeployed error
-          vertx.undeploy(context.deploymentID(), ctx.asyncAssertSuccess(ar -> {
-            try {
-              // Race condition? Without a sleep, test fails sometimes
-              Thread.sleep(10);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-            assertNoThreads(ctx, "vert.x-kafka-consumer-thread");
-            async.countDown();
-          }));
+          if (deployed) {
+            deployed = false;
+            vertx.undeploy(context.deploymentID(), ctx.asyncAssertSuccess(v2 -> async.countDown()));
+          }
         });
         consumer.assign(new TopicPartition(topicName, 0), fut);
       }
-    }, ctx.asyncAssertSuccess(v ->  produceLatch.complete()
-    ));
+    }, ctx.asyncAssertSuccess(v ->  produceLatch.complete()));
     produceLatch.awaitSuccess(10000);
     kafkaCluster.useTo().produce("testCleanupInConsumer_producer", 100,
       new StringSerializer(), new StringSerializer(), async::countDown,
       () -> new ProducerRecord<>(topicName, "the_value"));
+
+    async.awaitSuccess(10000);
+    waitUntil("Expected " + countThreads("vert.x-kafka-consumer-thread") + " == " + numVertxKafkaConsumerThread, () -> countThreads("vert.x-kafka-consumer-thread") == numKafkaConsumerNetworkThread);
   }
 
   @Test
   // Regression test for ISS-73: undeployment of a verticle with unassigned consumer fails
-  public void testUndeployUnassignedConsumer(TestContext ctx) throws Exception {
+  public void testUndeployUnassignedConsumer(TestContext ctx) {
     Properties config = kafkaCluster.useTo().getConsumerProperties("testUndeployUnassignedConsumer_consumer",
       "testUndeployUnassignedConsumer_consumer", OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -224,15 +244,14 @@ public class CleanupTest extends KafkaClusterTestBase {
     Async async = ctx.async(1);
     vertx.deployVerticle(new AbstractVerticle() {
       @Override
-      public void start() throws Exception {
+      public void start() {
         KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
-        vertx.setTimer(20, record -> {
-          // Very rarely, this throws a AlreadyUndedeployed error
-          vertx.undeploy(context.deploymentID(), ctx.asyncAssertSuccess(ar -> {
-            async.complete();
-          }));
-        });
       }
-    }, ctx.asyncAssertSuccess());
+    }, ctx.asyncAssertSuccess(id -> {
+      vertx.undeploy(id, ctx.asyncAssertSuccess(v2 -> async.complete()));
+    }));
+
+    async.awaitSuccess(10000);
+    waitUntil("Expected " + countThreads("vert.x-kafka-consumer-thread") + " == " + numVertxKafkaConsumerThread, () -> countThreads("vert.x-kafka-consumer-thread") == numKafkaConsumerNetworkThread);
   }
 }
