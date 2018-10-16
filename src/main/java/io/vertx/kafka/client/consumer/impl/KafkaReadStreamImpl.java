@@ -62,6 +62,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   private final AtomicBoolean consuming = new AtomicBoolean(false);
   private final AtomicLong demand = new AtomicLong(Long.MAX_VALUE);
+  private final AtomicBoolean polling = new AtomicBoolean(false);
   private Handler<ConsumerRecord<K, V>> recordHandler;
   private Handler<Throwable> exceptionHandler;
   private Iterator<ConsumerRecord<K, V>> current; // Accessed on event loop
@@ -137,24 +138,37 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   private void pollRecords(Handler<ConsumerRecords<K, V>> handler) {
-    this.worker.submit(() -> {
-      if (!this.closed.get()) {
-        try {
-          ConsumerRecords<K, V> records = this.consumer.poll(pollTimeout);
-          if (records != null && records.count() > 0) {
-            this.context.runOnContext(v -> handler.handle(records));
-          } else {
-            // Don't call pollRecords directly, but use schedule() to actually pause when the readStream is paused
-            schedule(0);
-          }
-        } catch (WakeupException ignore) {
-        } catch (Exception e) {
-          if (exceptionHandler != null) {
-            exceptionHandler.handle(e);
-          }
-        }
+      if(this.polling.compareAndSet(false, true)){
+          this.worker.submit(() -> {
+             boolean submitted = false;
+             try {
+                if (!this.closed.get()) {
+                  try {
+                    ConsumerRecords<K, V> records = this.consumer.poll(pollTimeout);
+                    if (records != null && records.count() > 0) {
+                      submitted = true; // sets false only when the iterator is overwritten
+                      this.context.runOnContext(v -> {
+                          this.polling.set(false);
+                          handler.handle(records);
+                      });
+                    }
+                  } catch (WakeupException ignore) {
+                  } catch (Exception e) {
+                    if (exceptionHandler != null) {
+                      exceptionHandler.handle(e);
+                    }
+                  }
+                }
+             } finally {
+                 if(!submitted){
+                     this.context.runOnContext(v -> {
+                         this.polling.set(false);
+                         schedule(0);
+                     });
+                 }
+             }
+          });
       }
-    });
   }
 
   private void schedule(long delay) {
