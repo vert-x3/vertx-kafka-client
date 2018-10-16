@@ -1,6 +1,6 @@
 # Vert.x Kafka Client
 
-[![Build Status](https://travis-ci.org/vert-x3/vertx-kafka-client.svg?branch=master?branch=master)](https://travis-ci.org/vert-x3/vertx-kafka-client)
+[![Build Status](https://travis-ci.org/vert-x3/vertx-kafka-client.svg?branch=master)](https://travis-ci.org/vert-x3/vertx-kafka-client)
 
 This component provides a Kafka client for reading and sending messages from/to an [Apache Kafka](https://kafka.apache.org/) cluster.
 From the consumer point of view, its API provides a bunch of methods for subscribing to a topic partition receiving
