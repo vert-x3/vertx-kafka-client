@@ -430,7 +430,7 @@ Or in a producer
 {@link examples.VertxKafkaClientExamples#exampleUsingVertxSerializers()}
 ----
 
-ifdef::java,groovy,kotlin[]
+ifeval::["$lang" == "java"]
 You can also specify the serializers/deserializers at creation time:
 
 In a consumer
@@ -449,7 +449,9 @@ Or in a producer
 
 endif::[]
 
-include::override/rxjava.adoc[]
+ifeval::["$lang" == "java"]
+include::override/rxjava2.adoc[]
+endif::[]
 
 ifdef::java,groovy,kotlin[]
 == Stream implementation and native Kafka objects
