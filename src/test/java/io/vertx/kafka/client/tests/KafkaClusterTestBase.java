@@ -18,7 +18,6 @@ package io.vertx.kafka.client.tests;
 
 import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

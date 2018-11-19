@@ -21,28 +21,26 @@ import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
-import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 
 @RunWith(VertxUnitRunner.class)
 public class KafkaReadStreamMockTest extends KafkaTestBase {
 
     private LinkedList<ConsumerRecord<String,String>> recordsMock = new LinkedList<>();
-    
+
     private int SEND_BATCH = 5;
     private int TOTAL_MESSAGES = 400;
     private final String TOPIC = "topic";
     private Long timer = null;
-    
+
     private void initRecords(){
         int numMessages = TOTAL_MESSAGES;
         for (int i = 0;i < numMessages;i++) {
             String key = "key-" + i;
             String value = "value-" + i;
             recordsMock.add(new ConsumerRecord<String,String>(TOPIC, 0, i, key, value));
-        } 
+        }
     }
-    
+
     private MockConsumer<String, String> createMockConsumer(){
         MockConsumer<String, String> consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
 
@@ -51,42 +49,42 @@ public class KafkaReadStreamMockTest extends KafkaTestBase {
         consumer.updateBeginningOffsets(beginningOffsets);
         return consumer;
     }
-    
+
     private void sendNextBatch(MockConsumer<String, String> consumer){
         for(int i=0;i<SEND_BATCH && recordsMock.size()>0;i++)
         consumer.addRecord(recordsMock.pop());
-        
+
     }
-    
+
     @Test
     public void shouldNotLoseMessages(TestContext ctx){
         Vertx vertx = Vertx.vertx();
-        
+
         Async done = ctx.async();
-        
+
         initRecords();
 
         MockConsumer<String, String> consumer = createMockConsumer();
         KafkaReadStream<String, String> readStream =  KafkaReadStream.create(vertx, consumer);
         KafkaConsumer<String, String> consumerVertx = new KafkaConsumerImpl<>(readStream);
-        
-        
+
+
         AtomicLong partitionOffset = new AtomicLong(-1);
-        
-        
+
+
         consumerVertx.handler((r)->{
             long offset = r.offset();
-            
+
             partitionOffset.addAndGet(1);
             ctx.assertEquals(partitionOffset.get(), offset);
-            
+
             System.out.println("offset " + offset);
-            
+
             if(offset == TOTAL_MESSAGES-1){
                 consumerVertx.close();
                 done.complete();
             } else {
-                
+
                 if(timer!=null) vertx.cancelTimer(timer);
                 timer = vertx.setTimer(5, (t)->{
                     consumerVertx.pause();
@@ -100,21 +98,21 @@ public class KafkaReadStreamMockTest extends KafkaTestBase {
                         });
                     });
                 });
-            
+
             }
 
         });
-        
+
         consumerVertx.exceptionHandler(t->ctx.fail(t));
 
-        
+
         Set<TopicPartition> partitions = new LinkedHashSet<>();
         partitions.add(new TopicPartition(TOPIC, 0));
-        
+
         consumerVertx.assign(partitions, (h)->{
             sendNextBatch(consumer);
         });
-        
+
     }
-    
+
 }
