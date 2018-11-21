@@ -295,7 +295,7 @@ In the case of the partition-specific pause and resume it is possible that the r
 observe messages from a paused partition for a time _after_ the `pause()` method's completion
 handler has been called. This is not the case for messages observed by the batch handler: Once the
 `pause()` completion handler has been called it will only observe messages from those partitions which
-rare not paused.
+are not paused.
 
 [source,$lang]
 ----
