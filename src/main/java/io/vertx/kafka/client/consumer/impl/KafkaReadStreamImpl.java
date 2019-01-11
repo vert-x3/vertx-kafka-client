@@ -20,7 +20,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -47,7 +46,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
-import java.util.function.LongUnaryOperator;
 
 /**
  * Kafka read stream implementation
@@ -701,7 +699,6 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   public void poll(long timeout, Handler<AsyncResult<ConsumerRecords<K, V>>> handler) {
     this.worker.submit(() -> {
       if (!this.closed.get()) {
-        Future fut;
         try {
           ConsumerRecords<K, V> records = this.consumer.poll(timeout);
           this.context.runOnContext(v -> handler.handle(Future.succeededFuture(records)));
