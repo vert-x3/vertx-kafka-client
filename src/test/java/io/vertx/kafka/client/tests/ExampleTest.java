@@ -8,6 +8,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @RunWith(VertxUnitRunner.class)
+@Ignore("This is an example test class.")
 public class ExampleTest {
 
   private static final String TOPIC = "";
