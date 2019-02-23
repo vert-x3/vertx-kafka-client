@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Base class for tests providing a Kafka cluster
@@ -46,9 +47,16 @@ public class KafkaClusterTestBase extends KafkaTestBase {
 
   @BeforeClass
   public static void setUp() throws IOException {
-    kafkaCluster = kafkaCluster().deleteDataPriorToStartup(true).addBrokers(1).startup();
+    startCluster(null);
   }
 
+  public static void startCluster(final Properties properties) throws IOException {
+    kafkaCluster = kafkaCluster()
+      .deleteDataPriorToStartup(true)
+      .addBrokers(1)
+      .withKafkaConfiguration(properties)
+      .startup();
+  }
 
   @AfterClass
   public static void tearDown() {
