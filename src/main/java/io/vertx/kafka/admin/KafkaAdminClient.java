@@ -86,6 +86,7 @@ public interface KafkaAdminClient {
    * @param topicNames the names of the topics to describe
    * @param completionHandler handler called on operation completed with the topics descriptions
    */
+  @GenIgnore
   void describeTopics(List<String> topicNames, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
 
   /**
