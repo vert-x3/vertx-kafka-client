@@ -16,6 +16,10 @@ import io.vertx.kafka.admin.AdminUtils;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
 
+/**
+ * @deprecated This class is now deprecated. @see io.vertx.kafka.admin.impl.{@link KafkaAdminClientImpl} instead.
+ */
+@Deprecated()
 @VertxGen
 public class AdminUtilsImpl implements AdminUtils {
   private Vertx vertx;

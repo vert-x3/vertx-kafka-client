@@ -17,7 +17,10 @@ import kafka.utils.ZkUtils;
  * @see kafka.admin.AdminUtils#deleteTopic(ZkUtils, String),
  * @see kafka.admin.AdminUtils#changeTopicConfig(ZkUtils, String, Properties), and
  * @see kafka.admin.AdminUtils#topicExists(ZkUtils, String)
+ *
+ * @deprecated This class is now deprecated. @see io.vertx.kafka.admin.{@link KafkaAdminClient} instead.
  */
+@Deprecated()
 @VertxGen
 public interface AdminUtils {
 

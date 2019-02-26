@@ -7,6 +7,8 @@ This component provides a vert.x wrapper around the most important functions of 
 AdminUtils are used to create, modify, and delete topics. Other functionality covered by AdminUtils,
 but not this wrapper, includes Partition Management, Broker Configuration management, etc.
 
+WARNING: this class is now deprecated see {@link io.vertx.kafka.admin.KafkaAdminClient} instead.
+
 == Using the AdminUtils
 
 === Create a topic
