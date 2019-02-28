@@ -121,4 +121,19 @@ public interface KafkaAdminClient {
    */
   @GenIgnore
   void alterConfigs(Map<ConfigResource,Config> configs, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Get the the consumer groups available in the cluster with the default options
+   *
+   * @param completionHandler handler called on operation completed with the consumer groups ids
+   */
+  void listConsumerGroups(Handler<AsyncResult<List<ConsumerGroupListing>>> completionHandler);
+
+  /**
+   * Describe some group ids in the cluster, with the default options
+   *
+   * @param groupIds the ids of the groups to describe
+   * @param completionHandler handler called on operation completed with the consumer groups descriptions
+   */
+  void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
 }

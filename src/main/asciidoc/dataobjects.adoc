@@ -98,6 +98,101 @@ Set the value of this configuration, which may be null if the configuration is s
 +++
 |===
 
+[[ConsumerGroupDescription]]
+== ConsumerGroupDescription
+
+++++
+ A detailed description of a single consumer group in the cluster
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[coordinator]]`@coordinator`|`link:dataobjects.html#Node[Node]`|+++
+Set the consumer group coordinator, or null if the coordinator is not known
++++
+|[[groupId]]`@groupId`|`String`|+++
+Set the id of the consumer group
++++
+|[[members]]`@members`|`Array of link:dataobjects.html#MemberDescription[MemberDescription]`|+++
+Set a list of the members of the consumer group
++++
+|[[partitionAssignor]]`@partitionAssignor`|`String`|+++
+Set the consumer group partition assignor
++++
+|[[simpleConsumerGroup]]`@simpleConsumerGroup`|`Boolean`|+++
+Set if consumer group is simple or not
++++
+|[[state]]`@state`|`link:enums.html#ConsumerGroupState[ConsumerGroupState]`|+++
+Set the consumer group state, or UNKNOWN if the state is too new for us to parse
++++
+|===
+
+[[ConsumerGroupListing]]
+== ConsumerGroupListing
+
+++++
+ A listing of a consumer group in the cluster.
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[groupId]]`@groupId`|`String`|+++
+Set the consumer group id
++++
+|[[simpleConsumerGroup]]`@simpleConsumerGroup`|`Boolean`|+++
+Set if consumer group is simple or not
++++
+|===
+
+[[MemberAssignment]]
+== MemberAssignment
+
+++++
+ A description of the assignments of a specific group member
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[topicPartitions]]`@topicPartitions`|`Array of link:dataobjects.html#TopicPartition[TopicPartition]`|+++
+Set the list of topic partitions
++++
+|===
+
+[[MemberDescription]]
+== MemberDescription
+
+++++
+ A detailed description of a single group instance in the cluster
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[assignment]]`@assignment`|`link:dataobjects.html#MemberAssignment[MemberAssignment]`|+++
+Set the assignment of the group member
++++
+|[[clientId]]`@clientId`|`String`|+++
+Set the client id of the group member
++++
+|[[consumerId]]`@consumerId`|`String`|+++
+Set the consumer id of the group member
++++
+|[[host]]`@host`|`String`|+++
+Set the host where the group member is running
++++
+|===
+
 [[NewTopic]]
 == NewTopic
 

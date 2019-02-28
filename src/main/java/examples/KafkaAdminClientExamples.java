@@ -20,7 +20,9 @@ import io.vertx.core.Vertx;
 import io.vertx.docgen.Source;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
+import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
@@ -130,6 +132,37 @@ public class KafkaAdminClientExamples {
 
     adminClient.alterConfigs(updateConfig, ar -> {
       // check the configuration was updated successfully
+    });
+  }
+
+  /**
+   * Example about listing consumer groups
+   * @param adminClient Kafka admin client instance
+   */
+  public void exampleListConsumerGroups(KafkaAdminClient adminClient) {
+
+    adminClient.listConsumerGroups(ar -> {
+      System.out.println("ConsumerGroups= " + ar.result());
+    });
+  }
+
+  /**
+   * Example about describing consumer groups
+   * @param adminClient Kafka admin client instance
+   */
+  public void exampleDescribeConsumerGroups(KafkaAdminClient adminClient) {
+
+    adminClient.describeConsumerGroups(Collections.singletonList("my-group"), ar -> {
+      ConsumerGroupDescription consumerGroupDescription = ar.result().get("my-group");
+
+      System.out.println("Group id=" + consumerGroupDescription.getGroupId() +
+        " state= " + consumerGroupDescription.getState() +
+        " coordinator host= " + consumerGroupDescription.getCoordinator().getHost());
+
+      for (MemberDescription memberDescription : consumerGroupDescription.getMembers()) {
+        System.out.println("client id= " + memberDescription.getClientId() +
+          " topic partitions= " + memberDescription.getAssignment().getTopicPartitions());
+      }
     });
   }
 }

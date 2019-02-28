@@ -96,3 +96,25 @@ It is possible to alter configurations for different resources with just one cal
 ----
 {@link examples.KafkaAdminClientExamples#exampleAlterConfigs}
 ----
+
+=== List consumer groups
+
+You can call the {@link io.vertx.kafka.admin.KafkaAdminClient#listConsumerGroups} for listing the consumer groups in the cluster.
+The only parameter is the usual callback to handle the result, which provides the consumer groups list.
+
+[source,$lang]
+----
+{@link examples.KafkaAdminClientExamples#exampleListConsumerGroups}
+----
+
+=== Describe consumer groups
+
+You can call {@link io.vertx.kafka.admin.KafkaAdminClient#describeConsumerGroups} to describe consumer groups in the cluster.
+Describing a consumer group means getting all related information like members, related ids, topics subscribed, partitions assignment and so on.
+The needed parameters are the list of consumer groups names to describe, and the usual callback to handle the result providing
+a map with consumer group names and related {@link io.vertx.kafka.admin.MemberDescription}.
+
+[source,$lang]
+----
+{@link examples.KafkaAdminClientExamples#exampleDescribeTopics}
+----

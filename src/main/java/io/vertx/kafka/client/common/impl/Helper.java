@@ -19,6 +19,8 @@ package io.vertx.kafka.client.common.impl;
 import io.vertx.core.Handler;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
+import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.MemberAssignment;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
@@ -182,5 +184,17 @@ public class Helper {
 
   public static List<ConfigEntry> fromConfigEntries(Collection<org.apache.kafka.clients.admin.ConfigEntry> configEntries) {
     return configEntries.stream().map(Helper::from).collect(Collectors.toList());
+  }
+
+  public static ConsumerGroupListing from(org.apache.kafka.clients.admin.ConsumerGroupListing consumerGroupListing) {
+    return new ConsumerGroupListing(consumerGroupListing.groupId(), consumerGroupListing.isSimpleConsumerGroup());
+  }
+
+  public static List<ConsumerGroupListing> fromConsumerGroupListings(Collection<org.apache.kafka.clients.admin.ConsumerGroupListing> consumerGroupListings) {
+    return consumerGroupListings.stream().map(Helper::from).collect(Collectors.toList());
+  }
+
+  public static MemberAssignment from(org.apache.kafka.clients.admin.MemberAssignment memberAssignment) {
+    return new MemberAssignment(Helper.from(memberAssignment.topicPartitions()));
   }
 }
