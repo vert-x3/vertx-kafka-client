@@ -24,6 +24,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.vertx.kafka.admin.Config;
+import io.vertx.kafka.admin.ConsumerGroupDescription;
+import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
@@ -34,7 +37,9 @@ import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
+import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 
 import io.vertx.codegen.annotations.VertxGen;
@@ -173,6 +178,63 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
       if (ex == null) {
         completionHandler.handle(Future.succeededFuture());
+      } else {
+        completionHandler.handle(Future.failedFuture(ex));
+      }
+    });
+  }
+
+  @Override
+  public void listConsumerGroups(Handler<AsyncResult<List<ConsumerGroupListing>>> completionHandler) {
+
+    ListConsumerGroupsResult listConsumerGroupsResult = this.adminClient.listConsumerGroups();
+    listConsumerGroupsResult.all().whenComplete((groupIds, ex) -> {
+
+      if (ex == null) {
+        completionHandler.handle(Future.succeededFuture(Helper.fromConsumerGroupListings(groupIds)));
+      } else {
+        completionHandler.handle(Future.failedFuture(ex));
+      }
+    });
+  }
+
+  @Override
+  public void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler) {
+
+    DescribeConsumerGroupsResult describeConsumerGroupsResult = this.adminClient.describeConsumerGroups(groupIds);
+    describeConsumerGroupsResult.all().whenComplete((cg, ex) -> {
+
+      if (ex == null) {
+
+        Map<String, ConsumerGroupDescription> consumerGroups = new HashMap<>();
+
+        for (Map.Entry<String, org.apache.kafka.clients.admin.ConsumerGroupDescription> cgDescriptionEntry: cg.entrySet()) {
+
+          List<MemberDescription> members = new ArrayList<>();
+
+          for (org.apache.kafka.clients.admin.MemberDescription memberDescription : cgDescriptionEntry.getValue().members()) {
+            MemberDescription m = new MemberDescription();
+            m.setConsumerId(memberDescription.consumerId())
+              .setClientId(memberDescription.clientId())
+              .setAssignment(Helper.from(memberDescription.assignment()))
+              .setHost(memberDescription.host());
+
+            members.add(m);
+          }
+
+          ConsumerGroupDescription consumerGroupDescription = new ConsumerGroupDescription();
+
+          consumerGroupDescription.setGroupId(cgDescriptionEntry.getValue().groupId())
+            .setCoordinator(Helper.from(cgDescriptionEntry.getValue().coordinator()))
+            .setMembers(members)
+            .setPartitionAssignor(cgDescriptionEntry.getValue().partitionAssignor())
+            .setSimpleConsumerGroup(cgDescriptionEntry.getValue().isSimpleConsumerGroup())
+            .setState(cgDescriptionEntry.getValue().state());
+
+          consumerGroups.put(cgDescriptionEntry.getKey(), consumerGroupDescription);
+        }
+
+        completionHandler.handle(Future.succeededFuture(consumerGroups));
       } else {
         completionHandler.handle(Future.failedFuture(ex));
       }
