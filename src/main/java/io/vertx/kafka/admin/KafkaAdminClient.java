@@ -136,5 +136,6 @@ public interface KafkaAdminClient {
    * @param groupIds the ids of the groups to describe
    * @param completionHandler handler called on operation completed with the consumer groups descriptions
    */
+  @GenIgnore
   void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
 }
