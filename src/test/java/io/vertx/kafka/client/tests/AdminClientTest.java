@@ -17,18 +17,24 @@
 package io.vertx.kafka.client.tests;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
+import io.vertx.kafka.admin.MemberAssignment;
 import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.TopicDescription;
@@ -313,5 +319,81 @@ public class AdminClientTest extends KafkaClusterTestBase {
     });
 
     async.await();
+  }
+
+  @Test
+  public void testConsumersOnTopics(TestContext ctx) {
+
+    List<ConsumerGroupDescription> cGroups = new ArrayList<>();
+
+    List<MemberDescription> members1 = new ArrayList<>();
+
+    MemberDescription m1 = new MemberDescription();
+    MemberAssignment ma1 = new MemberAssignment();
+    Set<TopicPartition> setTp1 = new HashSet<>();
+    setTp1.add(new TopicPartition("my-topic", 0));
+    setTp1.add(new TopicPartition("my-topic", 1));
+    setTp1.add(new TopicPartition("your-topic", 0));
+    ma1.setTopicPartitions(setTp1);
+    m1.setAssignment(ma1);
+
+    MemberDescription m2 = new MemberDescription();
+    MemberAssignment ma2 = new MemberAssignment();
+    Set<TopicPartition> setTp2 = new HashSet<>();
+    setTp2.add(new TopicPartition("my-topic", 2));
+    setTp2.add(new TopicPartition("my-topic", 3));
+    setTp2.add(new TopicPartition("his-topic", 0));
+    ma2.setTopicPartitions(setTp2);
+    m2.setAssignment(ma2);
+
+    members1.add(m1);
+    members1.add(m2);
+
+    List<MemberDescription> members2 = new ArrayList<>();
+
+    MemberDescription m3 = new MemberDescription();
+    MemberAssignment ma3 = new MemberAssignment();
+    Set<TopicPartition> setTp3 = new HashSet<>();
+    setTp3.add(new TopicPartition("my-topic", 0));
+    setTp3.add(new TopicPartition("my-topic", 1));
+    setTp3.add(new TopicPartition("my-topic", 2));
+    setTp3.add(new TopicPartition("my-topic", 3));
+    setTp3.add(new TopicPartition("his-topic", 0));
+    setTp3.add(new TopicPartition("your-topic", 0));
+    ma3.setTopicPartitions(setTp3);
+    m3.setAssignment(ma3);
+
+    members2.add(m3);
+
+    cGroups.add(new ConsumerGroupDescription().setGroupId("groupid-1").setMembers(members1));
+    cGroups.add(new ConsumerGroupDescription().setGroupId("groupid-2").setMembers(members2));
+
+    Map<String, Integer> consumers = new HashMap<>();
+
+    for (ConsumerGroupDescription cgd : cGroups) {
+
+      for (MemberDescription m : cgd.getMembers()) {
+
+        List<String> topics = m.getAssignment().getTopicPartitions().stream()
+          .filter(distinctByKey(tp -> tp.getTopic()))
+          .map(tp -> tp.getTopic())
+          .collect(Collectors.toList());
+
+        for (String topic : topics) {
+
+          consumers.merge(topic, 1, Integer::sum);
+        }
+      }
+
+    }
+
+    ctx.assertEquals(3, consumers.get("my-topic"));
+    ctx.assertEquals(2, consumers.get("your-topic"));
+    ctx.assertEquals(2, consumers.get("his-topic"));
+  }
+
+  private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+    Set<Object> seen = ConcurrentHashMap.newKeySet();
+    return t -> seen.add(keyExtractor.apply(t));
   }
 }
