@@ -170,4 +170,26 @@ public class CodecsTest extends KafkaClusterTestBase {
     });
     readStream.subscribe(Collections.singleton(prefix + topic));
   }
+
+  @Test
+  public void testCustomDataOnJsonSerializer() {
+    testSerializer(JsonObject.class, new CustomData("test", 0).toJson());
+  }
+
+  public static class CustomData {
+    private String field1;
+    private int field2;
+
+    public CustomData(String field1, int field2) {
+      this.field1 = field1;
+      this.field2 = field2;
+    }
+
+    public JsonObject toJson() {
+      JsonObject json = new JsonObject();
+      json.put("field1", field1);
+      json.put("field2", field2);
+      return json;
+    }
+  }
 }
