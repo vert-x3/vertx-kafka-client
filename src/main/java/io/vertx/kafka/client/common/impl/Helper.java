@@ -136,11 +136,16 @@ public class Helper {
   }
 
   public static org.apache.kafka.clients.admin.NewTopic to(NewTopic topic) {
+    org.apache.kafka.clients.admin.NewTopic newTopic = null;
     if (topic.getNumPartitions() != -1 && topic.getReplicationFactor() != -1) {
-      return new org.apache.kafka.clients.admin.NewTopic(topic.getName(), topic.getNumPartitions(), topic.getReplicationFactor());
+      newTopic = new org.apache.kafka.clients.admin.NewTopic(topic.getName(), topic.getNumPartitions(), topic.getReplicationFactor());
     } else {
-      return new org.apache.kafka.clients.admin.NewTopic(topic.getName(), topic.getReplicasAssignments());
+      newTopic = new org.apache.kafka.clients.admin.NewTopic(topic.getName(), topic.getReplicasAssignments());
     }
+    if (topic.getConfig() != null && !topic.getConfig().isEmpty()) {
+      newTopic.configs(topic.getConfig());
+    }
+    return newTopic;
   }
 
   public static org.apache.kafka.common.config.ConfigResource to(ConfigResource configResource) {
