@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
@@ -158,6 +159,52 @@ public class AdminClientTest extends KafkaClusterTestBase {
         adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ar2 -> {
           ctx.assertTrue(ar2.succeeded());
           async.complete();
+        });
+
+      });
+
+    });
+
+    async.await();
+  }
+
+  @Test
+  public void testCreateTopicWithConfigs(TestContext ctx) {
+
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+
+    NewTopic newTopic = new NewTopic("testCreateTopicWithConfigs", 1, (short)1);
+    newTopic.setConfig(Collections.singletonMap("segment.bytes", "1000"));
+
+    adminClient.createTopics(Collections.singletonList(newTopic), ar -> {
+      ctx.assertTrue(ar.succeeded());
+
+      adminClient.describeTopics(Collections.singletonList("testCreateTopicWithConfigs"), ar1 -> {
+        ctx.assertTrue(ar1.succeeded());
+        TopicDescription topicDescription = ar1.result().get("testCreateTopicWithConfigs");
+
+        ctx.assertEquals("testCreateTopicWithConfigs", topicDescription.getName());
+        ctx.assertEquals(1, topicDescription.getPartitions().size());
+        ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
+
+        ConfigResource configResource =
+          new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "testCreateTopicWithConfigs");
+
+        adminClient.describeConfigs(Collections.singletonList(configResource), ar2 -> {
+            ctx.assertTrue(ar2.succeeded());
+
+            Optional<ConfigEntry> configEntry = ar2.result().get(configResource).getEntries().stream()
+              .filter(e -> e.getName().equals("segment.bytes"))
+              .findFirst();
+            ctx.assertTrue(configEntry.isPresent());
+            ctx.assertEquals("1000", configEntry.get().getValue());
+
+            adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ar3 -> {
+              ctx.assertTrue(ar3.succeeded());
+              async.complete();
+            });
         });
 
       });
