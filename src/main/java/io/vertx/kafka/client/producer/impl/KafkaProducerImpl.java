@@ -127,6 +127,30 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
+  public KafkaProducer<K, V> initTransactions() {
+    this.stream.initTransactions();
+    return this;
+  }
+
+  @Override
+  public KafkaProducer<K, V> beginTransaction() {
+    this.stream.beginTransaction();
+    return this;
+  }
+
+  @Override
+  public KafkaProducer<K, V> commitTransaction() {
+    this.stream.commitTransaction();
+    return this;
+  }
+
+  @Override
+  public KafkaProducer<K, V> abortTransaction() {
+    this.stream.abortTransaction();
+    return this;
+  }
+
+  @Override
   @SuppressWarnings("unchecked")
   public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord) {
     return this.write(kafkaProducerRecord, null);
