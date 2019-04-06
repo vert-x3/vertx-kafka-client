@@ -16,29 +16,27 @@
 
 package io.vertx.kafka.client.producer.impl;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.function.Supplier;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
-import io.vertx.kafka.client.common.PartitionInfo;
+import io.vertx.kafka.client.common.impl.PartitionsForHelper;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.clients.producer.Producer;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Vert.x Kafka producer implementation
@@ -71,6 +69,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
       this.closeHandler = new CloseHandler(stream::close);
     }
   }
+
 
   private static final Map<String, SharedProducer> sharedProducers = new HashMap<>();
 
@@ -150,34 +149,11 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-    this.stream.partitionsFor(topic, done -> {
-
-      if (done.succeeded()) {
-        // TODO: use Helper class and stream approach
-        List<PartitionInfo> partitions = new ArrayList<>();
-        for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo: done.result()) {
-
-          PartitionInfo partitionInfo = new PartitionInfo();
-
-          partitionInfo
-            .setInSyncReplicas(
-              Stream.of(kafkaPartitionInfo.inSyncReplicas()).map(Helper::from).collect(Collectors.toList()))
-            .setLeader(Helper.from(kafkaPartitionInfo.leader()))
-            .setPartition(kafkaPartitionInfo.partition())
-            .setReplicas(
-              Stream.of(kafkaPartitionInfo.replicas()).map(Helper::from).collect(Collectors.toList()))
-            .setTopic(kafkaPartitionInfo.topic());
-
-          partitions.add(partitionInfo);
-        }
-        handler.handle(Future.succeededFuture(partitions));
-      } else {
-        handler.handle(Future.failedFuture(done.cause()));
-      }
-
-    });
+    this.stream.partitionsFor(topic, done -> PartitionsForHelper.partitionsFor(topic, handler, done));
     return this;
   }
+
+
 
   @Override
   public void end() {
