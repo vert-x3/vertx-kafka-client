@@ -16,24 +16,6 @@
 
 package io.vertx.kafka.client.consumer.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.streams.ReadStream;
-import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
-import io.vertx.kafka.client.common.impl.CloseHandler;
-import io.vertx.kafka.client.common.impl.Helper;
-import io.vertx.kafka.client.common.PartitionInfo;
-import io.vertx.kafka.client.common.TopicPartition;
-import io.vertx.kafka.client.consumer.KafkaConsumer;
-import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
-import io.vertx.kafka.client.consumer.KafkaConsumerRecords;
-import io.vertx.kafka.client.consumer.KafkaReadStream;
-import io.vertx.kafka.client.consumer.OffsetAndMetadata;
-import org.apache.kafka.clients.consumer.Consumer;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,8 +23,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.streams.ReadStream;
+import io.vertx.kafka.client.common.PartitionInfo;
+import io.vertx.kafka.client.common.TopicPartition;
+import io.vertx.kafka.client.common.impl.CloseHandler;
+import io.vertx.kafka.client.common.impl.Helper;
+import io.vertx.kafka.client.common.impl.PartitionsForHelper;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecords;
+import io.vertx.kafka.client.consumer.KafkaReadStream;
+import io.vertx.kafka.client.consumer.OffsetAndMetadata;
+import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
+import org.apache.kafka.clients.consumer.Consumer;
 
 /**
  * Vert.x Kafka consumer implementation
@@ -213,32 +212,20 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> listTopics(Handler<AsyncResult<Map<String,List<PartitionInfo>>>> handler) {
+  public KafkaConsumer<K, V> listTopics(Handler<AsyncResult<Map<String, List<PartitionInfo>>>> handler) {
     this.stream.listTopics(done -> {
 
       if (done.succeeded()) {
         // TODO: use Helper class and stream approach
-        Map<String,List<PartitionInfo>> topics = new HashMap<>();
+        Map<String, List<PartitionInfo>> topics = new HashMap<>();
 
-        for (Map.Entry<String,List<org.apache.kafka.common.PartitionInfo>> topicEntry: done.result().entrySet()) {
+        for (Map.Entry<String, List<org.apache.kafka.common.PartitionInfo>> topicEntry : done.result().entrySet()) {
 
           List<PartitionInfo> partitions = new ArrayList<>();
 
-          for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo: topicEntry.getValue()) {
-
-            PartitionInfo partitionInfo = new PartitionInfo();
-
-            partitionInfo
-              .setInSyncReplicas(
-                Stream.of(kafkaPartitionInfo.inSyncReplicas()).map(Helper::from).collect(Collectors.toList()))
-              .setLeader(Helper.from(kafkaPartitionInfo.leader()))
-              .setPartition(kafkaPartitionInfo.partition())
-              .setReplicas(
-                Stream.of(kafkaPartitionInfo.replicas()).map(Helper::from).collect(Collectors.toList()))
-              .setTopic(kafkaPartitionInfo.topic());
-
+          for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo : topicEntry.getValue()) {
+            PartitionInfo partitionInfo = PartitionsForHelper.fillPartitionInfo(kafkaPartitionInfo);
             partitions.add(partitionInfo);
-
           }
 
           topics.put(topicEntry.getKey(), partitions);
@@ -383,36 +370,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
   @Override
   public KafkaConsumer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-
-    this.stream.partitionsFor(topic, done -> {
-
-      if (done.succeeded()) {
-        // TODO: use Helper class and stream approach
-        List<PartitionInfo> partitions = new ArrayList<>();
-        List<org.apache.kafka.common.PartitionInfo> partitionInfos = done.result();
-        if (partitionInfos == null){
-          partitionInfos = new ArrayList<>();
-        }
-        for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo: partitionInfos) {
-
-          PartitionInfo partitionInfo = new PartitionInfo();
-
-          partitionInfo
-            .setInSyncReplicas(
-              Stream.of(kafkaPartitionInfo.inSyncReplicas()).map(Helper::from).collect(Collectors.toList()))
-            .setLeader(Helper.from(kafkaPartitionInfo.leader()))
-            .setPartition(kafkaPartitionInfo.partition())
-            .setReplicas(
-              Stream.of(kafkaPartitionInfo.replicas()).map(Helper::from).collect(Collectors.toList()))
-            .setTopic(kafkaPartitionInfo.topic());
-
-          partitions.add(partitionInfo);
-        }
-        handler.handle(Future.succeededFuture(partitions));
-      } else {
-        handler.handle(Future.failedFuture(done.cause()));
-      }
-    });
+    this.stream.partitionsFor(topic, done -> PartitionsForHelper.partitionsFor(topic, handler, done));
     return this;
   }
 
@@ -432,11 +390,11 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
     topicPartitions.put(topicPartition, timestamp);
 
     this.stream.offsetsForTimes(Helper.toTopicPartitionTimes(topicPartitions), done -> {
-      if(done.succeeded()) {
+      if (done.succeeded()) {
         if (done.result().values().size() == 1) {
-          org.apache.kafka.common.TopicPartition kTopicPartition = new org.apache.kafka.common.TopicPartition (topicPartition.getTopic(), topicPartition.getPartition());
+          org.apache.kafka.common.TopicPartition kTopicPartition = new org.apache.kafka.common.TopicPartition(topicPartition.getTopic(), topicPartition.getPartition());
           org.apache.kafka.clients.consumer.OffsetAndTimestamp offsetAndTimestamp = done.result().get(kTopicPartition);
-          if(offsetAndTimestamp != null) {
+          if (offsetAndTimestamp != null) {
             OffsetAndTimestamp resultOffsetAndTimestamp = new OffsetAndTimestamp(offsetAndTimestamp.offset(), offsetAndTimestamp.timestamp());
             handler.handle(Future.succeededFuture(resultOffsetAndTimestamp));
           }
@@ -458,7 +416,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler) {
     this.stream.offsetsForTimes(Helper.toTopicPartitionTimes(topicPartitionTimestamps), done -> {
-      if(done.succeeded()) {
+      if (done.succeeded()) {
         handler.handle(Future.succeededFuture(Helper.fromTopicPartitionOffsetAndTimestamp(done.result())));
       } else {
         handler.handle(Future.failedFuture(done.cause()));
@@ -469,7 +427,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public void beginningOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
     this.stream.beginningOffsets(Helper.to(topicPartitions), done -> {
-      if(done.succeeded()) {
+      if (done.succeeded()) {
         handler.handle(Future.succeededFuture(Helper.fromTopicPartitionOffsets(done.result())));
       } else {
         handler.handle(Future.failedFuture(done.cause()));
@@ -482,9 +440,9 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
     Set<TopicPartition> beginningOffsets = new HashSet<>();
     beginningOffsets.add(topicPartition);
     this.stream.beginningOffsets(Helper.to(beginningOffsets), done -> {
-      if(done.succeeded()) {
+      if (done.succeeded()) {
         // We know that this will result in exactly one iteration
-        for(long beginningOffset : done.result().values()) {
+        for (long beginningOffset : done.result().values()) {
           handler.handle(Future.succeededFuture(beginningOffset));
           break;
         }
@@ -497,7 +455,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public void endOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
     this.stream.endOffsets(Helper.to(topicPartitions), done -> {
-      if(done.succeeded()) {
+      if (done.succeeded()) {
         handler.handle(Future.succeededFuture(Helper.fromTopicPartitionOffsets(done.result())));
       } else {
         handler.handle(Future.failedFuture(done.cause()));
@@ -510,8 +468,8 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
     Set<TopicPartition> topicPartitions = new HashSet<>();
     topicPartitions.add(topicPartition);
     this.stream.endOffsets(Helper.to(topicPartitions), done -> {
-      if(done.succeeded()) {
-        for(long endOffset : done.result().values()) {
+      if (done.succeeded()) {
+        for (long endOffset : done.result().values()) {
           handler.handle(Future.succeededFuture(endOffset));
           break;
         }

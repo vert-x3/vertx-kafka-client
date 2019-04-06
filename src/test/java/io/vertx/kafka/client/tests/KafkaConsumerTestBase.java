@@ -1,12 +1,11 @@
 package io.vertx.kafka.client.tests;
 
-import java.util.List;
 import java.util.Properties;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.client.common.PartitionInfo;
+import io.vertx.kafka.client.common.impl.PartitionsForHelper;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
@@ -58,11 +57,9 @@ public class KafkaConsumerTestBase extends KafkaClusterTestBase {
 
     consumer.partitionsFor(topicName, ar -> {
       if (ar.succeeded()) {
-        final List<PartitionInfo> partitionInfos = ar.result();
-        ctx.assertNotNull(partitionInfos);
-        ctx.assertEquals(0, partitionInfos.size());
-      } else {
         ctx.fail();
+      } else {
+        ctx.assertEquals(ar.cause().getMessage(), PartitionsForHelper.getNoSuchTopicFailMessageFormat(topicName));
       }
       done.complete();
     });
