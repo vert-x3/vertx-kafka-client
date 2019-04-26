@@ -388,6 +388,46 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   @Test
+  public void testCommitAfterPoll(TestContext ctx) throws Exception {
+
+    String topicName = "testCommitAfterPoll";
+    String consumerId = topicName;
+    Async batch = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 10;
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch.awaitSuccess(10000);
+
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumer = createConsumer(vertx, config);
+    consumer.exceptionHandler(ctx::fail);
+
+    Async subscribe = ctx.async();
+    consumer.subscribe(Collections.singleton(topicName), ar1 -> {
+      subscribe.complete();
+    });
+    subscribe.await();
+
+    Async consume = ctx.async();
+    consumer.poll(10000, rec -> {
+      if (rec.result().count() == 10) {
+        consume.countDown();
+      }
+    });
+    consume.await();
+
+    Async committed = ctx.async();
+    TopicPartition the_topic = new TopicPartition(topicName, 0);
+    consumer.commit(Collections.singletonMap(the_topic, new OffsetAndMetadata(10)), ar2 -> {
+      committed.complete();
+    });
+    committed.await();
+  }
+
+  @Test
   public void testRebalance(TestContext ctx) throws Exception {
     String topicName = "testRebalance";
     String consumerId = topicName;
