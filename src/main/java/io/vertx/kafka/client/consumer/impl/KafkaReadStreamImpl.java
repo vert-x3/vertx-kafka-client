@@ -498,20 +498,16 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
     this.submitTask((consumer, future) -> {
-      OffsetCommitCallback callback = (result, exception) -> {
-        if (future != null) {
-          if (exception != null) {
-            future.fail(exception);
-          } else {
-            future.complete(result);
-          }
-        }
-      };
+
       if (offsets == null) {
-        consumer.commitAsync(callback);
+        consumer.commitSync();
       } else {
-        consumer.commitAsync(offsets, callback);
+        consumer.commitSync(offsets);
       }
+      if (future != null) {
+        future.complete(offsets);
+      }
+
     }, completionHandler);
   }
 
