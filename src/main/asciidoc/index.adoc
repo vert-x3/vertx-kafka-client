@@ -88,6 +88,9 @@ In order to start receiving messages from Kafka topics, the consumer can use the
 {@link io.vertx.kafka.client.consumer.KafkaConsumer#subscribe(java.util.Set)} method for
 subscribing to a set of topics being part of a consumer group (specified by the properties on creation).
 
+It's also possible to use the {@link io.vertx.kafka.client.consumer.KafkaConsumer#subscribe(java.util.regex.Pattern)} method for
+subscribing to more topics specifying a Java regex.
+
 You also need to register a handler for handling incoming messages using the
 {@link io.vertx.kafka.client.consumer.KafkaConsumer#handler(io.vertx.core.Handler)}.
 
