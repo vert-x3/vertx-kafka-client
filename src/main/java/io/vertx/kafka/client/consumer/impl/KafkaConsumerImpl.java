@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -174,6 +175,17 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler) {
     this.stream.subscribe(topics, completionHandler);
+    return this;
+  }
+
+  @Override
+  public KafkaConsumer<K, V> subscribe(Pattern pattern) {
+    return this.subscribe(pattern, null);
+  }
+
+  @Override
+  public KafkaConsumer<K, V> subscribe(Pattern pattern, Handler<AsyncResult<Void>> completionHandler) {
+    this.stream.subscribe(pattern, completionHandler);
     return this;
   }
 

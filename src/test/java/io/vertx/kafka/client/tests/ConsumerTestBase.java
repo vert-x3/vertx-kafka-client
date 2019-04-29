@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 
 /**
  * Base class for consumer tests
@@ -99,6 +100,35 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       }
     });
     consumer.subscribe(Collections.singleton(topicName));
+  }
+
+  @Test
+  public void testConsumePattern(TestContext ctx) throws Exception {
+    final String topicName1 = "testConsumePattern1";
+    final String topicName2 = "testConsumePattern2";
+    String consumerId = topicName1 + "-" + topicName2;
+    Async batch = ctx.async();
+    AtomicInteger index = new AtomicInteger();
+    int numMessages = 500;
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName1, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+      new ProducerRecord<>(topicName2, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    batch.awaitSuccess(20000);
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    consumer = createConsumer(vertx, config);
+    Async done = ctx.async();
+    AtomicInteger count = new AtomicInteger(numMessages * 2);
+    consumer.exceptionHandler(ctx::fail);
+    consumer.handler(rec -> {
+      if (count.decrementAndGet() == 0) {
+        done.complete();
+      }
+    });
+    Pattern pattern = Pattern.compile("testConsumePattern\\d");
+    consumer.subscribe(pattern);
   }
 
   @Test

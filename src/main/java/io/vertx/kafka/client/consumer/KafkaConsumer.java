@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Vert.x Kafka consumer.
@@ -190,6 +191,35 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    */
   @Fluent
   KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Subscribe to all topics matching specified pattern to get dynamically assigned partitions.
+   *
+   * @param pattern  Pattern to subscribe to
+   * @return  current KafkaConsumer instance
+   */
+  @Fluent
+  @GenIgnore
+  KafkaConsumer<K, V> subscribe(Pattern pattern);
+
+  /**
+   * Subscribe to all topics matching specified pattern to get dynamically assigned partitions.
+   * <p>
+   * Due to internal buffering of messages, when changing the subscribed topics
+   * the old set of topics may remain in effect
+   * (as observed by the {@linkplain #handler(Handler)} record handler})
+   * until some time <em>after</em> the given {@code completionHandler}
+   * is called. In contrast, the once the given {@code completionHandler}
+   * is called the {@link #batchHandler(Handler)} will only see messages
+   * consistent with the new set of topics.
+   *
+   * @param pattern  Pattern to subscribe to
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaConsumer instance
+   */
+  @Fluent
+  @GenIgnore
+  KafkaConsumer<K, V> subscribe(Pattern pattern, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Manually assign a partition to this consumer.

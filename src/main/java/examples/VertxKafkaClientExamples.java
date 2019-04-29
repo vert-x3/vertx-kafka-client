@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Source
 public class VertxKafkaClientExamples {
@@ -119,12 +120,16 @@ public class VertxKafkaClientExamples {
         ",partition=" + record.partition() + ",offset=" + record.offset());
     });
 
-    // subscribe to several topics
+    // subscribe to several topics with list
     Set<String> topics = new HashSet<>();
     topics.add("topic1");
     topics.add("topic2");
     topics.add("topic3");
     consumer.subscribe(topics);
+
+    // or using a Java regex
+    Pattern pattern = Pattern.compile("topic\\d");
+    consumer.subscribe(pattern);
 
     // or just subscribe to a single topic
     consumer.subscribe("a-single-topic");

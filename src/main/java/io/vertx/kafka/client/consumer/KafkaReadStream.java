@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * A {@link ReadStream} for consuming Kafka {@link ConsumerRecord}.
@@ -284,6 +285,31 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  current KafkaReadStream instance
    */
   KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Subscribe to all topics matching specified pattern to get dynamically assigned partitions.
+   * <p>
+   * Due to internal buffering of messages, when changing the subscribed topics
+   * the old set of topics may remain in effect
+   * (as observed by the {@linkplain #handler(Handler)} record handler})
+   * until some time <em>after</em> the given {@code completionHandler}
+   * is called. In contrast, the once the given {@code completionHandler}
+   * is called the {@link #batchHandler(Handler)} will only see messages
+   * consistent with the new set of topics.
+   *
+   * @param pattern  Pattern to subscribe to
+   * @param completionHandler handler called on operation completed
+   * @return  current KafkaReadStream instance
+   */
+  KafkaReadStream<K, V> subscribe(Pattern pattern, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Subscribe to all topics matching specified pattern to get dynamically assigned partitions.
+   *
+   * @param pattern  Pattern to subscribe to
+   * @return  current KafkaReadStream instance
+   */
+  KafkaReadStream<K, V> subscribe(Pattern pattern);
 
   /**
    * Unsubscribe from topics currently subscribed with subscribe.
