@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 /**
  * Kafka read stream implementation
@@ -394,6 +395,31 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     }
 
     return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> subscribe(Pattern pattern, Handler<AsyncResult<Void>> completionHandler) {
+
+    BiConsumer<Consumer<K, V>, Future<Void>> handler = (consumer, future) -> {
+      consumer.subscribe(pattern, this.rebalanceListener);
+      this.startConsuming();
+      if (future != null) {
+        future.complete();
+      }
+    };
+
+    if (this.closed.compareAndSet(true, false)) {
+      this.start(handler, completionHandler);
+    } else {
+      this.submitTask(handler, completionHandler);
+    }
+
+    return this;
+  }
+
+  @Override
+  public KafkaReadStream<K, V> subscribe(Pattern pattern) {
+    return subscribe(pattern, null);
   }
 
   @Override
