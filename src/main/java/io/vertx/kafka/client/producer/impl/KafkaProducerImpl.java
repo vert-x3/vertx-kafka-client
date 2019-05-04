@@ -133,18 +133,24 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
-    this.stream.write(record.record(), done -> {
-      if (handler != null) {
-        if (done.succeeded()) {
-          handler.handle(Future.succeededFuture(Helper.from(done.result())));
-        } else {
-          handler.handle(Future.failedFuture(done.cause()));
-        }
-      }
-    });
+  public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<Void>> handler) {
+    this.stream.write(record.record(), handler);
+    return this;
+  }
 
+  @Override
+  public KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record) {
+    return send(record, null);
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
+    Handler<AsyncResult<org.apache.kafka.clients.producer.RecordMetadata>> mdHandler = null;
+    if (handler != null) {
+      mdHandler = done -> handler.handle(done.map(Helper::from));
+    }
+    this.stream.send(record.record(), mdHandler);
     return this;
   }
 
@@ -182,6 +188,11 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   @Override
   public void end() {
     this.stream.end();
+  }
+
+  @Override
+  public void end(Handler<AsyncResult<Void>> handler) {
+    this.stream.end(handler);
   }
 
   @Override

@@ -160,6 +160,6 @@ public interface KafkaProducerRecord<K, V> {
    * @return a created native Kafka producer record with backed information
    */
   @GenIgnore
-  ProducerRecord record();
+  ProducerRecord<K, V> record();
 
 }

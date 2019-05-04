@@ -169,12 +169,6 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @Override
   KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord);
 
-  @Override
-  void end();
-
-  @Override
-  void end(KafkaProducerRecord<K, V> kafkaProducerRecord);
-
   @Fluent
   @Override
   KafkaProducer<K, V> setWriteQueueMaxSize(int i);
@@ -186,6 +180,18 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @Override
   KafkaProducer<K, V> drainHandler(Handler<Void> handler);
 
+  @Override
+  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Asynchronously write a record to a topic
+   *
+   * @param record  record to write
+   * @return  current KafkaWriteStream instance
+   */
+  @Fluent
+  KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record);
+
   /**
    * Asynchronously write a record to a topic
    *
@@ -194,7 +200,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return  current KafkaWriteStream instance
    */
   @Fluent
-  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler);
+  KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler);
 
   /**
    * Get the partition metadata for the give topic.
