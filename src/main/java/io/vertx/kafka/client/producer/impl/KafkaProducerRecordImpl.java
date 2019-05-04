@@ -152,7 +152,7 @@ public class KafkaProducerRecordImpl<K, V> implements KafkaProducerRecord<K, V> 
   }
 
   @Override
-  public ProducerRecord record() {
+  public ProducerRecord<K, V> record() {
     if (headers.isEmpty()) {
       return new ProducerRecord<>(topic, partition, timestamp, key, value);
     } else {

@@ -599,7 +599,7 @@ public class VertxKafkaClientExamples {
       KafkaProducerRecord<String, String> record =
         KafkaProducerRecord.create("test", "message_" + i);
 
-      producer.write(record, done -> {
+      producer.send(record, done -> {
 
         if (done.succeeded()) {
 

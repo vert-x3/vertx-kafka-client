@@ -102,10 +102,18 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * Asynchronously write a record to a topic
    *
    * @param record  record to write
+   * @return  current KafkaWriteStream instance
+   */
+  KafkaWriteStream<K, V> send(ProducerRecord<K, V> record);
+
+  /**
+   * Asynchronously write a record to a topic
+   *
+   * @param record  record to write
    * @param handler handler called on operation completed
    * @return  current KafkaWriteStream instance
    */
-  KafkaWriteStream<K, V> write(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler);
+  KafkaWriteStream<K, V> send(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler);
 
   /**
    * Get the partition metadata for the give topic.

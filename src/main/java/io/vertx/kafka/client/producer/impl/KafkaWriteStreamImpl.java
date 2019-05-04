@@ -83,7 +83,12 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public synchronized KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
+  public KafkaWriteStream<K, V> send(ProducerRecord<K, V> record) {
+    return send(record, null);
+  }
+
+  @Override
+  public synchronized KafkaWriteStreamImpl<K, V> send(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
 
     int len = this.len(record.value());
     this.pending += len;
@@ -127,8 +132,16 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record) {
+  public KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler) {
+    Handler<AsyncResult<RecordMetadata>> mdHandler = null;
+    if (handler != null) {
+      mdHandler = ar -> handler.handle(ar.mapEmpty());
+    }
+    return send(data, mdHandler);
+  }
 
+  @Override
+  public KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record) {
     return this.write(record, null);
   }
 
@@ -151,6 +164,13 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public void end() {
+  }
+
+  @Override
+  public void end(Handler<AsyncResult<Void>> handler) {
+    if (handler != null) {
+      context.runOnContext(v -> handler.handle(Future.succeededFuture()));
+    }
   }
 
   @Override
