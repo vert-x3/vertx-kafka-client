@@ -71,6 +71,19 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
     Deserializer<K> keyDeserializer = VertxSerdes.serdeFrom(keyType).deserializer();
     Deserializer<V> valueDeserializer = VertxSerdes.serdeFrom(valueType).deserializer();
+    return create(vertx, config, keyDeserializer, valueDeserializer);
+  }
+
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka consumer configuration
+   * @param keyDeserializer key deserializer
+   * @param valueDeserializer value deserializer
+   * @return  an instance of the KafkaReadStream
+   */
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 
@@ -97,6 +110,19 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config, Class<K> keyType, Class<V> valueType) {
     Deserializer<K> keyDeserializer = VertxSerdes.serdeFrom(keyType).deserializer();
     Deserializer<V> valueDeserializer = VertxSerdes.serdeFrom(valueType).deserializer();
+    return create(vertx, config, keyDeserializer, valueDeserializer);
+  }
+
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config  Kafka consumer configuration
+   * @param keyDeserializer key deserializer
+   * @param valueDeserializer value deserializer
+   * @return  an instance of the KafkaReadStream
+   */
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 

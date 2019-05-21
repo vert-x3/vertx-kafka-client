@@ -27,6 +27,7 @@ import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.common.serialization.Deserializer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -93,6 +94,22 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * Create a new KafkaConsumer instance
    *
    * @param vertx Vert.x instance to use
+   * @param config  Kafka consumer configuration
+   * @param keyDeserializer key deserializer
+   * @param valueDeserializer value deserializer
+   * @return  an instance of the KafkaConsumer
+   */
+  @GenIgnore
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config,
+                                           Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, new HashMap<>(config), keyDeserializer, valueDeserializer);
+    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+  }
+
+  /**
+   * Create a new KafkaConsumer instance
+   *
+   * @param vertx Vert.x instance to use
    * @param config Kafka consumer configuration
    * @return  an instance of the KafkaConsumer
    */
@@ -115,6 +132,22 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config,
                                            Class<K> keyType, Class<V> valueType) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config, keyType, valueType);
+    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+  }
+
+  /**
+   * Create a new KafkaConsumer instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param config Kafka consumer configuration
+   * @param keyDeserializer key deserializer
+   * @param valueDeserializer value deserializer
+   * @return  an instance of the KafkaConsumer
+   */
+  @GenIgnore
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config,
+                                           Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config, keyDeserializer, valueDeserializer);
     return new KafkaConsumerImpl<>(stream).registerCloseHook();
   }
 
