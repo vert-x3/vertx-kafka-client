@@ -20,7 +20,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.streams.ReadStream;
+import io.vertx.core.Promise;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -29,7 +29,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
-import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
@@ -47,7 +46,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
-import java.util.function.LongUnaryOperator;
 import java.util.regex.Pattern;
 
 /**
@@ -104,20 +102,20 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     this.consumer = consumer;
   }
 
-  private <T> void start(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task, Handler<AsyncResult<T>> handler) {
+  private <T> void start(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task, Handler<AsyncResult<T>> handler) {
     this.worker = Executors.newSingleThreadExecutor(r -> new Thread(r, "vert.x-kafka-consumer-thread-" + threadCount.getAndIncrement()));
     this.submitTaskWhenStarted(task, handler);
   }
 
-  private <T> void submitTaskWhenStarted(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task, Handler<AsyncResult<T>> handler) {
+  private <T> void submitTaskWhenStarted(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task, Handler<AsyncResult<T>> handler) {
     if (worker == null) {
       throw new IllegalStateException();
     }
     this.worker.submit(() -> {
-      Future<T> future;
+      Promise<T> future;
       if (handler != null) {
-        future = Future.future();
-        future.setHandler(event-> {
+        future = Promise.promise();
+        future.future().setHandler(event-> {
           // When we've executed the task on the worker thread,
           // run the callback on the eventloop thread
           this.context.runOnContext(v-> {
@@ -131,8 +129,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       try {
         task.accept(this.consumer, future);
       } catch (Exception e) {
-        if (future != null && !future.isComplete()) {
-          future.fail(e);
+        if (future != null) {
+          future.tryFail(e);
         }
       }
     });
@@ -234,7 +232,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     }
   }
 
-  protected <T> void submitTask(java.util.function.BiConsumer<Consumer<K, V>, Future<T>> task,
+  protected <T> void submitTask(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task,
       Handler<AsyncResult<T>> handler) {
     if (this.closed.compareAndSet(true, false)) {
       this.start(task, handler);
@@ -382,7 +380,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler) {
 
-    BiConsumer<Consumer<K, V>, Future<Void>> handler = (consumer, future) -> {
+    BiConsumer<Consumer<K, V>, Promise<Void>> handler = (consumer, future) -> {
       consumer.subscribe(topics, this.rebalanceListener);
       this.startConsuming();
       if (future != null) {
@@ -402,7 +400,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> subscribe(Pattern pattern, Handler<AsyncResult<Void>> completionHandler) {
 
-    BiConsumer<Consumer<K, V>, Future<Void>> handler = (consumer, future) -> {
+    BiConsumer<Consumer<K, V>, Promise<Void>> handler = (consumer, future) -> {
       consumer.subscribe(pattern, this.rebalanceListener);
       this.startConsuming();
       if (future != null) {
@@ -463,7 +461,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public KafkaReadStream<K, V> assign(Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
 
-    BiConsumer<Consumer<K, V>, Future<Void>> handler = (consumer, future) -> {
+    BiConsumer<Consumer<K, V>, Promise<Void>> handler = (consumer, future) -> {
       consumer.assign(partitions);
       this.startConsuming();
       if (future != null) {
