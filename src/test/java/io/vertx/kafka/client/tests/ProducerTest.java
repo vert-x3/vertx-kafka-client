@@ -16,6 +16,10 @@
 
 package io.vertx.kafka.client.tests;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetServer;
 import io.vertx.ext.unit.Async;
@@ -23,6 +27,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+import io.vertx.kafka.client.producer.RecordMetadata;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -146,6 +151,20 @@ public class ProducerTest extends KafkaClusterTestBase {
     KafkaProducer.create(Vertx.vertx(), props).
       exceptionHandler(exception -> async.complete()).
       write(KafkaProducerRecord.create("topic", "key", invalidValue));
+  }
+
+  @Test
+  public void testNotExistingPartition(TestContext ctx) {
+    Async async = ctx.async(2);
+    Properties props = new Properties();
+    props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+    // both exception handler and the handler on send (with failure) have to be called
+    KafkaProducer.create(Vertx.vertx(), props).
+      exceptionHandler(exception -> async.countDown()).
+      send(KafkaProducerRecord.create("topic", null, "value", 1000), r -> async.countDown());
   }
 
 }
