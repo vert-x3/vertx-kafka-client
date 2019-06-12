@@ -19,6 +19,7 @@ package io.vertx.kafka.client.tests;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -135,7 +136,7 @@ public class CleanupTest extends KafkaClusterTestBase {
 
   public static class TheVerticle extends AbstractVerticle {
     @Override
-    public void start(Future<Void> startFuture) throws Exception {
+    public void start(Promise<Void> startFuture) throws Exception {
       Properties config = new Properties();
       config.putAll(context.config().getMap());
       KafkaProducer<String, String> producer = KafkaProducer.createShared(vertx, "the-name", config);
