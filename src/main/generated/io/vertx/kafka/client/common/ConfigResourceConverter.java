@@ -4,12 +4,21 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import io.vertx.core.spi.json.JsonCodec;
 
 /**
- * Converter for {@link io.vertx.kafka.client.common.ConfigResource}.
+ * Converter and Codec for {@link io.vertx.kafka.client.common.ConfigResource}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.kafka.client.common.ConfigResource} original class using Vert.x codegen.
  */
-public class ConfigResourceConverter {
+public class ConfigResourceConverter implements JsonCodec<ConfigResource, JsonObject> {
+
+  public static final ConfigResourceConverter INSTANCE = new ConfigResourceConverter();
+
+  @Override public JsonObject encode(ConfigResource value) { return (value != null) ? value.toJson() : null; }
+
+  @Override public ConfigResource decode(JsonObject value) { return (value != null) ? new ConfigResource(value) : null; }
+
+  @Override public Class<ConfigResource> getTargetClass() { return ConfigResource.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ConfigResource obj) {
     for (java.util.Map.Entry<String, Object> member : json) {

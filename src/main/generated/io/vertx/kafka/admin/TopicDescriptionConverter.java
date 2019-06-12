@@ -4,12 +4,21 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import io.vertx.core.spi.json.JsonCodec;
 
 /**
- * Converter for {@link io.vertx.kafka.admin.TopicDescription}.
+ * Converter and Codec for {@link io.vertx.kafka.admin.TopicDescription}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.kafka.admin.TopicDescription} original class using Vert.x codegen.
  */
-public class TopicDescriptionConverter {
+public class TopicDescriptionConverter implements JsonCodec<TopicDescription, JsonObject> {
+
+  public static final TopicDescriptionConverter INSTANCE = new TopicDescriptionConverter();
+
+  @Override public JsonObject encode(TopicDescription value) { return (value != null) ? value.toJson() : null; }
+
+  @Override public TopicDescription decode(JsonObject value) { return (value != null) ? new TopicDescription(value) : null; }
+
+  @Override public Class<TopicDescription> getTargetClass() { return TopicDescription.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, TopicDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
@@ -29,7 +38,7 @@ public class TopicDescriptionConverter {
             java.util.ArrayList<io.vertx.kafka.client.common.TopicPartitionInfo> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.client.common.TopicPartitionInfo((JsonObject)item));
+                list.add(io.vertx.kafka.client.common.TopicPartitionInfoConverter.INSTANCE.decode((JsonObject)item));
             });
             obj.setPartitions(list);
           }
@@ -49,7 +58,7 @@ public class TopicDescriptionConverter {
     }
     if (obj.getPartitions() != null) {
       JsonArray array = new JsonArray();
-      obj.getPartitions().forEach(item -> array.add(item.toJson()));
+      obj.getPartitions().forEach(item -> array.add(io.vertx.kafka.client.common.TopicPartitionInfoConverter.INSTANCE.encode(item)));
       json.put("partitions", array);
     }
   }

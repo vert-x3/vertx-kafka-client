@@ -4,12 +4,21 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import io.vertx.core.spi.json.JsonCodec;
 
 /**
- * Converter for {@link io.vertx.kafka.admin.ConfigEntry}.
+ * Converter and Codec for {@link io.vertx.kafka.admin.ConfigEntry}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.kafka.admin.ConfigEntry} original class using Vert.x codegen.
  */
-public class ConfigEntryConverter {
+public class ConfigEntryConverter implements JsonCodec<ConfigEntry, JsonObject> {
+
+  public static final ConfigEntryConverter INSTANCE = new ConfigEntryConverter();
+
+  @Override public JsonObject encode(ConfigEntry value) { return (value != null) ? value.toJson() : null; }
+
+  @Override public ConfigEntry decode(JsonObject value) { return (value != null) ? new ConfigEntry(value) : null; }
+
+  @Override public Class<ConfigEntry> getTargetClass() { return ConfigEntry.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ConfigEntry obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
@@ -44,7 +53,7 @@ public class ConfigEntryConverter {
             java.util.ArrayList<io.vertx.kafka.admin.ConfigSynonym> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.admin.ConfigSynonym((JsonObject)item));
+                list.add(io.vertx.kafka.admin.ConfigSynonymConverter.INSTANCE.decode((JsonObject)item));
             });
             obj.setSynonyms(list);
           }
@@ -74,7 +83,7 @@ public class ConfigEntryConverter {
     }
     if (obj.getSynonyms() != null) {
       JsonArray array = new JsonArray();
-      obj.getSynonyms().forEach(item -> array.add(item.toJson()));
+      obj.getSynonyms().forEach(item -> array.add(io.vertx.kafka.admin.ConfigSynonymConverter.INSTANCE.encode(item)));
       json.put("synonyms", array);
     }
     if (obj.getValue() != null) {

@@ -4,12 +4,21 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import io.vertx.core.spi.json.JsonCodec;
 
 /**
- * Converter for {@link io.vertx.kafka.admin.Config}.
+ * Converter and Codec for {@link io.vertx.kafka.admin.Config}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.kafka.admin.Config} original class using Vert.x codegen.
  */
-public class ConfigConverter {
+public class ConfigConverter implements JsonCodec<Config, JsonObject> {
+
+  public static final ConfigConverter INSTANCE = new ConfigConverter();
+
+  @Override public JsonObject encode(Config value) { return (value != null) ? value.toJson() : null; }
+
+  @Override public Config decode(JsonObject value) { return (value != null) ? new Config(value) : null; }
+
+  @Override public Class<Config> getTargetClass() { return Config.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, Config obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
@@ -19,7 +28,7 @@ public class ConfigConverter {
             java.util.ArrayList<io.vertx.kafka.admin.ConfigEntry> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.admin.ConfigEntry((JsonObject)item));
+                list.add(io.vertx.kafka.admin.ConfigEntryConverter.INSTANCE.decode((JsonObject)item));
             });
             obj.setEntries(list);
           }
@@ -35,7 +44,7 @@ public class ConfigConverter {
   public static void toJson(Config obj, java.util.Map<String, Object> json) {
     if (obj.getEntries() != null) {
       JsonArray array = new JsonArray();
-      obj.getEntries().forEach(item -> array.add(item.toJson()));
+      obj.getEntries().forEach(item -> array.add(io.vertx.kafka.admin.ConfigEntryConverter.INSTANCE.encode(item)));
       json.put("entries", array);
     }
   }
