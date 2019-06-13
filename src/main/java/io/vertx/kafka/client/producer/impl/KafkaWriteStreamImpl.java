@@ -120,7 +120,16 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
           });
         });
       } catch (Throwable e) {
-        exceptionHandler.handle(e);
+        synchronized (KafkaWriteStreamImpl.this) {
+          if (this.exceptionHandler != null) {
+            Handler<Throwable> exceptionHandler = this.exceptionHandler;
+            this.context.runOnContext(v3 -> exceptionHandler.handle(e));
+          }
+        }
+
+        if (handler != null) {
+          handler.handle(Future.failedFuture(e));
+        }
       }
     }, null);
 
