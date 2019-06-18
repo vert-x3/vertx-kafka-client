@@ -20,6 +20,7 @@ import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.WriteStream;
@@ -226,9 +227,8 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @Override
   KafkaProducer<K, V> exceptionHandler(Handler<Throwable> handler);
 
-  @Fluent
   @Override
-  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord);
+  Future<Void> write(KafkaProducerRecord<K, V> kafkaProducerRecord);
 
   @Fluent
   @Override
@@ -242,7 +242,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   KafkaProducer<K, V> drainHandler(Handler<Void> handler);
 
   @Override
-  KafkaProducer<K, V> write(KafkaProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler);
+  void write(KafkaProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler);
 
   /**
    * Asynchronously write a record to a topic

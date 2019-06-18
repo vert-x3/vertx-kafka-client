@@ -20,9 +20,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
-import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -137,17 +137,19 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler) {
+  public void write(ProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler) {
     Handler<AsyncResult<RecordMetadata>> mdHandler = null;
     if (handler != null) {
       mdHandler = ar -> handler.handle(ar.mapEmpty());
     }
-    return send(data, mdHandler);
+    send(data, mdHandler);
   }
 
   @Override
-  public KafkaWriteStreamImpl<K, V> write(ProducerRecord<K, V> record) {
-    return this.write(record, null);
+  public Future<Void> write(ProducerRecord<K, V> record) {
+    Promise<Void> promise = Promise.promise();
+    this.write(record, promise);
+    return promise.future();
   }
 
   @Override
@@ -165,10 +167,6 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   public synchronized KafkaWriteStreamImpl<K, V> drainHandler(Handler<Void> handler) {
     this.drainHandler = handler;
     return this;
-  }
-
-  @Override
-  public void end() {
   }
 
   @Override

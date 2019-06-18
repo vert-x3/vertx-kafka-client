@@ -20,6 +20,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.kafka.client.common.impl.CloseHandler;
@@ -137,14 +138,15 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   @SuppressWarnings("unchecked")
-  public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> kafkaProducerRecord) {
-    return this.write(kafkaProducerRecord, null);
+  public Future<Void> write(KafkaProducerRecord<K, V> kafkaProducerRecord) {
+    Promise<Void> promise = Promise.promise();
+    this.write(kafkaProducerRecord, promise);
+    return promise.future();
   }
 
   @Override
-  public KafkaProducer<K, V> write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<Void>> handler) {
+  public void write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<Void>> handler) {
     this.stream.write(record.record(), handler);
-    return this;
   }
 
   @Override
@@ -195,19 +197,8 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public void end() {
-    this.stream.end();
-  }
-
-  @Override
   public void end(Handler<AsyncResult<Void>> handler) {
     this.stream.end(handler);
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public void end(KafkaProducerRecord<K, V> kafkaProducerRecord) {
-    this.stream.end(kafkaProducerRecord.record());
   }
 
   @Override
