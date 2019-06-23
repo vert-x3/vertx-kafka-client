@@ -28,7 +28,7 @@ public class ConfigConverter implements JsonCodec<Config, JsonObject> {
             java.util.ArrayList<io.vertx.kafka.admin.ConfigEntry> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(io.vertx.kafka.admin.ConfigEntryConverter.INSTANCE.decode((JsonObject)item));
+                list.add(new io.vertx.kafka.admin.ConfigEntry((JsonObject)item));
             });
             obj.setEntries(list);
           }
@@ -44,7 +44,7 @@ public class ConfigConverter implements JsonCodec<Config, JsonObject> {
   public static void toJson(Config obj, java.util.Map<String, Object> json) {
     if (obj.getEntries() != null) {
       JsonArray array = new JsonArray();
-      obj.getEntries().forEach(item -> array.add(io.vertx.kafka.admin.ConfigEntryConverter.INSTANCE.encode(item)));
+      obj.getEntries().forEach(item -> array.add(item.toJson()));
       json.put("entries", array);
     }
   }

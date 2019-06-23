@@ -28,14 +28,14 @@ public class TopicPartitionInfoConverter implements JsonCodec<TopicPartitionInfo
             java.util.ArrayList<io.vertx.kafka.client.common.Node> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(io.vertx.kafka.client.common.NodeConverter.INSTANCE.decode((JsonObject)item));
+                list.add(new io.vertx.kafka.client.common.Node((JsonObject)item));
             });
             obj.setIsr(list);
           }
           break;
         case "leader":
           if (member.getValue() instanceof JsonObject) {
-            obj.setLeader(io.vertx.kafka.client.common.NodeConverter.INSTANCE.decode((JsonObject)member.getValue()));
+            obj.setLeader(new io.vertx.kafka.client.common.Node((JsonObject)member.getValue()));
           }
           break;
         case "partition":
@@ -48,7 +48,7 @@ public class TopicPartitionInfoConverter implements JsonCodec<TopicPartitionInfo
             java.util.ArrayList<io.vertx.kafka.client.common.Node> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(io.vertx.kafka.client.common.NodeConverter.INSTANCE.decode((JsonObject)item));
+                list.add(new io.vertx.kafka.client.common.Node((JsonObject)item));
             });
             obj.setReplicas(list);
           }
@@ -64,16 +64,16 @@ public class TopicPartitionInfoConverter implements JsonCodec<TopicPartitionInfo
   public static void toJson(TopicPartitionInfo obj, java.util.Map<String, Object> json) {
     if (obj.getIsr() != null) {
       JsonArray array = new JsonArray();
-      obj.getIsr().forEach(item -> array.add(io.vertx.kafka.client.common.NodeConverter.INSTANCE.encode(item)));
+      obj.getIsr().forEach(item -> array.add(item.toJson()));
       json.put("isr", array);
     }
     if (obj.getLeader() != null) {
-      json.put("leader", io.vertx.kafka.client.common.NodeConverter.INSTANCE.encode(obj.getLeader()));
+      json.put("leader", obj.getLeader().toJson());
     }
     json.put("partition", obj.getPartition());
     if (obj.getReplicas() != null) {
       JsonArray array = new JsonArray();
-      obj.getReplicas().forEach(item -> array.add(io.vertx.kafka.client.common.NodeConverter.INSTANCE.encode(item)));
+      obj.getReplicas().forEach(item -> array.add(item.toJson()));
       json.put("replicas", array);
     }
   }

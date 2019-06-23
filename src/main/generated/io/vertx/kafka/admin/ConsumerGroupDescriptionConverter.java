@@ -25,7 +25,7 @@ public class ConsumerGroupDescriptionConverter implements JsonCodec<ConsumerGrou
       switch (member.getKey()) {
         case "coordinator":
           if (member.getValue() instanceof JsonObject) {
-            obj.setCoordinator(io.vertx.kafka.client.common.NodeConverter.INSTANCE.decode((JsonObject)member.getValue()));
+            obj.setCoordinator(new io.vertx.kafka.client.common.Node((JsonObject)member.getValue()));
           }
           break;
         case "groupId":
@@ -38,7 +38,7 @@ public class ConsumerGroupDescriptionConverter implements JsonCodec<ConsumerGrou
             java.util.ArrayList<io.vertx.kafka.admin.MemberDescription> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(io.vertx.kafka.admin.MemberDescriptionConverter.INSTANCE.decode((JsonObject)item));
+                list.add(new io.vertx.kafka.admin.MemberDescription((JsonObject)item));
             });
             obj.setMembers(list);
           }
@@ -68,14 +68,14 @@ public class ConsumerGroupDescriptionConverter implements JsonCodec<ConsumerGrou
 
   public static void toJson(ConsumerGroupDescription obj, java.util.Map<String, Object> json) {
     if (obj.getCoordinator() != null) {
-      json.put("coordinator", io.vertx.kafka.client.common.NodeConverter.INSTANCE.encode(obj.getCoordinator()));
+      json.put("coordinator", obj.getCoordinator().toJson());
     }
     if (obj.getGroupId() != null) {
       json.put("groupId", obj.getGroupId());
     }
     if (obj.getMembers() != null) {
       JsonArray array = new JsonArray();
-      obj.getMembers().forEach(item -> array.add(io.vertx.kafka.admin.MemberDescriptionConverter.INSTANCE.encode(item)));
+      obj.getMembers().forEach(item -> array.add(item.toJson()));
       json.put("members", array);
     }
     if (obj.getPartitionAssignor() != null) {

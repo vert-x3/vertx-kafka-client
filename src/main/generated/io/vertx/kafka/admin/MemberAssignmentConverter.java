@@ -28,7 +28,7 @@ public class MemberAssignmentConverter implements JsonCodec<MemberAssignment, Js
             java.util.LinkedHashSet<io.vertx.kafka.client.common.TopicPartition> list =  new java.util.LinkedHashSet<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(io.vertx.kafka.client.common.TopicPartitionConverter.INSTANCE.decode((JsonObject)item));
+                list.add(new io.vertx.kafka.client.common.TopicPartition((JsonObject)item));
             });
             obj.setTopicPartitions(list);
           }
@@ -44,7 +44,7 @@ public class MemberAssignmentConverter implements JsonCodec<MemberAssignment, Js
   public static void toJson(MemberAssignment obj, java.util.Map<String, Object> json) {
     if (obj.getTopicPartitions() != null) {
       JsonArray array = new JsonArray();
-      obj.getTopicPartitions().forEach(item -> array.add(io.vertx.kafka.client.common.TopicPartitionConverter.INSTANCE.encode(item)));
+      obj.getTopicPartitions().forEach(item -> array.add(item.toJson()));
       json.put("topicPartitions", array);
     }
   }

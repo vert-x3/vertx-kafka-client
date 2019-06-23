@@ -53,7 +53,7 @@ public class ConfigEntryConverter implements JsonCodec<ConfigEntry, JsonObject> 
             java.util.ArrayList<io.vertx.kafka.admin.ConfigSynonym> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(io.vertx.kafka.admin.ConfigSynonymConverter.INSTANCE.decode((JsonObject)item));
+                list.add(new io.vertx.kafka.admin.ConfigSynonym((JsonObject)item));
             });
             obj.setSynonyms(list);
           }
@@ -83,7 +83,7 @@ public class ConfigEntryConverter implements JsonCodec<ConfigEntry, JsonObject> 
     }
     if (obj.getSynonyms() != null) {
       JsonArray array = new JsonArray();
-      obj.getSynonyms().forEach(item -> array.add(io.vertx.kafka.admin.ConfigSynonymConverter.INSTANCE.encode(item)));
+      obj.getSynonyms().forEach(item -> array.add(item.toJson()));
       json.put("synonyms", array);
     }
     if (obj.getValue() != null) {

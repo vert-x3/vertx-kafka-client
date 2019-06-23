@@ -25,7 +25,7 @@ public class MemberDescriptionConverter implements JsonCodec<MemberDescription, 
       switch (member.getKey()) {
         case "assignment":
           if (member.getValue() instanceof JsonObject) {
-            obj.setAssignment(io.vertx.kafka.admin.MemberAssignmentConverter.INSTANCE.decode((JsonObject)member.getValue()));
+            obj.setAssignment(new io.vertx.kafka.admin.MemberAssignment((JsonObject)member.getValue()));
           }
           break;
         case "clientId":
@@ -53,7 +53,7 @@ public class MemberDescriptionConverter implements JsonCodec<MemberDescription, 
 
   public static void toJson(MemberDescription obj, java.util.Map<String, Object> json) {
     if (obj.getAssignment() != null) {
-      json.put("assignment", io.vertx.kafka.admin.MemberAssignmentConverter.INSTANCE.encode(obj.getAssignment()));
+      json.put("assignment", obj.getAssignment().toJson());
     }
     if (obj.getClientId() != null) {
       json.put("clientId", obj.getClientId());

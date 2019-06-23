@@ -38,7 +38,7 @@ public class TopicDescriptionConverter implements JsonCodec<TopicDescription, Js
             java.util.ArrayList<io.vertx.kafka.client.common.TopicPartitionInfo> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(io.vertx.kafka.client.common.TopicPartitionInfoConverter.INSTANCE.decode((JsonObject)item));
+                list.add(new io.vertx.kafka.client.common.TopicPartitionInfo((JsonObject)item));
             });
             obj.setPartitions(list);
           }
@@ -58,7 +58,7 @@ public class TopicDescriptionConverter implements JsonCodec<TopicDescription, Js
     }
     if (obj.getPartitions() != null) {
       JsonArray array = new JsonArray();
-      obj.getPartitions().forEach(item -> array.add(io.vertx.kafka.client.common.TopicPartitionInfoConverter.INSTANCE.encode(item)));
+      obj.getPartitions().forEach(item -> array.add(item.toJson()));
       json.put("partitions", array);
     }
   }
