@@ -16,18 +16,12 @@
 
 package io.vertx.kafka.client.tests;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.net.NetServer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
-import io.vertx.kafka.client.producer.RecordMetadata;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -110,7 +104,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     // Use a port different from default 9092, because Broker IS running
     int port = 9091;
     Async serverAsync = ctx.async();
-    NetServer server = vertx.createNetServer().connectHandler(so -> {
+    vertx.createNetServer().connectHandler(so -> {
     }).listen(port, ctx.asyncAssertSuccess(v -> serverAsync.complete()));
     serverAsync.awaitSuccess(10000);
     Properties props = new Properties();
