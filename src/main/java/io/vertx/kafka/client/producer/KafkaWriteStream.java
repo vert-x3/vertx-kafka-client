@@ -16,6 +16,8 @@
 
 package io.vertx.kafka.client.producer;
 
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -129,6 +131,18 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Producer<K, V> producer) {
     return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), producer);
   }
+
+  @Fluent
+  @Override
+  KafkaWriteStream<K, V> exceptionHandler(Handler<Throwable> handler);
+
+  @Fluent
+  @Override
+  KafkaWriteStream<K, V> setWriteQueueMaxSize(int i);
+
+  @Fluent
+  @Override
+  KafkaWriteStream<K, V> drainHandler(@Nullable Handler<Void> handler);
 
   /**
    * Asynchronously write a record to a topic

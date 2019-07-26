@@ -759,6 +759,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * If 0, returns immediately with any records that are available currently in the native Kafka consumer's buffer,
    * else returns empty. Must not be negative.
    */
+  @Fluent
   KafkaConsumer<K, V> pollTimeout(long timeout);
 
   /**

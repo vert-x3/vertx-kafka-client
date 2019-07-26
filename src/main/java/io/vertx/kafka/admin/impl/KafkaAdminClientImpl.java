@@ -49,7 +49,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
 
-@VertxGen
 public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   private Vertx vertx;

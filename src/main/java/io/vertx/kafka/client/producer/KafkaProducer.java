@@ -227,22 +227,13 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @Override
   KafkaProducer<K, V> exceptionHandler(Handler<Throwable> handler);
 
-  @Override
-  Future<Void> write(KafkaProducerRecord<K, V> kafkaProducerRecord);
-
   @Fluent
   @Override
   KafkaProducer<K, V> setWriteQueueMaxSize(int i);
 
-  @Override
-  boolean writeQueueFull();
-
   @Fluent
   @Override
   KafkaProducer<K, V> drainHandler(Handler<Void> handler);
-
-  @Override
-  void write(KafkaProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler);
 
   /**
    * Asynchronously write a record to a topic
