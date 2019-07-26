@@ -271,7 +271,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return  current KafkaProducer instance
    */
   @Fluent
-  KafkaProducer<K, V> flush(Handler<Void> completionHandler);
+  KafkaProducer<K, V> flush(Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Close the producer

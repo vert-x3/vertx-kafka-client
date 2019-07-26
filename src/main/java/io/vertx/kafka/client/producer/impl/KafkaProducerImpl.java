@@ -219,7 +219,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducer<K, V> flush(Handler<Void> completionHandler) {
+  public KafkaProducer<K, V> flush(Handler<AsyncResult<Void>> completionHandler) {
     this.stream.flush(completionHandler);
     return this;
   }

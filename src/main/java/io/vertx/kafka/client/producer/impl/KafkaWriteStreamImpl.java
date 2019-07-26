@@ -206,14 +206,14 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStreamImpl<K, V> flush(Handler<Void> completionHandler) {
+  public KafkaWriteStreamImpl<K, V> flush(Handler<AsyncResult<Void>> completionHandler) {
 
     this.context.executeBlocking(future -> {
 
       this.producer.flush();
       future.complete();
 
-    }, ar -> completionHandler.handle(null));
+    }, completionHandler);
 
     return this;
   }

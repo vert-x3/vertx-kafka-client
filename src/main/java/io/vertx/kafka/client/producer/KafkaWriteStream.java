@@ -176,7 +176,7 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @param completionHandler handler called on operation completed
    * @return  current KafkaWriteStream instance
    */
-  KafkaWriteStream<K, V> flush(Handler<Void> completionHandler);
+  KafkaWriteStream<K, V> flush(Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Close the stream
