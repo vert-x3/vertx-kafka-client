@@ -1349,7 +1349,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       ctx.assertTrue(ex instanceof InvalidGroupIdException);
       done.complete();
     });
-    consumer.subscribe(Collections.singleton("someTopic")).handler(System.out::println);
+    consumer.handler(System.out::println).subscribe(Collections.singleton("someTopic"));
   }
 
   @Test

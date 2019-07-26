@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.vertx.core.Promise;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.ConsumerGroupListing;
@@ -103,6 +104,13 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
+  public Future<Map<String, TopicDescription>> describeTopics(List<String> topicNames) {
+    Promise<Map<String, TopicDescription>> promise = Promise.promise();
+    describeTopics(topicNames, promise);
+    return promise.future();
+  }
+
+  @Override
   public void listTopics(Handler<AsyncResult<Set<String>>> completionHandler) {
 
     ListTopicsResult listTopicsResult = this.adminClient.listTopics();
@@ -114,6 +122,13 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
           completionHandler.handle(Future.failedFuture(ex));
       }
     });
+  }
+
+  @Override
+  public Future<Set<String>> listTopics() {
+    Promise<Set<String>> promise = Promise.promise();
+    listTopics(promise);
+    return promise.future();
   }
 
   @Override
@@ -131,6 +146,13 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
+  public Future<Void> createTopics(List<NewTopic> topics) {
+    Promise<Void> promise = Promise.promise();
+    createTopics(topics, promise);
+    return promise.future();
+  }
+
+  @Override
   public void deleteTopics(List<String> topicNames, Handler<AsyncResult<Void>> completionHandler) {
 
     DeleteTopicsResult deleteTopicsResult = this.adminClient.deleteTopics(topicNames);
@@ -142,6 +164,13 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
         completionHandler.handle(Future.failedFuture(ex));
       }
     });
+  }
+
+  @Override
+  public Future<Void> deleteTopics(List<String> topicNames) {
+    Promise<Void> promise = Promise.promise();
+    deleteTopics(topicNames, promise);
+    return promise.future();
   }
 
   @Override
@@ -170,6 +199,13 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
+  public Future<Map<ConfigResource, Config>> describeConfigs(List<ConfigResource> configResources) {
+    Promise<Map<ConfigResource, Config>> promise = Promise.promise();
+    describeConfigs(configResources, promise);
+    return promise.future();
+  }
+
+  @Override
   public void alterConfigs(Map<ConfigResource,Config> configs, Handler<AsyncResult<Void>> completionHandler) {
 
     AlterConfigsResult alterConfigsResult = this.adminClient.alterConfigs(Helper.toConfigMaps(configs));
@@ -184,6 +220,13 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
+  public Future<Void> alterConfigs(Map<ConfigResource, Config> configs) {
+    Promise<Void> promise = Promise.promise();
+    alterConfigs(configs, promise);
+    return promise.future();
+  }
+
+  @Override
   public void listConsumerGroups(Handler<AsyncResult<List<ConsumerGroupListing>>> completionHandler) {
 
     ListConsumerGroupsResult listConsumerGroupsResult = this.adminClient.listConsumerGroups();
@@ -195,6 +238,13 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
         completionHandler.handle(Future.failedFuture(ex));
       }
     });
+  }
+
+  @Override
+  public Future<List<ConsumerGroupListing>> listConsumerGroups() {
+    Promise<List<ConsumerGroupListing>> promise = Promise.promise();
+    listConsumerGroups(promise);
+    return promise.future();
   }
 
   @Override
@@ -238,5 +288,12 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
         completionHandler.handle(Future.failedFuture(ex));
       }
     });
+  }
+
+  @Override
+  public Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds) {
+    Promise<Map<String, ConsumerGroupDescription>> promise = Promise.promise();
+    describeConsumerGroups(groupIds, promise);
+    return promise.future();
   }
 }

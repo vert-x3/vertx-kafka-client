@@ -19,6 +19,7 @@ package io.vertx.kafka.client.producer;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.WriteStream;
@@ -148,9 +149,9 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * Asynchronously write a record to a topic
    *
    * @param record  record to write
-   * @return  current KafkaWriteStream instance
+   * @return a {@code Future} completed with the record metadata
    */
-  KafkaWriteStream<K, V> send(ProducerRecord<K, V> record);
+  Future<RecordMetadata> send(ProducerRecord<K, V> record);
 
   /**
    * Asynchronously write a record to a topic
@@ -171,6 +172,11 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   KafkaWriteStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
   /**
+   * Like {@link #partitionsFor(String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<List<PartitionInfo>> partitionsFor(String topic);
+
+  /**
    * Invoking this method makes all buffered records immediately available to write
    *
    * @param completionHandler handler called on operation completed
@@ -179,9 +185,14 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   KafkaWriteStream<K, V> flush(Handler<AsyncResult<Void>> completionHandler);
 
   /**
+   * Like {@link #flush(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> flush();
+
+  /**
    * Close the stream
    */
-  void close();
+  Future<Void> close();
 
   /**
    * Close the stream
@@ -197,6 +208,11 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @param completionHandler handler called on operation completed
    */
   void close(long timeout, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Like {@link #close(long, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> close(long timeout);
 
   /**
    * @return the underlying producer

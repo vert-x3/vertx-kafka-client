@@ -79,8 +79,10 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStream<K, V> send(ProducerRecord<K, V> record) {
-    return send(record, null);
+  public Future<RecordMetadata> send(ProducerRecord<K, V> record) {
+    Promise<RecordMetadata> promise = Promise.promise();
+    send(record, promise);
+    return promise.future();
   }
 
   @Override
@@ -183,6 +185,13 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
+  public Future<List<PartitionInfo>> partitionsFor(String topic) {
+    Promise<List<PartitionInfo>> promise = Promise.promise();
+    partitionsFor(topic, promise);
+    return promise.future();
+  }
+
+  @Override
   public KafkaWriteStreamImpl<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
 
     AtomicBoolean done = new AtomicBoolean();
@@ -206,6 +215,13 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
+  public Future<Void> flush() {
+    Promise<Void> promise = Promise.promise();
+    flush(promise);
+    return promise.future();
+  }
+
+  @Override
   public KafkaWriteStreamImpl<K, V> flush(Handler<AsyncResult<Void>> completionHandler) {
 
     this.context.executeBlocking(future -> {
@@ -218,13 +234,22 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     return this;
   }
 
-  public void close() {
-    close(ar -> {});
+  public Future<Void> close() {
+    Promise<Void> promise = Promise.promise();
+    close(promise);
+    return promise.future();
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
     close(0, completionHandler);
+  }
+
+  @Override
+  public Future<Void> close(long timeout) {
+    Promise<Void> promise = Promise.promise();
+    close(timeout, promise);
+    return promise.future();
   }
 
   public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {

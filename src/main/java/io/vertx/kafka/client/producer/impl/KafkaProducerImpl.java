@@ -150,8 +150,8 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record) {
-    return send(record, null);
+  public Future<RecordMetadata> send(KafkaProducerRecord<K, V> record) {
+    return send(record);
   }
 
   @Override
@@ -163,6 +163,13 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     }
     this.stream.send(record.record(), mdHandler);
     return this;
+  }
+
+  @Override
+  public Future<List<PartitionInfo>> partitionsFor(String topic) {
+    Promise<List<PartitionInfo>> promise = Promise.promise();
+    partitionsFor(topic, promise);
+    return promise.future();
   }
 
   @Override
@@ -225,8 +232,22 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public void close() {
-    closeHandler.close();
+  public Future<Void> flush() {
+    return this.stream.flush();
+  }
+
+  @Override
+  public Future<Void> close(long timeout) {
+    Promise<Void> promise = Promise.promise();
+    closeHandler.close(timeout, promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Void> close() {
+    Promise<Void> promise = Promise.promise();
+    closeHandler.close(promise);
+    return promise.future();
   }
 
   @Override

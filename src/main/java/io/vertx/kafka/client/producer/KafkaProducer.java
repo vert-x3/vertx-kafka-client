@@ -239,10 +239,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * Asynchronously write a record to a topic
    *
    * @param record  record to write
-   * @return  current KafkaWriteStream instance
+   * @return a {@code Future} completed with the record metadata
    */
-  @Fluent
-  KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record);
+  Future<RecordMetadata> send(KafkaProducerRecord<K, V> record);
 
   /**
    * Asynchronously write a record to a topic
@@ -265,6 +264,11 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
   /**
+   * Like {@link #partitionsFor(String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<List<PartitionInfo>> partitionsFor(String topic);
+
+  /**
    * Invoking this method makes all buffered records immediately available to write
    *
    * @param completionHandler handler called on operation completed
@@ -274,9 +278,16 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   KafkaProducer<K, V> flush(Handler<AsyncResult<Void>> completionHandler);
 
   /**
-   * Close the producer
+   * Like {@link #flush(Handler)} but returns a {@code Future} of the asynchronous result
    */
-  void close();
+  Future<Void> flush();
+
+  /**
+   * Close the producer
+   *
+   * @return a {@code Future} completed with the operation result
+   */
+  Future<Void> close();
 
   /**
    * Close the producer
@@ -284,6 +295,11 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @param completionHandler handler called on operation completed
    */
   void close(Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Like {@link #close(long, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> close(long timeout);
 
   /**
    * Close the producer

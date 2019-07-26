@@ -242,8 +242,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> pause(Set<TopicPartition> topicPartitions) {
-    return pause(topicPartitions, null);
+  public Future<Void> pause(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    pause(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -271,8 +273,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> resume(Set<TopicPartition> topicPartitions) {
-    return this.resume(topicPartitions, null);
+  public Future<Set<TopicPartition>> paused() {
+    Promise<Set<TopicPartition>> promise = Promise.promise();
+    paused(promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Void> resume(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    this.resume(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -300,8 +311,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> seekToEnd(Set<TopicPartition> topicPartitions) {
-    return this.seekToEnd(topicPartitions, null);
+  public Future<OffsetAndMetadata> committed(TopicPartition topicPartition) {
+    Promise<OffsetAndMetadata> promise = Promise.promise();
+    committed(topicPartition, promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Void> seekToEnd(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    this.seekToEnd(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -320,8 +340,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> seekToBeginning(Set<TopicPartition> topicPartitions) {
-    return this.seekToBeginning(topicPartitions, null);
+  public Future<Void> seekToBeginning(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    this.seekToBeginning(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -340,8 +362,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset) {
-    return this.seek(topicPartition, offset, null);
+  public Future<Void> seek(TopicPartition topicPartition, long offset) {
+    Promise<Void> promise = Promise.promise();
+    this.seek(topicPartition, offset, promise);
+    return promise.future();
   }
 
   @Override
@@ -373,8 +397,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> subscribe(Set<String> topics) {
-    return subscribe(topics, null);
+  public Future<Void> subscribe(Set<String> topics) {
+    Promise<Void> promise = Promise.promise();
+    subscribe(topics, promise);
+    return promise.future();
   }
 
   @Override
@@ -418,13 +444,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> subscribe(Pattern pattern) {
-    return subscribe(pattern, null);
+  public Future<Void> subscribe(Pattern pattern) {
+    Promise<Void> promise = Promise.promise();
+    subscribe(pattern, promise);
+    return promise.future();
   }
 
   @Override
-  public KafkaReadStream<K, V> unsubscribe() {
-    return this.unsubscribe(null);
+  public Future<Void> unsubscribe() {
+    Promise<Void> promise = Promise.promise();
+    this.unsubscribe(promise);
+    return promise.future();
   }
 
   @Override
@@ -454,8 +484,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> assign(Set<TopicPartition> partitions) {
-    return this.assign(partitions, null);
+  public Future<Set<String>> subscription() {
+    Promise<Set<String>> promise = Promise.promise();
+    subscription(promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Void> assign(Set<TopicPartition> partitions) {
+    Promise<Void> promise = Promise.promise();
+    this.assign(partitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -492,6 +531,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public Future<Set<TopicPartition>> assignment() {
+    Promise<Set<TopicPartition>> promise = Promise.promise();
+    assignment(promise);
+    return promise.future();
+  }
+
+  @Override
   public KafkaReadStream<K, V> listTopics(Handler<AsyncResult<Map<String,List<PartitionInfo>>>> handler) {
 
     this.submitTask((consumer, future) -> {
@@ -505,8 +551,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public void commit() {
-    this.commit((Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>>) null);
+  public Future<Map<String, List<PartitionInfo>>> listTopics() {
+    Promise<Map<String, List<PartitionInfo>>> promise = Promise.promise();
+    listTopics(promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Map<TopicPartition, OffsetAndMetadata>> commit() {
+    Promise<Map<TopicPartition, OffsetAndMetadata>> promise = Promise.promise();
+    this.commit(promise);
+    return promise.future();
   }
 
   @Override
@@ -515,8 +570,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public void commit(Map<TopicPartition, OffsetAndMetadata> offsets) {
-    this.commit(offsets, null);
+  public Future<Map<TopicPartition, OffsetAndMetadata>> commit(Map<TopicPartition, OffsetAndMetadata> offsets) {
+    Promise<Map<TopicPartition, OffsetAndMetadata>> promise = Promise.promise();
+    this.commit(offsets, promise);
+    return promise.future();
   }
 
   @Override
@@ -546,6 +603,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     }, handler);
 
     return this;
+  }
+
+  @Override
+  public Future<List<PartitionInfo>> partitionsFor(String topic) {
+    Promise<List<PartitionInfo>> promise = Promise.promise();
+    partitionsFor(topic, promise);
+    return promise.future();
   }
 
   @Override
@@ -603,6 +667,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public Future<Void> close() {
+    Promise<Void> promise = Promise.promise();
+    close(promise);
+    return promise.future();
+  }
+
+  @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
     if (this.closed.compareAndSet(false, true)) {
       this.worker.submit(() -> {
@@ -634,6 +705,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public Future<Long> position(TopicPartition partition) {
+    Promise<Long> promise = Promise.promise();
+    position(partition, promise);
+    return promise.future();
+  }
+
+  @Override
   public void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler) {
     this.submitTask((consumer, future) -> {
       Map<TopicPartition, OffsetAndTimestamp> offsetsForTimes = this.consumer.offsetsForTimes(topicPartitionTimestamps);
@@ -641,6 +719,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         future.complete(offsetsForTimes);
       }
     }, handler);
+  }
+
+  @Override
+  public Future<Map<TopicPartition, OffsetAndTimestamp>> offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps) {
+    Promise<Map<TopicPartition, OffsetAndTimestamp>> promise = Promise.promise();
+    offsetsForTimes(topicPartitionTimestamps, promise);
+    return promise.future();
   }
 
   @Override
@@ -656,6 +741,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     }, handler);
   }
 
+  @Override
+  public Future<OffsetAndTimestamp> offsetsForTimes(TopicPartition topicPartition, long timestamp) {
+    Promise<OffsetAndTimestamp> promise = Promise.promise();
+    offsetsForTimes(topicPartition, timestamp, promise);
+    return promise.future();
+  }
 
   @Override
   public void beginningOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
@@ -665,6 +756,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         future.complete(beginningOffsets);
       }
     }, handler);
+  }
+
+  @Override
+  public Future<Map<TopicPartition, Long>> beginningOffsets(Set<TopicPartition> topicPartitions) {
+    Promise<Map<TopicPartition, Long>> promise = Promise.promise();
+    beginningOffsets(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -680,6 +778,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public Future<Long> beginningOffsets(TopicPartition topicPartition) {
+    Promise<Long> promise = Promise.promise();
+    beginningOffsets(topicPartition, promise);
+    return promise.future();
+  }
+
+  @Override
   public void endOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
     this.submitTask((consumer, future) -> {
       Map<TopicPartition, Long> endOffsets = this.consumer.endOffsets(topicPartitions);
@@ -687,6 +792,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         future.complete(endOffsets);
       }
     }, handler);
+  }
+
+  @Override
+  public Future<Map<TopicPartition, Long>> endOffsets(Set<TopicPartition> topicPartitions) {
+    Promise<Map<TopicPartition, Long>> promise = Promise.promise();
+    endOffsets(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -699,6 +811,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         future.complete(endOffsets.get(topicPartition));
       }
     }, handler);
+  }
+
+  @Override
+  public Future<Long> endOffsets(TopicPartition topicPartition) {
+    Promise<Long> promise = Promise.promise();
+    endOffsets(topicPartition, promise);
+    return promise.future();
   }
 
   @Override
@@ -731,5 +850,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         }
       }
     });
+  }
+
+  @Override
+  public Future<ConsumerRecords<K, V>> poll(long timeout) {
+    Promise<ConsumerRecords<K, V>> promise = Promise.promise();
+    poll(timeout, promise);
+    return promise.future();
   }
 }

@@ -23,6 +23,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.core.Future;
 import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.kafka.clients.admin.AdminClient;
 
@@ -81,12 +82,22 @@ public interface KafkaAdminClient {
   void listTopics(Handler<AsyncResult<Set<String>>> completionHandler);
 
   /**
+   * Like {@link #listTopics(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Set<String>> listTopics();
+
+  /**
    * Describe some topics in the cluster, with the default options.
    *
    * @param topicNames the names of the topics to describe
    * @param completionHandler handler called on operation completed with the topics descriptions
    */
   void describeTopics(List<String> topicNames, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
+
+  /**
+   * Like {@link #describeTopics(List, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Map<String, TopicDescription>> describeTopics(List<String> topicNames);
 
   /**
    * Creates a batch of new Kafka topics
@@ -97,12 +108,22 @@ public interface KafkaAdminClient {
   void createTopics(List<NewTopic> topics, Handler<AsyncResult<Void>> completionHandler);
 
   /**
+   * Like {@link #createTopics(List, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> createTopics(List<NewTopic> topics);
+
+  /**
    * Deletes a batch of Kafka topics
    *
    * @param topicNames the names of the topics to delete
    * @param completionHandler handler called on operation completed
    */
   void deleteTopics(List<String> topicNames, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Like {@link #deleteTopics(List, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> deleteTopics(List<String> topicNames);
 
   /**
    * Get the configuration for the specified resources with the default options
@@ -114,6 +135,12 @@ public interface KafkaAdminClient {
   void describeConfigs(List<ConfigResource> configResources, Handler<AsyncResult<Map<ConfigResource, Config>>> completionHandler);
 
   /**
+   * Like {@link #describeConfigs(List, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<Map<ConfigResource, Config>> describeConfigs(List<ConfigResource> configResources);
+
+  /**
    * Update the configuration for the specified resources with the default options
    *
    * @param configs The resources with their configs (topic is the only resource type with configs that can be updated currently)
@@ -123,11 +150,22 @@ public interface KafkaAdminClient {
   void alterConfigs(Map<ConfigResource,Config> configs, Handler<AsyncResult<Void>> completionHandler);
 
   /**
+   * Like {@link #alterConfigs(Map, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<Void> alterConfigs(Map<ConfigResource,Config> configs);
+
+  /**
    * Get the the consumer groups available in the cluster with the default options
    *
    * @param completionHandler handler called on operation completed with the consumer groups ids
    */
   void listConsumerGroups(Handler<AsyncResult<List<ConsumerGroupListing>>> completionHandler);
+
+  /**
+   * Like {@link #listConsumerGroups(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<List<ConsumerGroupListing>> listConsumerGroups();
 
   /**
    * Describe some group ids in the cluster, with the default options
@@ -136,4 +174,9 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the consumer groups descriptions
    */
   void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
+
+  /**
+   * Like {@link #describeConsumerGroups(List, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<java.lang.String> groupIds);
 }

@@ -20,6 +20,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
@@ -96,14 +97,16 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public ReadStream<KafkaConsumerRecord<K, V>> fetch(long amount) {
+  public KafkaConsumer<K, V> fetch(long amount) {
     this.stream.fetch(amount);
     return this;
   }
 
   @Override
-  public KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions) {
-    return this.pause(topicPartitions, null);
+  public Future<Void> pause(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    this.pause(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -131,13 +134,22 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> resume(TopicPartition topicPartition) {
+  public Future<Set<TopicPartition>> paused() {
+    Promise<Set<TopicPartition>> promise = Promise.promise();
+    paused(promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Void> resume(TopicPartition topicPartition) {
     return this.resume(Collections.singleton(topicPartition));
   }
 
   @Override
-  public KafkaConsumer<K, V> resume(Set<TopicPartition> topicPartitions) {
-    return this.resume(topicPartitions, null);
+  public Future<Void> resume(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    this.resume(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -158,13 +170,15 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> subscribe(String topic) {
+  public Future<Void> subscribe(String topic) {
     return this.subscribe(Collections.singleton(topic));
   }
 
   @Override
-  public KafkaConsumer<K, V> subscribe(Set<String> topics) {
-    return this.subscribe(topics, null);
+  public Future<Void> subscribe(Set<String> topics) {
+    Promise<Void> promise = Promise.promise();
+    this.subscribe(topics, promise);
+    return promise.future();
   }
 
   @Override
@@ -179,8 +193,10 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> subscribe(Pattern pattern) {
-    return this.subscribe(pattern, null);
+  public Future<Void> subscribe(Pattern pattern) {
+    Promise<Void> promise = Promise.promise();
+    this.subscribe(pattern, promise);
+    return promise.future();
   }
 
   @Override
@@ -190,13 +206,15 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> assign(TopicPartition topicPartition) {
+  public Future<Void> assign(TopicPartition topicPartition) {
     return this.assign(Collections.singleton(topicPartition));
   }
 
   @Override
-  public KafkaConsumer<K, V> assign(Set<TopicPartition> topicPartitions) {
-    return this.assign(topicPartitions, null);
+  public Future<Void> assign(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    this.assign(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -222,6 +240,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
 
     });
     return this;
+  }
+
+  @Override
+  public Future<Set<TopicPartition>> assignment() {
+    Promise<Set<TopicPartition>> promise = Promise.promise();
+    assignment(promise);
+    return promise.future();
   }
 
   @Override
@@ -265,8 +290,17 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> unsubscribe() {
-    return this.unsubscribe(null);
+  public Future<Map<String, List<PartitionInfo>>> listTopics() {
+    Promise<Map<String, List<PartitionInfo>>> promise = Promise.promise();
+    listTopics(promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Void> unsubscribe() {
+    Promise<Void> promise = Promise.promise();
+    this.unsubscribe(promise);
+    return promise.future();
   }
 
   @Override
@@ -282,7 +316,14 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> pause(TopicPartition topicPartition) {
+  public Future<Set<String>> subscription() {
+    Promise<Set<String>> promise = Promise.promise();
+    subscription(promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Void> pause(TopicPartition topicPartition) {
     return this.pause(Collections.singleton(topicPartition));
   }
 
@@ -299,8 +340,10 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> seek(TopicPartition topicPartition, long offset) {
-    return this.seek(topicPartition, offset, null);
+  public Future<Void> seek(TopicPartition topicPartition, long offset) {
+    Promise<Void> promise = Promise.promise();
+    this.seek(topicPartition, offset, promise);
+    return promise.future();
   }
 
   @Override
@@ -310,13 +353,15 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> seekToBeginning(TopicPartition topicPartition) {
+  public Future<Void> seekToBeginning(TopicPartition topicPartition) {
     return this.seekToBeginning(Collections.singleton(topicPartition));
   }
 
   @Override
-  public KafkaConsumer<K, V> seekToBeginning(Set<TopicPartition> topicPartitions) {
-    return this.seekToBeginning(topicPartitions, null);
+  public Future<Void> seekToBeginning(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    this.seekToBeginning(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -331,13 +376,15 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> seekToEnd(TopicPartition topicPartition) {
+  public Future<Void> seekToEnd(TopicPartition topicPartition) {
     return this.seekToEnd(Collections.singleton(topicPartition));
   }
 
   @Override
-  public KafkaConsumer<K, V> seekToEnd(Set<TopicPartition> topicPartitions) {
-    return this.seekToEnd(topicPartitions, null);
+  public Future<Void> seekToEnd(Set<TopicPartition> topicPartitions) {
+    Promise<Void> promise = Promise.promise();
+    this.seekToEnd(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -352,8 +399,8 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public void commit() {
-    this.stream.commit();
+  public Future<Void> commit() {
+    return this.stream.commit().mapEmpty();
   }
 
   @Override
@@ -362,8 +409,10 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public void commit(Map<TopicPartition, OffsetAndMetadata> offsets) {
-    this.stream.commit(Helper.to(offsets));
+  public Future<Map<TopicPartition, OffsetAndMetadata>> commit(Map<TopicPartition, OffsetAndMetadata> offsets) {
+    Promise<Map<TopicPartition, OffsetAndMetadata>> promise = Promise.promise();
+    commit(offsets, promise);
+    return promise.future();
   }
 
   @Override
@@ -391,6 +440,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
         handler.handle(Future.failedFuture(done.cause()));
       }
     });
+  }
+
+  @Override
+  public Future<OffsetAndMetadata> committed(TopicPartition topicPartition) {
+    Promise<OffsetAndMetadata> promise = Promise.promise();
+    committed(topicPartition, promise);
+    return promise.future();
   }
 
   @Override
@@ -425,6 +481,20 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public Future<List<PartitionInfo>> partitionsFor(String topic) {
+    Promise<List<PartitionInfo>> promise = Promise.promise();
+    partitionsFor(topic, promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<Void> close() {
+    Promise<Void> promise = Promise.promise();
+    close(promise);
+    return promise.future();
+  }
+
+  @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
     this.closeHandler.close(completionHandler);
   }
@@ -432,6 +502,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   @Override
   public void position(TopicPartition partition, Handler<AsyncResult<Long>> handler) {
     this.stream.position(Helper.to(partition), handler);
+  }
+
+  @Override
+  public Future<Long> position(TopicPartition partition) {
+    Promise<Long> promise = Promise.promise();
+    position(partition, promise);
+    return promise.future();
   }
 
   @Override
@@ -464,6 +541,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public Future<OffsetAndTimestamp> offsetsForTimes(TopicPartition topicPartition, Long timestamp) {
+    Promise<OffsetAndTimestamp> promise = Promise.promise();
+    offsetsForTimes(topicPartition, timestamp, promise);
+    return promise.future();
+  }
+
+  @Override
   public void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler) {
     this.stream.offsetsForTimes(Helper.toTopicPartitionTimes(topicPartitionTimestamps), done -> {
       if(done.succeeded()) {
@@ -475,6 +559,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public Future<Map<TopicPartition, OffsetAndTimestamp>> offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps) {
+    Promise<Map<TopicPartition, OffsetAndTimestamp>> promise = Promise.promise();
+    offsetsForTimes(topicPartitionTimestamps, promise);
+    return promise.future();
+  }
+
+  @Override
   public void beginningOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
     this.stream.beginningOffsets(Helper.to(topicPartitions), done -> {
       if(done.succeeded()) {
@@ -483,6 +574,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
         handler.handle(Future.failedFuture(done.cause()));
       }
     });
+  }
+
+  @Override
+  public Future<Map<TopicPartition, Long>> beginningOffsets(Set<TopicPartition> topicPartitions) {
+    Promise<Map<TopicPartition, Long>> promise = Promise.promise();
+    beginningOffsets(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -503,6 +601,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public Future<Long> beginningOffsets(TopicPartition topicPartition) {
+    Promise<Long> promise = Promise.promise();
+    beginningOffsets(topicPartition, promise);
+    return promise.future();
+  }
+
+  @Override
   public void endOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
     this.stream.endOffsets(Helper.to(topicPartitions), done -> {
       if(done.succeeded()) {
@@ -511,6 +616,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
         handler.handle(Future.failedFuture(done.cause()));
       }
     });
+  }
+
+  @Override
+  public Future<Map<TopicPartition, Long>> endOffsets(Set<TopicPartition> topicPartitions) {
+    Promise<Map<TopicPartition, Long>> promise = Promise.promise();
+    endOffsets(topicPartitions, promise);
+    return promise.future();
   }
 
   @Override
@@ -527,6 +639,13 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
         handler.handle(Future.failedFuture(done.cause()));
       }
     });
+  }
+
+  @Override
+  public Future<Long> endOffsets(TopicPartition topicPartition) {
+    Promise<Long> promise = Promise.promise();
+    endOffsets(topicPartition, promise);
+    return promise.future();
   }
 
   @Override
@@ -562,5 +681,12 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
         handler.handle(Future.failedFuture(done.cause()));
       }
     });
+  }
+
+  @Override
+  public Future<KafkaConsumerRecords<K, V>> poll(long timeout) {
+    Promise<KafkaConsumerRecords<K, V>> promise = Promise.promise();
+    poll(timeout, promise);
+    return promise.future();
   }
 }
