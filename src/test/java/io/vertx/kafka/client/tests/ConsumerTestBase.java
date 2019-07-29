@@ -107,12 +107,12 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     final String topicName1 = "testConsumePattern1";
     final String topicName2 = "testConsumePattern2";
     String consumerId = topicName1 + "-" + topicName2;
-    Async batch = ctx.async();
+    Async batch = ctx.async(2);
     AtomicInteger index = new AtomicInteger();
     int numMessages = 500;
-    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+    kafkaCluster.useTo().produceStrings(numMessages, batch::countDown, () ->
       new ProducerRecord<>(topicName1, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
-    kafkaCluster.useTo().produceStrings(numMessages, batch::complete, () ->
+    kafkaCluster.useTo().produceStrings(numMessages, batch::countDown, () ->
       new ProducerRecord<>(topicName2, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch.awaitSuccess(20000);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
