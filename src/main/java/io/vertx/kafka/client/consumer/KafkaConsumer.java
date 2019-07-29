@@ -171,6 +171,10 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   @Override
   KafkaConsumer<K, V> endHandler(Handler<Void> endHandler);
 
+  @Fluent
+  @Override
+  KafkaConsumer<K, V> fetch(long amount);
+
   /**
    * Subscribe to the given topic to get dynamically assigned partitions.
    *
@@ -759,6 +763,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * If 0, returns immediately with any records that are available currently in the native Kafka consumer's buffer,
    * else returns empty. Must not be negative.
    */
+  @Fluent
   KafkaConsumer<K, V> pollTimeout(long timeout);
 
   /**

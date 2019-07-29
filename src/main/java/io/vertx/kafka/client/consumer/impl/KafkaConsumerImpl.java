@@ -96,7 +96,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public ReadStream<KafkaConsumerRecord<K, V>> fetch(long amount) {
+  public KafkaConsumer<K, V> fetch(long amount) {
     this.stream.fetch(amount);
     return this;
   }

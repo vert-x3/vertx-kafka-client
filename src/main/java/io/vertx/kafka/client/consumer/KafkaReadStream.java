@@ -16,6 +16,8 @@
 
 package io.vertx.kafka.client.consumer;
 
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -112,6 +114,30 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
     Deserializer<V> valueDeserializer = VertxSerdes.serdeFrom(valueType).deserializer();
     return create(vertx, config, keyDeserializer, valueDeserializer);
   }
+
+  @Fluent
+  @Override
+  KafkaReadStream<K, V> exceptionHandler(Handler<Throwable> handler);
+
+  @Fluent
+  @Override
+  KafkaReadStream<K, V> handler(@Nullable Handler<ConsumerRecord<K, V>> handler);
+
+  @Fluent
+  @Override
+  KafkaReadStream<K, V> pause();
+
+  @Fluent
+  @Override
+  KafkaReadStream<K, V> resume();
+
+  @Fluent
+  @Override
+  KafkaReadStream<K, V> fetch(long amount);
+
+  @Fluent
+  @Override
+  KafkaReadStream<K, V> endHandler(@Nullable Handler<Void> endHandler);
 
   /**
    * Create a new KafkaReadStream instance

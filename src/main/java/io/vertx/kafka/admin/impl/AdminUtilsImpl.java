@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -20,7 +19,6 @@ import kafka.utils.ZkUtils;
  * @deprecated This class is now deprecated. @see io.vertx.kafka.admin.impl.{@link KafkaAdminClientImpl} instead.
  */
 @Deprecated()
-@VertxGen
 public class AdminUtilsImpl implements AdminUtils {
   private Vertx vertx;
   private final String zookeeper;
