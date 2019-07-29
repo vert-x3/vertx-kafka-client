@@ -78,8 +78,6 @@ public class KafkaReadStreamMockTest extends KafkaTestBase {
             partitionOffset.addAndGet(1);
             ctx.assertEquals(partitionOffset.get(), offset);
 
-            System.out.println("offset " + offset);
-
             if(offset == TOTAL_MESSAGES-1){
                 consumerVertx.close();
                 done.complete();
