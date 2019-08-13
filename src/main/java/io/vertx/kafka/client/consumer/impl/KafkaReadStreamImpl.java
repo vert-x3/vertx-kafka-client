@@ -112,7 +112,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       throw new IllegalStateException();
     }
     this.worker.submit(() -> {
-      Promise<T> future;
+      Promise<T> future = null;
       if (handler != null) {
         future = Promise.promise();
         future.future().setHandler(event-> {
@@ -122,15 +122,15 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
             handler.handle(event);
             });
           });
-
-      } else {
-        future = null;
       }
       try {
         task.accept(this.consumer, future);
       } catch (Exception e) {
         if (future != null) {
           future.tryFail(e);
+        }
+        if (exceptionHandler != null) {
+          exceptionHandler.handle(e);
         }
       }
     });
