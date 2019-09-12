@@ -151,7 +151,9 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public Future<RecordMetadata> send(KafkaProducerRecord<K, V> record) {
-    return send(record);
+    Promise<RecordMetadata> promise = Promise.promise();
+    this.send(record, promise);
+    return promise.future();
   }
 
   @Override
