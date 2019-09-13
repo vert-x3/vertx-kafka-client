@@ -4,21 +4,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import io.vertx.core.spi.json.JsonCodec;
 
 /**
- * Converter and Codec for {@link io.vertx.kafka.client.common.PartitionInfo}.
+ * Converter and mapper for {@link io.vertx.kafka.client.common.PartitionInfo}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.kafka.client.common.PartitionInfo} original class using Vert.x codegen.
  */
-public class PartitionInfoConverter implements JsonCodec<PartitionInfo, JsonObject> {
+public class PartitionInfoConverter {
 
-  public static final PartitionInfoConverter INSTANCE = new PartitionInfoConverter();
-
-  @Override public JsonObject encode(PartitionInfo value) { return (value != null) ? value.toJson() : null; }
-
-  @Override public PartitionInfo decode(JsonObject value) { return (value != null) ? new PartitionInfo(value) : null; }
-
-  @Override public Class<PartitionInfo> getTargetClass() { return PartitionInfo.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, PartitionInfo obj) {
     for (java.util.Map.Entry<String, Object> member : json) {

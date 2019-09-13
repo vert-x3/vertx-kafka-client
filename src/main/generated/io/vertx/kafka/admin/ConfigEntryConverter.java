@@ -4,21 +4,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import io.vertx.core.spi.json.JsonCodec;
 
 /**
- * Converter and Codec for {@link io.vertx.kafka.admin.ConfigEntry}.
+ * Converter and mapper for {@link io.vertx.kafka.admin.ConfigEntry}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.kafka.admin.ConfigEntry} original class using Vert.x codegen.
  */
-public class ConfigEntryConverter implements JsonCodec<ConfigEntry, JsonObject> {
+public class ConfigEntryConverter {
 
-  public static final ConfigEntryConverter INSTANCE = new ConfigEntryConverter();
-
-  @Override public JsonObject encode(ConfigEntry value) { return (value != null) ? value.toJson() : null; }
-
-  @Override public ConfigEntry decode(JsonObject value) { return (value != null) ? new ConfigEntry(value) : null; }
-
-  @Override public Class<ConfigEntry> getTargetClass() { return ConfigEntry.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ConfigEntry obj) {
     for (java.util.Map.Entry<String, Object> member : json) {

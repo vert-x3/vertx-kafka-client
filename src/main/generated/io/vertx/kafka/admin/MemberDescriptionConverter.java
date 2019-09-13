@@ -4,21 +4,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import io.vertx.core.spi.json.JsonCodec;
 
 /**
- * Converter and Codec for {@link io.vertx.kafka.admin.MemberDescription}.
+ * Converter and mapper for {@link io.vertx.kafka.admin.MemberDescription}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.kafka.admin.MemberDescription} original class using Vert.x codegen.
  */
-public class MemberDescriptionConverter implements JsonCodec<MemberDescription, JsonObject> {
+public class MemberDescriptionConverter {
 
-  public static final MemberDescriptionConverter INSTANCE = new MemberDescriptionConverter();
-
-  @Override public JsonObject encode(MemberDescription value) { return (value != null) ? value.toJson() : null; }
-
-  @Override public MemberDescription decode(JsonObject value) { return (value != null) ? new MemberDescription(value) : null; }
-
-  @Override public Class<MemberDescription> getTargetClass() { return MemberDescription.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, MemberDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
