@@ -131,6 +131,30 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
+  public KafkaProducer<K, V> initTransactions(Handler<AsyncResult<Void>> handler) {
+    this.stream.initTransactions(handler);
+    return this;
+  }
+
+  @Override
+  public KafkaProducer<K, V> beginTransaction(Handler<AsyncResult<Void>> handler) {
+    this.stream.beginTransaction(handler);
+    return this;
+  }
+
+  @Override
+  public KafkaProducer<K, V> commitTransaction(Handler<AsyncResult<Void>> handler) {
+    this.stream.commitTransaction(handler);
+    return this;
+  }
+
+  @Override
+  public KafkaProducer<K, V> abortTransaction(Handler<AsyncResult<Void>> handler) {
+    this.stream.abortTransaction(handler);
+    return this;
+  }
+
+  @Override
   public KafkaProducer<K, V> exceptionHandler(Handler<Throwable> handler) {
     this.stream.exceptionHandler(handler);
     return this;

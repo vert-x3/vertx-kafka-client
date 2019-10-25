@@ -179,6 +179,42 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
+  public KafkaWriteStream<K, V> initTransactions(Handler<AsyncResult<Void>> handler) {
+    this.context.executeBlocking(future -> {
+      this.producer.initTransactions();
+      future.complete();
+    }, handler);
+    return this;
+  }
+
+  @Override
+  public KafkaWriteStream<K, V> beginTransaction(Handler<AsyncResult<Void>> handler) {
+    this.context.executeBlocking(future -> {
+      this.producer.beginTransaction();
+      future.complete();
+    }, handler);
+    return this;
+  }
+
+  @Override
+  public KafkaWriteStream<K, V> commitTransaction(Handler<AsyncResult<Void>> handler) {
+    this.context.executeBlocking(future -> {
+      this.producer.commitTransaction();
+      future.complete();
+    }, handler);
+    return this;
+  }
+
+  @Override
+  public KafkaWriteStream<K, V> abortTransaction(Handler<AsyncResult<Void>> handler) {
+    this.context.executeBlocking(future -> {
+      this.producer.abortTransaction();
+      future.complete();
+    }, handler);
+    return this;
+  }
+
+  @Override
   public KafkaWriteStreamImpl<K, V> exceptionHandler(Handler<Throwable> handler) {
     this.exceptionHandler = handler;
     return this;
