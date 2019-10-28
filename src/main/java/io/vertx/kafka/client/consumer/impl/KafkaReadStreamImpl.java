@@ -607,12 +607,15 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     if (this.closed.compareAndSet(false, true)) {
       this.worker.submit(() -> {
         this.consumer.close();
-        this.context.runOnContext(v -> {
+        // always execute the shutdown code in a new thread instead of on the context
+        // which may have been closed
+        Thread completionHandlerExecutorThread = new Thread(() -> {
           this.worker.shutdownNow();
           if (completionHandler != null) {
             completionHandler.handle(Future.succeededFuture());
           }
         });
+        completionHandlerExecutorThread.start();
       });
       this.consumer.wakeup();
     }
