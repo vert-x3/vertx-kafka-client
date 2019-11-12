@@ -41,6 +41,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -442,7 +443,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     subscribe.await();
 
     Async consume = ctx.async();
-    consumer.poll(10000, rec -> {
+    consumer.poll(Duration.ofSeconds(10), rec -> {
       if (rec.result().count() == 10) {
         consume.countDown();
       }
@@ -1431,7 +1432,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       if (subscribeResult.succeeded()) {
 
         vertx.setPeriodic(1000, t -> {
-          consumer.poll(100, pollResult -> {
+          consumer.poll(Duration.ofMillis(100), pollResult -> {
             if (pollResult.succeeded()) {
               if (count.updateAndGet(o -> count.get() - pollResult.result().size()) == 0) {
                 vertx.cancelTimer(t);
@@ -1465,7 +1466,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       if (subscribeResult.succeeded()) {
 
         vertx.setPeriodic(1000, t -> {
-          consumer.poll(100, pollResult -> {
+          consumer.poll(Duration.ofMillis(100), pollResult -> {
             if (pollResult.succeeded()) {
               if (pollResult.result().size() > 0) {
                 ctx.fail();

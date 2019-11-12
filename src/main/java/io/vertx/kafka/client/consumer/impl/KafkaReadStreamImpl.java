@@ -33,6 +33,7 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,7 +69,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private Handler<ConsumerRecords<K, V>> batchHandler;
   private Handler<Set<TopicPartition>> partitionsRevokedHandler;
   private Handler<Set<TopicPartition>> partitionsAssignedHandler;
-  private long pollTimeout = 1000L;
+  private Duration pollTimeout = Duration.ofSeconds(1);
 
   private ExecutorService worker;
 
@@ -831,13 +832,24 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> pollTimeout(long timeout) {
+  public KafkaReadStream<K, V> pollTimeout(final Duration timeout) {
     this.pollTimeout = timeout;
     return this;
   }
 
   @Override
+  public KafkaReadStream<K, V> pollTimeout(long timeout) {
+    this.pollTimeout = Duration.ofMillis(timeout);
+    return this;
+  }
+
+  @Override
   public void poll(long timeout, Handler<AsyncResult<ConsumerRecords<K, V>>> handler) {
+    poll(Duration.ofMillis(timeout), handler);
+  }
+
+  @Override
+  public void poll(final Duration timeout, final Handler<AsyncResult<ConsumerRecords<K, V>>> handler) {
     this.worker.submit(() -> {
       if (!this.closed.get()) {
         try {
@@ -854,7 +866,14 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public Future<ConsumerRecords<K, V>> poll(long timeout) {
-    Promise<ConsumerRecords<K, V>> promise = Promise.promise();
+    final Promise<ConsumerRecords<K, V>> promise = Promise.promise();
+    poll(timeout, promise);
+    return promise.future();
+  }
+
+  @Override
+  public Future<ConsumerRecords<K, V>> poll(final Duration timeout) {
+    final Promise<ConsumerRecords<K, V>> promise = Promise.promise();
     poll(timeout, promise);
     return promise.future();
   }
