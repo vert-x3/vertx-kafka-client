@@ -25,6 +25,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.After;
@@ -123,6 +124,32 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
         done.complete();
       });
     });
+  }
+
+  @Test
+  public void transactionHandlingFailsIfInitWasNotCalled(TestContext ctx) {
+    producer.beginTransaction(ctx.asyncAssertFailure(cause -> {
+      ctx.assertTrue(cause instanceof KafkaException);
+    }));
+    producer.commitTransaction(ctx.asyncAssertFailure(cause -> {
+      ctx.assertTrue(cause instanceof KafkaException);
+    }));
+    producer.abortTransaction(ctx.asyncAssertFailure(cause -> {
+      ctx.assertTrue(cause instanceof KafkaException);
+    }));
+  }
+
+  @Test
+  public void initTransactionsFailsOnWrongConfig(TestContext ctx) {
+    final Properties noTransactionalIdConfigured = kafkaCluster.useTo().getProducerProperties("nonTransactionalProducer");
+    noTransactionalIdConfigured.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    noTransactionalIdConfigured.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+    final KafkaWriteStream<Object, Object> nonTransactionalProducer = producer(Vertx.vertx(), noTransactionalIdConfigured);
+    nonTransactionalProducer.exceptionHandler(ctx::fail);
+    nonTransactionalProducer.initTransactions(ctx.asyncAssertFailure(cause -> {
+      ctx.assertTrue(cause instanceof IllegalStateException);
+    }));
   }
 
   private <K, V> KafkaReadStream<K, V> consumer(final String topicName) {

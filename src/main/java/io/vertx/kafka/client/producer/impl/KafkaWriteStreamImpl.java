@@ -180,38 +180,22 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public KafkaWriteStream<K, V> initTransactions(Handler<AsyncResult<Void>> handler) {
-    this.context.executeBlocking(future -> {
-      this.producer.initTransactions();
-      future.complete();
-    }, handler);
-    return this;
+    return executeBlocking(handler, this.producer::initTransactions);
   }
 
   @Override
   public KafkaWriteStream<K, V> beginTransaction(Handler<AsyncResult<Void>> handler) {
-    this.context.executeBlocking(future -> {
-      this.producer.beginTransaction();
-      future.complete();
-    }, handler);
-    return this;
+    return executeBlocking(handler, this.producer::beginTransaction);
   }
 
   @Override
   public KafkaWriteStream<K, V> commitTransaction(Handler<AsyncResult<Void>> handler) {
-    this.context.executeBlocking(future -> {
-      this.producer.commitTransaction();
-      future.complete();
-    }, handler);
-    return this;
+    return executeBlocking(handler, this.producer::commitTransaction);
   }
 
   @Override
   public KafkaWriteStream<K, V> abortTransaction(Handler<AsyncResult<Void>> handler) {
-    this.context.executeBlocking(future -> {
-      this.producer.abortTransaction();
-      future.complete();
-    }, handler);
-    return this;
+    return executeBlocking(handler, this.producer::abortTransaction);
   }
 
   @Override
@@ -304,4 +288,23 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   public Producer<K, V> unwrap() {
     return this.producer;
   }
+
+  private KafkaWriteStreamImpl<K, V> executeBlocking(final Handler<AsyncResult<Void>> handler, final BlockingStatement statement) {
+    this.context.executeBlocking(promise -> {
+      try {
+        statement.execute();
+        promise.complete();
+      } catch (Exception e) {
+        promise.fail(e);
+      }
+    }, handler);
+    return this;
+  }
+
+  @FunctionalInterface
+  private interface BlockingStatement {
+
+    void execute();
+  }
+
 }
