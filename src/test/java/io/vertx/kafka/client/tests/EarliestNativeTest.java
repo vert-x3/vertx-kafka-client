@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class EarliestNativeTest {
     consumer.subscribe(Collections.singleton("my-topic"));
 
     while (true) {
-      ConsumerRecords<String, String> records = consumer.poll(1000);
+      ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
       for (ConsumerRecord<String, String> record: records) {
         System.out.println(record);
       }
