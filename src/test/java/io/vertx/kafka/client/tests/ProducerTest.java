@@ -17,6 +17,7 @@
 package io.vertx.kafka.client.tests;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.producer.KafkaProducer;
@@ -79,7 +80,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producer = producer(Vertx.vertx(), config);
     producer.exceptionHandler(ctx::fail);
-    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.producer);
+    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
     int numMessages = 100000;
     for (int i = 0;i < numMessages;i++) {
       producer.write(KafkaProducerRecord.create(topicName, "key-" + i, "value-" + i, 0)

@@ -22,6 +22,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
@@ -93,7 +94,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
         return s;
       });
       Object key = new Object();
-      KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>(KafkaWriteStream.create(vertx, sharedProducer.producer), new CloseHandler((timeout, ar) -> {
+      KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>(vertx, KafkaWriteStream.create(vertx, sharedProducer.producer), new CloseHandler((timeout, ar) -> {
         synchronized (sharedProducers) {
           sharedProducer.remove(key);
           if (sharedProducer.isEmpty()) {
@@ -109,16 +110,18 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     }
   }
 
+  private final Vertx vertx;
   private final KafkaWriteStream<K, V> stream;
   private final CloseHandler closeHandler;
 
-  public KafkaProducerImpl(KafkaWriteStream<K, V> stream, CloseHandler closeHandler) {
+  public KafkaProducerImpl(Vertx vertx, KafkaWriteStream<K, V> stream, CloseHandler closeHandler) {
+    this.vertx = vertx;
     this.stream = stream;
     this.closeHandler = closeHandler;
   }
 
-  public KafkaProducerImpl(KafkaWriteStream<K, V> stream) {
-    this(stream, new CloseHandler(stream::close));
+  public KafkaProducerImpl(Vertx vertx, KafkaWriteStream<K, V> stream) {
+    this(vertx, stream, new CloseHandler(stream::close));
   }
 
   public KafkaProducerImpl<K, V> registerCloseHook() {
@@ -139,9 +142,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   @Override
   @SuppressWarnings("unchecked")
   public Future<Void> write(KafkaProducerRecord<K, V> kafkaProducerRecord) {
-    Promise<Void> promise = Promise.promise();
-    this.write(kafkaProducerRecord, promise);
-    return promise.future();
+    return this.stream.write(kafkaProducerRecord.record());
   }
 
   @Override
@@ -151,57 +152,35 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public Future<RecordMetadata> send(KafkaProducerRecord<K, V> record) {
-    Promise<RecordMetadata> promise = Promise.promise();
-    this.send(record, promise);
-    return promise.future();
+    return this.stream.send(record.record()).map(Helper::from);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
-    Handler<AsyncResult<org.apache.kafka.clients.producer.RecordMetadata>> mdHandler = null;
-    if (handler != null) {
-      mdHandler = done -> handler.handle(done.map(Helper::from));
-    }
-    this.stream.send(record.record(), mdHandler);
+    this.send(record).setHandler(handler);
     return this;
   }
 
   @Override
   public Future<List<PartitionInfo>> partitionsFor(String topic) {
-    Promise<List<PartitionInfo>> promise = Promise.promise();
-    partitionsFor(topic, promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-    this.stream.partitionsFor(topic, done -> {
-
-      if (done.succeeded()) {
-        // TODO: use Helper class and stream approach
-        List<PartitionInfo> partitions = new ArrayList<>();
-        for (org.apache.kafka.common.PartitionInfo kafkaPartitionInfo: done.result()) {
-
-          PartitionInfo partitionInfo = new PartitionInfo();
-
-          partitionInfo
+    return this.stream.partitionsFor(topic).map(list ->
+      list.stream().map(kafkaPartitionInfo ->
+          new PartitionInfo()
             .setInSyncReplicas(
               Stream.of(kafkaPartitionInfo.inSyncReplicas()).map(Helper::from).collect(Collectors.toList()))
             .setLeader(Helper.from(kafkaPartitionInfo.leader()))
             .setPartition(kafkaPartitionInfo.partition())
             .setReplicas(
               Stream.of(kafkaPartitionInfo.replicas()).map(Helper::from).collect(Collectors.toList()))
-            .setTopic(kafkaPartitionInfo.topic());
+            .setTopic(kafkaPartitionInfo.topic())
+        ).collect(Collectors.toList())
+    );
+  }
 
-          partitions.add(partitionInfo);
-        }
-        handler.handle(Future.succeededFuture(partitions));
-      } else {
-        handler.handle(Future.failedFuture(done.cause()));
-      }
-
-    });
+  @Override
+  public KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
+    partitionsFor(topic).setHandler(handler);
     return this;
   }
 
