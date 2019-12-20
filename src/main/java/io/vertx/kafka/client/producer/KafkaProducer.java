@@ -136,7 +136,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @GenIgnore
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Producer<K, V> producer) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, producer);
-    return new KafkaProducerImpl<>(stream);
+    return new KafkaProducerImpl<>(vertx, stream);
   }
 
   /**
@@ -148,7 +148,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    */
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Map<String, String> config) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, new HashMap<>(config));
-    return new KafkaProducerImpl<>(stream).registerCloseHook();
+    return new KafkaProducerImpl<>(vertx, stream).registerCloseHook();
   }
 
   /**
@@ -163,7 +163,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @GenIgnore
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Map<String, String> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, new HashMap<>(config), keySerializer, valueSerializer);
-    return new KafkaProducerImpl<>(stream).registerCloseHook();
+    return new KafkaProducerImpl<>(vertx, stream).registerCloseHook();
   }
 
   /**
@@ -177,7 +177,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    */
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Map<String, String> config, Class<K> keyType, Class<V> valueType) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, new HashMap<>(config), keyType, valueType);
-    return new KafkaProducerImpl<>(stream).registerCloseHook();
+    return new KafkaProducerImpl<>(vertx, stream).registerCloseHook();
   }
 
   /**
@@ -190,7 +190,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @GenIgnore
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Properties config) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, config);
-    return new KafkaProducerImpl<>(stream).registerCloseHook();
+    return new KafkaProducerImpl<>(vertx, stream).registerCloseHook();
   }
 
   /**
@@ -205,7 +205,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @GenIgnore
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, config, keySerializer, valueSerializer);
-    return new KafkaProducerImpl<>(stream).registerCloseHook();
+    return new KafkaProducerImpl<>(vertx, stream).registerCloseHook();
   }
 
   /**
@@ -220,7 +220,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @GenIgnore
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Properties config, Class<K> keyType, Class<V> valueType) {
     KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, config, keyType, valueType);
-    return new KafkaProducerImpl<>(stream).registerCloseHook();
+    return new KafkaProducerImpl<>(vertx, stream).registerCloseHook();
   }
 
   @Fluent

@@ -22,10 +22,12 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -80,17 +82,11 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public Future<RecordMetadata> send(ProducerRecord<K, V> record) {
-    Promise<RecordMetadata> promise = Promise.promise();
-    send(record, promise);
-    return promise.future();
-  }
-
-  @Override
-  public synchronized KafkaWriteStreamImpl<K, V> send(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
-
+    ContextInternal ctx = (ContextInternal) context.owner().getOrCreateContext();
+    Promise<RecordMetadata> trampolineProm = ctx.promise();
     int len = this.len(record.value());
     this.pending += len;
-    this.context.<RecordMetadata>executeBlocking(fut -> {
+    this.context.<RecordMetadata>executeBlocking(prom -> {
       try {
         this.producer.send(record, (metadata, err) -> {
 
@@ -115,11 +111,13 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
                 this.context.runOnContext(drainHandler);
               }
             }
-
-            if (handler != null) {
-              handler.handle(err != null ? Future.failedFuture(err) : Future.succeededFuture(metadata));
-            }
           });
+
+          if (err != null) {
+            prom.fail(err);
+          } else {
+            prom.complete(metadata);
+          }
         });
       } catch (Throwable e) {
         synchronized (KafkaWriteStreamImpl.this) {
@@ -128,30 +126,26 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             this.context.runOnContext(v3 -> exceptionHandler.handle(e));
           }
         }
-
-        if (handler != null) {
-          handler.handle(Future.failedFuture(e));
-        }
+        prom.fail(e);
       }
-    }, null);
+    }).setHandler(trampolineProm);
+    return trampolineProm.future(); // Trampoline on caller context
+  }
 
+  @Override
+  public synchronized KafkaWriteStreamImpl<K, V> send(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
+    this.send(record).setHandler(handler);
     return this;
   }
 
   @Override
   public void write(ProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler) {
-    Handler<AsyncResult<RecordMetadata>> mdHandler = null;
-    if (handler != null) {
-      mdHandler = ar -> handler.handle(ar.mapEmpty());
-    }
-    send(data, mdHandler);
+    this.write(data).setHandler(handler);
   }
 
   @Override
   public Future<Void> write(ProducerRecord<K, V> record) {
-    Promise<Void> promise = Promise.promise();
-    this.write(record, promise);
-    return promise.future();
+    return this.send(record).mapEmpty();
   }
 
   @Override
@@ -186,58 +180,49 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public Future<List<PartitionInfo>> partitionsFor(String topic) {
-    Promise<List<PartitionInfo>> promise = Promise.promise();
-    partitionsFor(topic, promise);
-    return promise.future();
+    ContextInternal ctx = (ContextInternal) context.owner().getOrCreateContext();
+    Promise<List<PartitionInfo>> trampolineProm = ctx.promise();
+
+    // TODO: should be this timeout related to the Kafka producer property "metadata.fetch.timeout.ms" ?
+    this.context.owner().setTimer(2000, id -> {
+      trampolineProm.tryFail("Kafka connect timeout");
+    });
+
+    this.context.<List<PartitionInfo>>executeBlocking(prom -> {
+      prom.complete(
+        this.producer.partitionsFor(topic)
+      );
+    }).setHandler(trampolineProm);
+
+    return trampolineProm.future(); // Trampoline on caller context
   }
 
   @Override
   public KafkaWriteStreamImpl<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-
-    AtomicBoolean done = new AtomicBoolean();
-
-    // TODO: should be this timeout related to the Kafka producer property "metadata.fetch.timeout.ms" ?
-    this.context.owner().setTimer(2000, id -> {
-      if (done.compareAndSet(false, true)) {
-        handler.handle(Future.failedFuture("Kafka connect timeout"));
-      }
-    });
-
-    this.context.executeBlocking(future -> {
-
-      List<PartitionInfo> partitions = this.producer.partitionsFor(topic);
-      if (done.compareAndSet(false, true)) {
-        future.complete(partitions);
-      }
-    }, handler);
-
+    partitionsFor(topic).setHandler(handler);
     return this;
   }
 
   @Override
   public Future<Void> flush() {
-    Promise<Void> promise = Promise.promise();
-    flush(promise);
-    return promise.future();
+    ContextInternal ctx = (ContextInternal) context.owner().getOrCreateContext();
+    Promise<Void> trampolineProm = ctx.promise();
+    this.context.<Void>executeBlocking(prom -> {
+      this.producer.flush();
+      prom.complete();
+    }).setHandler(trampolineProm);
+    return trampolineProm.future(); // Trampoline on caller context
   }
 
   @Override
   public KafkaWriteStreamImpl<K, V> flush(Handler<AsyncResult<Void>> completionHandler) {
-
-    this.context.executeBlocking(future -> {
-
-      this.producer.flush();
-      future.complete();
-
-    }, completionHandler);
-
+    flush().setHandler(completionHandler);
     return this;
   }
 
+  @Override
   public Future<Void> close() {
-    Promise<Void> promise = Promise.promise();
-    close(promise);
-    return promise.future();
+    return close(0);
   }
 
   @Override
@@ -247,21 +232,22 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public Future<Void> close(long timeout) {
-    Promise<Void> promise = Promise.promise();
-    close(timeout, promise);
-    return promise.future();
-  }
-
-  public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
-
-    this.context.executeBlocking(future -> {
+    ContextInternal ctx = (ContextInternal) context.owner().getOrCreateContext();
+    Promise<Void> trampolineProm = ctx.promise();
+    this.context.<Void>executeBlocking(prom -> {
       if (timeout > 0) {
         this.producer.close(timeout, TimeUnit.MILLISECONDS);
       } else {
         this.producer.close();
       }
-      future.complete();
-    }, completionHandler);
+      prom.complete();
+    }).setHandler(trampolineProm);
+    return trampolineProm.future(); // Trampoline on caller context
+  }
+
+  @Override
+  public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
+    close(timeout).setHandler(completionHandler);
   }
 
   @Override
