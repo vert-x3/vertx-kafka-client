@@ -224,6 +224,18 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   }
 
   @Fluent
+  KafkaProducer<K, V> initTransactions(Handler<AsyncResult<Void>> handler);
+
+  @Fluent
+  KafkaProducer<K, V> beginTransaction(Handler<AsyncResult<Void>> handler);
+
+  @Fluent
+  KafkaProducer<K, V> commitTransaction(Handler<AsyncResult<Void>> handler);
+
+  @Fluent
+  KafkaProducer<K, V> abortTransaction(Handler<AsyncResult<Void>> handler);
+
+  @Fluent
   @Override
   KafkaProducer<K, V> exceptionHandler(Handler<Throwable> handler);
 

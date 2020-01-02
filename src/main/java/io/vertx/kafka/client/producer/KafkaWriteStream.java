@@ -146,6 +146,38 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   KafkaWriteStream<K, V> drainHandler(@Nullable Handler<Void> handler);
 
   /**
+   * Initializes the underlying kafka transactional producer. See {@link KafkaProducer#initTransactions()} ()}
+   *
+   * @param handler handler called on operation completed
+   * @return current KafkaWriteStream instance
+   */
+  KafkaWriteStream<K, V> initTransactions(Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Starts a new kafka transaction. See {@link KafkaProducer#beginTransaction()}
+   *
+   * @param handler handler called on operation completed
+   * @return current KafkaWriteStream instance
+   */
+  KafkaWriteStream<K, V> beginTransaction(Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Commits the ongoing transaction. See {@link KafkaProducer#commitTransaction()}
+   *
+   * @param handler handler called on operation completed
+   * @return current KafkaWriteStream instance
+   */
+  KafkaWriteStream<K, V> commitTransaction(Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Aborts the ongoing transaction. See {@link org.apache.kafka.clients.producer.KafkaProducer#abortTransaction()}
+   *
+   * @param handler handler called on operation completed
+   * @return current KafkaWriteStream instance
+   */
+  KafkaWriteStream<K, V> abortTransaction(Handler<AsyncResult<Void>> handler);
+
+  /**
    * Asynchronously write a record to a topic
    *
    * @param record  record to write
