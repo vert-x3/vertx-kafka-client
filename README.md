@@ -7,19 +7,19 @@ From the consumer point of view, its API provides a bunch of methods for subscri
 messages asynchronously or reading them as a stream (even with the possibility to pause the stream itself).
 As producer, its API provides methods for sending message to a topic partition like writing on a stream.
 
-See the in-source docs for more details:
-- [Java](src/main/asciidoc/java/index.adoc)
-- [JavaScript](src/main/asciidoc/js/index.adoc)
-- [Ruby](src/main/asciidoc/ruby/index.adoc)
-- [Groovy](src/main/asciidoc/groovy/index.adoc)
-- [Kotlin](src/main/asciidoc/kotlin/index.adoc)
+See the online docs for more details:
+- [Java](https://vertx.io/docs/vertx-kafka-client/java)
+- [JavaScript](https://vertx.io/docs/vertx-kafka-client/js)
+- [Ruby](https://vertx.io/docs/vertx-kafka-client/ruby)
+- [Groovy](https://vertx.io/docs/vertx-kafka-client/groovy)
+- [Kotlin](https://vertx.io/docs/vertx-kafka-client/kotlin)
 
 Important aspects of Topic Management, such as creating a topic, deleting a topic, changing configuration of a topic, are also supported.
-See the in-source docs for more details:
-- [Java](src/main/asciidoc/java/adminUtils.adoc)
-- [JavaScript](src/main/asciidoc/js/adminUtils.adoc)
-- [Ruby](src/main/asciidoc/ruby/adminUtils.adoc)
-- [Groovy](src/main/asciidoc/groovy/adminUtils.adoc)
-- [Kotlin](src/main/asciidoc/kotlin/adminUtils.adoc)
+See the online docs for more details:
+- [Java](https://vertx.io/docs/vertx-kafka-client/java/#_vert_x_kafka_adminutils)
+- [JavaScript](https://vertx.io/docs/vertx-kafka-client/js/#_vert_x_kafka_adminutils)
+- [Ruby](https://vertx.io/docs/vertx-kafka-client/ruby/#_vert_x_kafka_adminutils)
+- [Groovy](https://vertx.io/docs/vertx-kafka-client/groovy/#_vert_x_kafka_adminutils)
+- [Kotlin](https://vertx.io/docs/vertx-kafka-client/kotlin/#_vert_x_kafka_adminutils)
 
 **Note: This module has Tech Preview status, this means the API can change between versions.**
