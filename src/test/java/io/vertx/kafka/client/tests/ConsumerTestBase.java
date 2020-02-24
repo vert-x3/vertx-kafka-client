@@ -480,18 +480,15 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       ctx.assertEquals(Vertx.currentContext(), context);
       switch (status.getAndIncrement()) {
         case 0:
-          ctx.fail();
-          break;
-        case 1:
           consumer2.subscribe(Collections.singleton(topicName));
           ctx.assertEquals(2, partitions.size());
           ctx.assertTrue(partitions.contains(new TopicPartition(topicName, 0)));
           ctx.assertTrue(partitions.contains(new TopicPartition(topicName, 1)));
           break;
-        case 2:
+        case 1:
           ctx.fail();
           break;
-        case 3:
+        case 2:
           ctx.assertEquals(1, partitions.size());
           rebalanced.countDown();
           break;
@@ -501,15 +498,18 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       ctx.assertEquals(Vertx.currentContext(), context);
       switch (status.getAndIncrement()) {
         case 0:
-          ctx.assertEquals(0, partitions.size());
-          break;
-        case 1:
           ctx.fail();
           break;
-        case 2:
+        case 1:
           ctx.assertEquals(2, partitions.size());
           ctx.assertTrue(partitions.contains(new TopicPartition(topicName, 0)));
           ctx.assertTrue(partitions.contains(new TopicPartition(topicName, 1)));
+          break;
+        case 2:
+          ctx.fail();
+          break;
+        case 3:
+          ctx.assertEquals(1, partitions.size());
           break;
       }
     });
