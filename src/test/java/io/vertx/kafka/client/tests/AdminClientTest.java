@@ -98,6 +98,8 @@ public class AdminClientTest extends KafkaClusterTestBase {
     vertx.setTimer(1000, t -> {
       adminClient.listTopics(ctx.asyncAssertSuccess(res ->{
         ctx.assertTrue(res.containsAll(topics), "Was expecting topics " + topics + " to be in " + res);
+        
+        adminClient.close();
         async.complete();
       }));
     });
@@ -128,6 +130,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
         ctx.assertEquals(1, topicPartitionInfo.getIsr().size());
         ctx.assertEquals(1, topicPartitionInfo.getIsr().get(0).getId());
 
+        adminClient.close();
         async.complete();
       }));
     });
@@ -146,7 +149,9 @@ public class AdminClientTest extends KafkaClusterTestBase {
         ctx.assertEquals(1, topicDescription.getPartitions().size());
         ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
 
-        adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess());
+        adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(v1 -> {
+          adminClient.close();
+        }));
       }));
     }));
   }
@@ -180,7 +185,9 @@ public class AdminClientTest extends KafkaClusterTestBase {
           ctx.assertTrue(configEntry.isPresent());
           ctx.assertEquals("1000", configEntry.get().getValue());
 
-          adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess());
+          adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(v1 -> {
+            adminClient.close();
+          }));
         }));
       }));
     }));
@@ -204,6 +211,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
         ctx.assertTrue(topics.contains("topicToDelete"));
 
         adminClient.deleteTopics(Collections.singletonList("topicToDelete"), ctx.asyncAssertSuccess(v -> {
+          adminClient.close();
           async.complete();
         }));
       }));
@@ -218,6 +226,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     adminClient.describeConfigs(Collections.singletonList(
       new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "first-topic")), ctx.asyncAssertSuccess(desc -> {
       ctx.assertFalse(desc.isEmpty());
+      adminClient.close();
     }));
   }
 
@@ -245,6 +254,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
             .get(0);
 
         ctx.assertEquals("51000", describeRetentionEntry.getValue());
+        adminClient.close();
       }));
     }));
   }
@@ -269,6 +279,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
         ctx.assertEquals(1, groups.size());
         ctx.assertEquals("groupId", groups.get(0).getGroupId());
+        adminClient.close();
         async.complete();
       }));
 
@@ -306,6 +317,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
         ctx.assertTrue(iterator.hasNext());
         ctx.assertEquals("first-topic", iterator.next().getTopic());
 
+        adminClient.close();
         async.complete();
       }));
 

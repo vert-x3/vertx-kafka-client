@@ -179,4 +179,19 @@ public interface KafkaAdminClient {
    * Like {@link #describeConsumerGroups(List, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<java.lang.String> groupIds);
+
+  /**
+   * Close the admin client
+   *
+   * @return a {@code Future} completed with the operation result
+   */
+  Future<Void> close();
+
+  /**
+   * Close the admin client
+   * 
+   * @param timeout timeout to wait for closing
+   * @return a {@code Future} completed with the operation result
+   */
+  Future<Void> close(long timeout);
 }
