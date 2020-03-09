@@ -182,7 +182,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   @Override
   @SuppressWarnings("unchecked")
   public KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
-    this.send(record).setHandler(handler);
+    this.send(record).onComplete(handler);
     return this;
   }
 
@@ -204,7 +204,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-    partitionsFor(topic).setHandler(handler);
+    partitionsFor(topic).onComplete(handler);
     return this;
   }
 

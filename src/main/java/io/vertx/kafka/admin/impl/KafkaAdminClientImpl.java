@@ -62,7 +62,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void describeTopics(List<String> topicNames, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler) {
-    describeTopics(topicNames).setHandler(completionHandler);
+    describeTopics(topicNames).onComplete(completionHandler);
   }
 
   @Override
@@ -112,7 +112,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void listTopics(Handler<AsyncResult<Set<String>>> completionHandler) {
-    listTopics().setHandler(completionHandler);
+    listTopics().onComplete(completionHandler);
   }
 
   @Override
@@ -133,7 +133,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void createTopics(List<NewTopic> topics, Handler<AsyncResult<Void>> completionHandler) {
-    createTopics(topics).setHandler(completionHandler);
+    createTopics(topics).onComplete(completionHandler);
   }
 
   @Override
@@ -155,7 +155,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void deleteTopics(List<String> topicNames, Handler<AsyncResult<Void>> completionHandler) {
-    deleteTopics(topicNames).setHandler(completionHandler);
+    deleteTopics(topicNames).onComplete(completionHandler);
   }
 
   @Override
@@ -177,7 +177,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void describeConfigs(List<ConfigResource> configResources, Handler<AsyncResult<Map<ConfigResource, Config>>> completionHandler) {
-    describeConfigs(configResources).setHandler(completionHandler);
+    describeConfigs(configResources).onComplete(completionHandler);
   }
 
   @Override
@@ -210,7 +210,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void alterConfigs(Map<ConfigResource,Config> configs, Handler<AsyncResult<Void>> completionHandler) {
-    alterConfigs(configs).setHandler(completionHandler);
+    alterConfigs(configs).onComplete(completionHandler);
   }
 
   @Override
@@ -232,7 +232,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void listConsumerGroups(Handler<AsyncResult<List<ConsumerGroupListing>>> completionHandler) {
-    listConsumerGroups().setHandler(completionHandler);
+    listConsumerGroups().onComplete(completionHandler);
   }
 
   @Override
@@ -254,7 +254,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler) {
-    describeConsumerGroups(groupIds).setHandler(completionHandler);
+    describeConsumerGroups(groupIds).onComplete(completionHandler);
   }
 
   @Override

@@ -128,19 +128,19 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
         }
         prom.fail(e);
       }
-    }).setHandler(trampolineProm);
+    }).onComplete(trampolineProm);
     return trampolineProm.future(); // Trampoline on caller context
   }
 
   @Override
   public synchronized KafkaWriteStreamImpl<K, V> send(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
-    this.send(record).setHandler(handler);
+    this.send(record).onComplete(handler);
     return this;
   }
 
   @Override
   public void write(ProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler) {
-    this.write(data).setHandler(handler);
+    this.write(data).onComplete(handler);
   }
 
   @Override
@@ -212,14 +212,14 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
       prom.complete(
         this.producer.partitionsFor(topic)
       );
-    }).setHandler(trampolineProm);
+    }).onComplete(trampolineProm);
 
     return trampolineProm.future(); // Trampoline on caller context
   }
 
   @Override
   public KafkaWriteStreamImpl<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-    partitionsFor(topic).setHandler(handler);
+    partitionsFor(topic).onComplete(handler);
     return this;
   }
 
@@ -230,13 +230,13 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     this.context.<Void>executeBlocking(prom -> {
       this.producer.flush();
       prom.complete();
-    }).setHandler(trampolineProm);
+    }).onComplete(trampolineProm);
     return trampolineProm.future(); // Trampoline on caller context
   }
 
   @Override
   public KafkaWriteStreamImpl<K, V> flush(Handler<AsyncResult<Void>> completionHandler) {
-    flush().setHandler(completionHandler);
+    flush().onComplete(completionHandler);
     return this;
   }
 
@@ -261,13 +261,13 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
         this.producer.close();
       }
       prom.complete();
-    }).setHandler(trampolineProm);
+    }).onComplete(trampolineProm);
     return trampolineProm.future(); // Trampoline on caller context
   }
 
   @Override
   public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
-    close(timeout).setHandler(completionHandler);
+    close(timeout).onComplete(completionHandler);
   }
 
   @Override
