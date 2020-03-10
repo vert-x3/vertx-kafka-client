@@ -138,4 +138,24 @@ public interface KafkaAdminClient {
    */
   @GenIgnore
   void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
+
+  /**
+   * Close the admin client
+   */
+  void close();
+
+  /**
+   * Close the admin client
+   *
+   * @param completionHandler handler called on operation completed
+   */
+  void close(Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Close the admin client
+   *
+   * @param timeout timeout to wait for closing
+   * @param completionHandler handler called on operation completed
+   */
+  void close(long timeout, Handler<AsyncResult<Void>> completionHandler);
 }

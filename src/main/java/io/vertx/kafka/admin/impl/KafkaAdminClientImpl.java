@@ -16,6 +16,7 @@
 
 package io.vertx.kafka.admin.impl;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -237,5 +238,27 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
         completionHandler.handle(Future.failedFuture(ex));
       }
     });
+  }
+
+  @Override
+  public void close() {
+    close(ar -> {});
+  }
+
+  @Override
+  public void close(Handler<AsyncResult<Void>> completionHandler) {
+    close(0, completionHandler);
+  }
+
+  @Override
+  public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
+    vertx.getOrCreateContext().executeBlocking(future -> {
+      if (timeout > 0) {
+        adminClient.close(Duration.ofMillis(timeout));
+      } else {
+        adminClient.close();
+      }
+      future.complete();
+    }, completionHandler);
   }
 }
