@@ -155,6 +155,16 @@ Set if consumer group is simple or not
 +++
 |===
 
+[[ListConsumerGroupOffsetsOptions]]
+== ListConsumerGroupOffsetsOptions
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|===
+
 [[MemberAssignment]]
 == MemberAssignment
 

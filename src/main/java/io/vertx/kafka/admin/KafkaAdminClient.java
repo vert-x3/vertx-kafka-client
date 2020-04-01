@@ -16,12 +16,6 @@
 
 package io.vertx.kafka.admin;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.Future;
 import io.vertx.kafka.client.common.ConfigResource;
@@ -32,6 +26,15 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
+import io.vertx.kafka.client.common.ConfigResource;
+import io.vertx.kafka.client.common.TopicPartition;
+import io.vertx.kafka.client.consumer.OffsetAndMetadata;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import org.apache.kafka.clients.admin.AdminClient;
 
 /**
  * Vert.x Kafka Admin client implementation
@@ -193,6 +196,68 @@ public interface KafkaAdminClient {
   Future<ClusterDescription> describeCluster();
 
   /**
+   * Delete consumer groups from the cluster.
+   *
+   * @param groupIds the ids of the groups to delete
+   */
+  void deleteConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Like {@link #deleteConsumerGroups(List, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> deleteConsumerGroups(List<java.lang.String> groupIds);
+
+  /**
+   * List the consumer group offsets available in the cluster.
+   *
+   * @param groupId The group id of the group whose offsets will be listed
+   * @param options The options to use when listing the consumer group offsets.
+   * @param completionHandler handler called on operation completed with the consumer groups offsets
+   */
+  @GenIgnore
+  void listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
+
+  /**
+   * Like {@link #listConsumerGroupOffsets(String, ListConsumerGroupOffsetsOptions, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options);
+
+  /**
+   * List the consumer group offsets available in the cluster.
+   *
+   * @param groupId The group id of the group whose offsets will be listed
+   * @param completionHandler handler called on operation completed with the consumer groups offsets
+   */
+  @GenIgnore
+  default void listConsumerGroupOffsets(String groupId, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
+    listConsumerGroupOffsets(groupId, new ListConsumerGroupOffsetsOptions(), completionHandler);
+  }
+
+  /**
+   * Like {@link #listConsumerGroupOffsets(String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  default Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId) {
+    return listConsumerGroupOffsets(groupId, new ListConsumerGroupOffsetsOptions());
+  }
+
+  /**
+   * Delete committed offsets for a set of partitions in a consumer group. This will
+   * succeed at the partition level only if the group is not actively subscribed
+   * to the corresponding topic.
+   *
+   * @param groupId The group id of the group whose offsets will be listed
+   * @param partitions The set of partitions in the consumer group whose offsets will be deleted
+   */
+  void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Like {@link #deleteConsumerGroupOffsets(String, Set, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions);
+
+  /**
    * Close the admin client
    *
    * @return a {@code Future} completed with the operation result
@@ -201,7 +266,7 @@ public interface KafkaAdminClient {
 
   /**
    * Close the admin client
-   * 
+   *
    * @param timeout timeout to wait for closing
    * @return a {@code Future} completed with the operation result
    */
