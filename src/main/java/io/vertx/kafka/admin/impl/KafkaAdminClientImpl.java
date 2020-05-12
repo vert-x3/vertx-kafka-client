@@ -304,7 +304,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
           consumerGroups.put(cgDescriptionEntry.getKey(), consumerGroupDescription);
         }
-
         promise.complete(consumerGroups);
       } else {
         promise.fail(ex);
@@ -325,13 +324,11 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata().whenComplete((cgo, ex) -> {
 
       if (ex == null) {
-
         Map<TopicPartition, OffsetAndMetadata> consumerGroupOffsets = new HashMap<>();
 
         for (Map.Entry<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndMetadata> cgoOffset : cgo.entrySet()) {
           consumerGroupOffsets.put(Helper.from(cgoOffset.getKey()), Helper.from(cgoOffset.getValue()));
         }
-
         promise.complete(consumerGroupOffsets);
       } else {
         promise.fail(ex);
@@ -352,7 +349,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
     DeleteConsumerGroupsResult deleteConsumerGroupsResult = this.adminClient.deleteConsumerGroups(groupIds);
     deleteConsumerGroupsResult.all().whenComplete((v, ex) -> {
-
       if (ex == null) {
         promise.complete();
       } else {
@@ -374,7 +370,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
     DeleteConsumerGroupOffsetsResult deleteConsumerGroupOffsetsResult = this.adminClient.deleteConsumerGroupOffsets(groupId, Helper.toTopicPartitionSet(partitions));
     deleteConsumerGroupOffsetsResult.all().whenComplete((v, ex) -> {
-
       if (ex == null) {
         promise.complete();
       } else {

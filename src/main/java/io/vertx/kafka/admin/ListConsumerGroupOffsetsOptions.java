@@ -13,9 +13,7 @@ public class ListConsumerGroupOffsetsOptions {
   /**
    * Constructor
    */
-  public ListConsumerGroupOffsetsOptions() {
-
-  }
+  public ListConsumerGroupOffsetsOptions() {}
 
   /**
    * Constructor (from JSON representation)
@@ -23,7 +21,6 @@ public class ListConsumerGroupOffsetsOptions {
    * @param json  JSON representation
    */
   public ListConsumerGroupOffsetsOptions(JsonObject json) {
-
     ListConsumerGroupOffsetsOptionsConverter.fromJson(json, this);
   }
 
@@ -52,7 +49,6 @@ public class ListConsumerGroupOffsetsOptions {
    * @return  JSON representation
    */
   public JsonObject toJson() {
-
     JsonObject json = new JsonObject();
     ListConsumerGroupOffsetsOptionsConverter.toJson(this, json);
     return json;

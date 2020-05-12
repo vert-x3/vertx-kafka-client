@@ -176,12 +176,12 @@ public interface KafkaAdminClient {
    * @param groupIds the ids of the groups to describe
    * @param completionHandler handler called on operation completed with the consumer groups descriptions
    */
-  void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
+  void describeConsumerGroups(List<String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
 
   /**
    * Like {@link #describeConsumerGroups(List, Handler)} but returns a {@code Future} of the asynchronous result
    */
-  Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<java.lang.String> groupIds);
+  Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds);
 
   /**
    * Describe the nodes in the cluster with the default options
@@ -199,13 +199,14 @@ public interface KafkaAdminClient {
    * Delete consumer groups from the cluster.
    *
    * @param groupIds the ids of the groups to delete
+   * @param completionHandler handler called on operation completed
    */
-  void deleteConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Void>> completionHandler);
+  void deleteConsumerGroups(List<String> groupIds, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Like {@link #deleteConsumerGroups(List, Handler)} but returns a {@code Future} of the asynchronous result
    */
-  Future<Void> deleteConsumerGroups(List<java.lang.String> groupIds);
+  Future<Void> deleteConsumerGroups(List<String> groupIds);
 
   /**
    * List the consumer group offsets available in the cluster.
