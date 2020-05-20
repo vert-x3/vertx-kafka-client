@@ -129,7 +129,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     if (context == null) {
       return this;
     }
-    closeHandler.registerCloseHook(context);
+    closeHandler.registerCloseHook((ContextInternal) context);
     return this;
   }
 

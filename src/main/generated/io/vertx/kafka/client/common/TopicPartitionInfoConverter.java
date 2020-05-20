@@ -20,14 +20,14 @@ public class TopicPartitionInfoConverter {
             java.util.ArrayList<io.vertx.kafka.client.common.Node> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.client.common.Node((JsonObject)item));
+                list.add(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)item));
             });
             obj.setIsr(list);
           }
           break;
         case "leader":
           if (member.getValue() instanceof JsonObject) {
-            obj.setLeader(new io.vertx.kafka.client.common.Node((JsonObject)member.getValue()));
+            obj.setLeader(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)member.getValue()));
           }
           break;
         case "partition":
@@ -40,7 +40,7 @@ public class TopicPartitionInfoConverter {
             java.util.ArrayList<io.vertx.kafka.client.common.Node> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.client.common.Node((JsonObject)item));
+                list.add(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)item));
             });
             obj.setReplicas(list);
           }

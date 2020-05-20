@@ -17,7 +17,7 @@ public class MemberDescriptionConverter {
       switch (member.getKey()) {
         case "assignment":
           if (member.getValue() instanceof JsonObject) {
-            obj.setAssignment(new io.vertx.kafka.admin.MemberAssignment((JsonObject)member.getValue()));
+            obj.setAssignment(new io.vertx.kafka.admin.MemberAssignment((io.vertx.core.json.JsonObject)member.getValue()));
           }
           break;
         case "clientId":

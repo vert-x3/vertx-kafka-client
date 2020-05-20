@@ -20,7 +20,7 @@ public class ConfigConverter {
             java.util.ArrayList<io.vertx.kafka.admin.ConfigEntry> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.admin.ConfigEntry((JsonObject)item));
+                list.add(new io.vertx.kafka.admin.ConfigEntry((io.vertx.core.json.JsonObject)item));
             });
             obj.setEntries(list);
           }

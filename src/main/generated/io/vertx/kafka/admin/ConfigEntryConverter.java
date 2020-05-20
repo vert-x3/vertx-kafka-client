@@ -45,7 +45,7 @@ public class ConfigEntryConverter {
             java.util.ArrayList<io.vertx.kafka.admin.ConfigSynonym> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.admin.ConfigSynonym((JsonObject)item));
+                list.add(new io.vertx.kafka.admin.ConfigSynonym((io.vertx.core.json.JsonObject)item));
             });
             obj.setSynonyms(list);
           }

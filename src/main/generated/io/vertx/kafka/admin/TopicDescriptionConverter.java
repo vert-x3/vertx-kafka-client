@@ -30,7 +30,7 @@ public class TopicDescriptionConverter {
             java.util.ArrayList<io.vertx.kafka.client.common.TopicPartitionInfo> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.client.common.TopicPartitionInfo((JsonObject)item));
+                list.add(new io.vertx.kafka.client.common.TopicPartitionInfo((io.vertx.core.json.JsonObject)item));
             });
             obj.setPartitions(list);
           }

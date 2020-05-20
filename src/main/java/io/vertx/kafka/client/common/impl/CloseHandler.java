@@ -20,6 +20,7 @@ import io.vertx.core.Closeable;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 
 import java.util.function.BiConsumer;
@@ -44,7 +45,7 @@ public class CloseHandler {
     registerCloseHook(vertx::addCloseHook, vertx::removeCloseHook);
   }
 
-  public void registerCloseHook(Context context) {
+  public void registerCloseHook(ContextInternal context) {
     registerCloseHook(context::addCloseHook, context::removeCloseHook);
   }
 

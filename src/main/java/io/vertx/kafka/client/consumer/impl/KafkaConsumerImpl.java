@@ -22,6 +22,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.impl.CloseHandler;
@@ -64,7 +65,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
     if (context == null) {
       return this;
     }
-    closeHandler.registerCloseHook(context);
+    closeHandler.registerCloseHook((ContextInternal) context);
     return this;
   }
 
