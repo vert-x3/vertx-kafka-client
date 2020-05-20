@@ -181,6 +181,18 @@ public interface KafkaAdminClient {
   Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<java.lang.String> groupIds);
 
   /**
+   * Describe the nodes in the cluster with the default options
+   *
+   * @param completionHandler handler called on operation completed with the cluster description
+   */
+  void describeCluster(Handler<AsyncResult<ClusterDescription>> completionHandler);
+
+  /**
+   * Like {@link #describeCluster(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<ClusterDescription> describeCluster();
+
+  /**
    * Close the admin client
    *
    * @return a {@code Future} completed with the operation result
