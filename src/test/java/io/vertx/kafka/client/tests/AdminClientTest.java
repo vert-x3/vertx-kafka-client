@@ -18,6 +18,7 @@ package io.vertx.kafka.client.tests;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -40,6 +41,7 @@ import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
+import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -393,6 +395,37 @@ public class AdminClientTest extends KafkaClusterTestBase {
     assertEquals(3, (int)consumers.get("my-topic"));
     assertEquals(2, (int)consumers.get("your-topic"));
     assertEquals(2, (int)consumers.get("his-topic"));
+  }
+  @Test
+  public void testDescribeCluster(TestContext ctx) {
+
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+
+    // timer because, Kafka cluster takes time to start consumer
+    vertx.setTimer(1000, t -> {
+
+      adminClient.describeCluster(ctx.asyncAssertSuccess(cluster -> {
+        ctx.assertNotNull(cluster.getClusterId());
+        Node controller = cluster.getController();
+        ctx.assertNotNull(controller);
+        ctx.assertEquals(1, controller.getId());
+        ctx.assertEquals("localhost", controller.getHost());
+        ctx.assertEquals(false, controller.hasRack());
+        ctx.assertEquals("1", controller.getIdString());
+        ctx.assertEquals(false, controller.isEmpty());
+        ctx.assertEquals(9092, controller.getPort());
+        ctx.assertEquals(null, controller.rack());
+        Collection<Node> nodes = cluster.getNodes();
+        ctx.assertNotNull(nodes);
+        ctx.assertEquals(1, nodes.size());
+        ctx.assertEquals(1, nodes.iterator().next().getId());
+        adminClient.close();
+        async.complete();
+      }));
+
+    });
   }
 
   private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {

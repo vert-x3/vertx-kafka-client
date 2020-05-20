@@ -145,6 +145,13 @@ public interface KafkaAdminClient {
   void close();
 
   /**
+   * Describe the nodes in the cluster with the default options
+   *
+   * @param completionHandler handler called on operation completed with the cluster description
+   */
+  void describeCluster(Handler<AsyncResult<ClusterDescription>> completionHandler);
+
+  /**
    * Close the admin client
    *
    * @param completionHandler handler called on operation completed

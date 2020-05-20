@@ -1,5 +1,25 @@
 = Cheatsheets
 
+[[ClusterDescription]]
+== ClusterDescription
+
+++++
+ A detailed description of the cluster
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[clusterId]]`@clusterId`|`String`|+++
+Set the cluster ID
++++
+|[[controller]]`@controller`|`link:dataobjects.html#Node[Node]`|+++
+Set the controller node.
++++
+|===
+
 [[Config]]
 == Config
 

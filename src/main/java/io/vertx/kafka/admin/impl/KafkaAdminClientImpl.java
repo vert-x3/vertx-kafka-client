@@ -18,12 +18,15 @@ package io.vertx.kafka.admin.impl;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import io.vertx.kafka.admin.ClusterDescription;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.ConsumerGroupListing;
@@ -31,12 +34,14 @@ import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
+import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
@@ -48,6 +53,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
+import org.apache.kafka.common.KafkaFuture;
 
 public class KafkaAdminClientImpl implements KafkaAdminClient {
 
@@ -234,6 +240,33 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
         }
 
         completionHandler.handle(Future.succeededFuture(consumerGroups));
+      } else {
+        completionHandler.handle(Future.failedFuture(ex));
+      }
+    });
+  }
+
+  @Override
+  public void describeCluster(Handler<AsyncResult<ClusterDescription>> completionHandler) {
+    
+    DescribeClusterResult describeClusterResult = this.adminClient.describeCluster();
+    KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
+      if (ex == null) {
+        try {
+          String clusterId = describeClusterResult.clusterId().get();
+          org.apache.kafka.common.Node rcontroller = describeClusterResult.controller().get();
+          Collection<org.apache.kafka.common.Node> rnodes = describeClusterResult.nodes().get();
+
+          Node controller = Helper.from(rcontroller);
+          Collection<Node> nodes = new ArrayList<Node>();
+          rnodes.forEach(rnode -> {
+            nodes.add(Helper.from(rnode));
+          });
+          ClusterDescription clusterDescription = new ClusterDescription(clusterId, controller, nodes);
+          completionHandler.handle(Future.succeededFuture(clusterDescription));
+        } catch (InterruptedException|ExecutionException e) {
+          completionHandler.handle(Future.failedFuture(e));
+        }
       } else {
         completionHandler.handle(Future.failedFuture(ex));
       }
