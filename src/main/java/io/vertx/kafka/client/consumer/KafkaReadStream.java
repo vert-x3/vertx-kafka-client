@@ -620,41 +620,12 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   KafkaReadStream<K, V> pollTimeout(Duration timeout);
 
   /**
-   * Sets the poll timeout (in ms) for the underlying native Kafka Consumer. Defaults to 1000.
-   *
-   * @deprecated use {@link #pollTimeout(Duration)}
-   */
-  @Deprecated
-  KafkaReadStream<K, V> pollTimeout(long timeout);
-
-  /**
-   * Executes a poll for getting messages from Kafka
-   *
-   * @param timeout The time, in milliseconds, spent waiting in poll if data is not available in the buffer.
-   *                If 0, returns immediately with any records that are available currently in the native Kafka consumer's buffer,
-   *                else returns empty. Must not be negative.
-   * @param handler handler called after the poll with batch of records (can be empty).
-   *
-   * @deprecated use {@link #poll(Duration, Handler)}
-   */
-  @Deprecated
-  void poll(long timeout, Handler<AsyncResult<ConsumerRecords<K, V>>> handler);
-
-  /**
    * Executes a poll for getting messages from Kafka.
    *
    * @param timeout The maximum time to block (must not be greater than {@link Long#MAX_VALUE} milliseconds)
    * @param handler handler called after the poll with batch of records (can be empty).
    */
   void poll(Duration timeout, Handler<AsyncResult<ConsumerRecords<K, V>>> handler);
-
-  /**
-   * Like {@link #poll(long, Handler)} but returns a {@code Future} of the asynchronous result
-   *
-   * @deprecated use {@link #poll(Duration)}
-   */
-  @Deprecated
-  Future<ConsumerRecords<K, V>> poll(long timeout);
 
   /**
    * Like {@link #poll(Duration, Handler)} but returns a {@code Future} of the asynchronous result
