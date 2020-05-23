@@ -807,15 +807,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   Consumer<K, V> unwrap();
 
   /**
-   * Sets the poll timeout (in ms) for the underlying native Kafka Consumer. Defaults to 1000.
-   *
-   * @deprecated use {@link #pollTimeout(Duration)}
-   */
-  @Deprecated
-  @Fluent
-  KafkaConsumer<K, V> pollTimeout(long timeout);
-
-  /**
    * Sets the poll timeout for the underlying native Kafka Consumer. Defaults to 1000ms.
    * Setting timeout to a lower value results in a more 'responsive' client, because it will block for a shorter period
    * if no data is available in the assigned partition and therefore allows subsequent actions to be executed with a shorter
@@ -830,19 +821,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   KafkaConsumer<K, V> pollTimeout(Duration timeout);
 
   /**
-   * Executes a poll for getting messages from Kafka
-   *
-   * @param timeout The time, in milliseconds, spent waiting in poll if data is not available in the buffer.
-   *                If 0, returns immediately with any records that are available currently in the native Kafka consumer's buffer,
-   *                else returns empty. Must not be negative.
-   * @param handler handler called after the poll with batch of records (can be empty).
-   *
-   * @deprecated use {@link #poll(Duration, Handler)}
-   */
-  @Deprecated
-  void poll(long timeout, Handler<AsyncResult<KafkaConsumerRecords<K, V>>> handler);
-
-  /**
    * Executes a poll for getting messages from Kafka.
    *
    * @param timeout The maximum time to block (must not be greater than {@link Long#MAX_VALUE} milliseconds)
@@ -850,14 +828,6 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   void poll(Duration timeout, Handler<AsyncResult<KafkaConsumerRecords<K, V>>> handler);
-
-  /**
-   * Like {@link #poll(long, Handler)} but returns a {@code Future} of the asynchronous result
-   *
-   * @deprecated use {@link #poll(Duration)}
-   */
-  @Deprecated
-  Future<KafkaConsumerRecords<K, V>> poll(long timeout);
 
   /**
    * Like {@link #poll(Duration, Handler)} but returns a {@code Future} of the asynchronous result

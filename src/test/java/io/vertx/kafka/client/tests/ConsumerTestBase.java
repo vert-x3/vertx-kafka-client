@@ -1366,7 +1366,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     int pollingTimeout = 1500;
     // Set the polling timeout to 1500 ms (default is 1000)
-    consumerWithCustomTimeout.pollTimeout(pollingTimeout);
+    consumerWithCustomTimeout.pollTimeout(Duration.ofMillis(pollingTimeout));
     // Subscribe to the empty topic (we want the poll() call to timeout!)
     consumerWithCustomTimeout.subscribe(topicName, subscribeRes -> {
       consumerWithCustomTimeout.handler(rec -> {}); // Consumer will now immediately poll once

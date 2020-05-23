@@ -23,7 +23,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
@@ -675,17 +674,6 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public KafkaConsumer<K, V> pollTimeout(long timeout) {
-    this.stream.pollTimeout(timeout);
-    return this;
-  }
-
-  @Override
-  public void poll(long timeout, Handler<AsyncResult<KafkaConsumerRecords<K, V>>> handler) {
-    poll(Duration.ofMillis(timeout), handler);
-  }
-
-  @Override
   public void poll(final Duration timeout, final Handler<AsyncResult<KafkaConsumerRecords<K, V>>> handler) {
     stream.poll(timeout, done -> {
       if (done.succeeded()) {
@@ -694,11 +682,6 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
         handler.handle(Future.failedFuture(done.cause()));
       }
     });
-  }
-
-  @Override
-  public Future<KafkaConsumerRecords<K, V>> poll(long timeout) {
-    return poll(Duration.ofMillis(timeout));
   }
 
   @Override

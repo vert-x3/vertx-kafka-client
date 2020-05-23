@@ -838,17 +838,6 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public KafkaReadStream<K, V> pollTimeout(long timeout) {
-    this.pollTimeout = Duration.ofMillis(timeout);
-    return this;
-  }
-
-  @Override
-  public void poll(long timeout, Handler<AsyncResult<ConsumerRecords<K, V>>> handler) {
-    poll(Duration.ofMillis(timeout), handler);
-  }
-
-  @Override
   public void poll(final Duration timeout, final Handler<AsyncResult<ConsumerRecords<K, V>>> handler) {
     this.worker.submit(() -> {
       if (!this.closed.get()) {
@@ -862,13 +851,6 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         }
       }
     });
-  }
-
-  @Override
-  public Future<ConsumerRecords<K, V>> poll(long timeout) {
-    final Promise<ConsumerRecords<K, V>> promise = Promise.promise();
-    poll(timeout, promise);
-    return promise.future();
   }
 
   @Override
