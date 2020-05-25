@@ -17,6 +17,7 @@
 package io.vertx.kafka.client.tests;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -119,7 +120,7 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
       final KafkaReadStream<String, String> consumer = consumer(topicName);
       consumer.exceptionHandler(ctx::fail);
       consumer.subscribe(Collections.singleton(topicName));
-      consumer.poll(5000, records -> {
+      consumer.poll(Duration.ofSeconds(5), records -> {
         ctx.assertTrue(records.result().isEmpty());
         done.complete();
       });
