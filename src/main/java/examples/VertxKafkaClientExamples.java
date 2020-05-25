@@ -34,7 +34,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -325,7 +324,7 @@ public class VertxKafkaClientExamples {
 
         vertx.setPeriodic(1000, timerId -> {
 
-          consumer.poll(Duration.ofMillis(100), ar1 -> {
+          consumer.poll(100, ar1 -> {
 
             if (ar1.succeeded()) {
 

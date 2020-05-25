@@ -41,7 +41,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -443,7 +442,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     subscribe.await();
 
     Async consume = ctx.async();
-    consumer.poll(Duration.ofSeconds(10), rec -> {
+    consumer.poll(10000, rec -> {
       if (rec.result().count() == 10) {
         consume.countDown();
       }
@@ -1366,7 +1365,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     int pollingTimeout = 1500;
     // Set the polling timeout to 1500 ms (default is 1000)
-    consumerWithCustomTimeout.pollTimeout(Duration.ofMillis(pollingTimeout));
+    consumerWithCustomTimeout.pollTimeout(pollingTimeout);
     // Subscribe to the empty topic (we want the poll() call to timeout!)
     consumerWithCustomTimeout.subscribe(topicName, subscribeRes -> {
       consumerWithCustomTimeout.handler(rec -> {}); // Consumer will now immediately poll once
@@ -1432,7 +1431,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       if (subscribeResult.succeeded()) {
 
         vertx.setPeriodic(1000, t -> {
-          consumer.poll(Duration.ofMillis(100), pollResult -> {
+          consumer.poll(100, pollResult -> {
             if (pollResult.succeeded()) {
               if (count.updateAndGet(o -> count.get() - pollResult.result().size()) == 0) {
                 vertx.cancelTimer(t);
@@ -1466,7 +1465,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       if (subscribeResult.succeeded()) {
 
         vertx.setPeriodic(1000, t -> {
-          consumer.poll(Duration.ofMillis(100), pollResult -> {
+          consumer.poll(100, pollResult -> {
             if (pollResult.succeeded()) {
               if (pollResult.result().size() > 0) {
                 ctx.fail();
