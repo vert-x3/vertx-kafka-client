@@ -30,7 +30,6 @@ import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.common.serialization.Deserializer;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -807,32 +806,31 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   Consumer<K, V> unwrap();
 
   /**
-   * Sets the poll timeout for the underlying native Kafka Consumer. Defaults to 1000ms.
+   * Sets the poll timeout (in ms) for the underlying native Kafka Consumer. Defaults to 1000.
    * Setting timeout to a lower value results in a more 'responsive' client, because it will block for a shorter period
    * if no data is available in the assigned partition and therefore allows subsequent actions to be executed with a shorter
    * delay. At the same time, the client will poll more frequently and thus will potentially create a higher load on the Kafka Broker.
    *
-   * @param timeout The time, spent waiting in poll if data is not available in the buffer.
+   * @param timeout The time, in milliseconds, spent waiting in poll if data is not available in the buffer.
    * If 0, returns immediately with any records that are available currently in the native Kafka consumer's buffer,
    * else returns empty. Must not be negative.
    */
   @Fluent
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  KafkaConsumer<K, V> pollTimeout(Duration timeout);
+  KafkaConsumer<K, V> pollTimeout(long timeout);
 
   /**
-   * Executes a poll for getting messages from Kafka.
+   * Executes a poll for getting messages from Kafka
    *
-   * @param timeout The maximum time to block (must not be greater than {@link Long#MAX_VALUE} milliseconds)
+   * @param timeout The time, in milliseconds, spent waiting in poll if data is not available in the buffer.
+   *                If 0, returns immediately with any records that are available currently in the native Kafka consumer's buffer,
+   *                else returns empty. Must not be negative.
    * @param handler handler called after the poll with batch of records (can be empty).
    */
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void poll(Duration timeout, Handler<AsyncResult<KafkaConsumerRecords<K, V>>> handler);
+  void poll(long timeout, Handler<AsyncResult<KafkaConsumerRecords<K, V>>> handler);
 
   /**
-   * Like {@link #poll(Duration, Handler)} but returns a {@code Future} of the asynchronous result
+   * Like {@link #poll(long, Handler)} but returns a {@code Future} of the asynchronous result
    */
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  Future<KafkaConsumerRecords<K, V>> poll(Duration timeout);
+  Future<KafkaConsumerRecords<K, V>> poll(long timeout);
 
 }

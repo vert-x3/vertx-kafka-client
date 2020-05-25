@@ -165,7 +165,7 @@ the list of the current assigned partitions.
 == Receiving messages with explicit polling
 
 Other than using the internal polling mechanism in order to receive messages from Kafka, the client can subscribe to a
-topic, avoiding to register the handler for getting the messages and then using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#poll(Duration, io.vertx.core.Handler)} method.
+topic, avoiding to register the handler for getting the messages and then using the {@link io.vertx.kafka.client.consumer.KafkaConsumer#poll(long, io.vertx.core.Handler)} method.
 
 In this way, the user application is in charge to execute the poll for getting messages when it needs, for example after processing
 the previous ones.
