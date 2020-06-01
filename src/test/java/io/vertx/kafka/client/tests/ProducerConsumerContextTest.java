@@ -16,6 +16,9 @@
 
 package io.vertx.kafka.client.tests;
 
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Context;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.ext.unit.Async;
@@ -77,44 +80,50 @@ public class ProducerConsumerContextTest extends KafkaClusterTestBase {
     final int numMessages = 100;
     final Async async = ctx.async(numMessages * 2);
 
-    ContextInternal thisProducerCtx = (ContextInternal) vertx.getOrCreateContext();
-    ContextInternal thatProducerCtx = (ContextInternal) vertx.getOrCreateContext();
-
-    thisProducerCtx.runOnContext(v -> {
-      producer = producer(vertx, config);
-      producer.exceptionHandler(ctx::fail);
-
-      thatProducerCtx.runOnContext(v1 -> {
-        for (int i = 0; i < numMessages; i++) {
-          ProducerRecord<String, String> record = new ProducerRecord<>(topicName, 0, "key-" + i, "value-" + i);
-          record.headers().add("header_key", ("header_value-" + i).getBytes());
-          producer.write(record, h -> {
-            ctx.assertEquals(thatProducerCtx, Vertx.currentContext());
-            ctx.assertNotEquals(thisProducerCtx, Vertx.currentContext());
-            async.countDown();
-          });
-        }
-      });
-    });
-
-    ContextInternal thisConsumerCtx = (ContextInternal) vertx.getOrCreateContext();
-    ContextInternal thatConsumerCtx = (ContextInternal) vertx.getOrCreateContext();
-
-    thisConsumerCtx.runOnContext(v -> {
-      consumer = KafkaReadStream.create(vertx, config);
-      consumer.exceptionHandler(ctx::fail);
-
-      thatConsumerCtx.runOnContext(v1 -> {
-        consumer.handler(record -> {
-          ctx.assertEquals(thisConsumerCtx, Vertx.currentContext());
-          ctx.assertNotEquals(thatConsumerCtx, Vertx.currentContext());
-          async.countDown();
+    vertx.deployVerticle(new AbstractVerticle() {
+      @Override
+      public void start() throws Exception {
+        producer = producer(vertx, config);
+        producer.exceptionHandler(ctx::fail);
+        Context thisProducerCtx = context;
+        vertx.deployVerticle(new AbstractVerticle() {
+          @Override
+          public void start() throws Exception {
+            for (int i = 0; i < numMessages; i++) {
+              ProducerRecord<String, String> record = new ProducerRecord<>(topicName, 0, "key-" + i, "value-" + i);
+              record.headers().add("header_key", ("header_value-" + i).getBytes());
+              producer.write(record, h -> {
+                ctx.assertEquals(context, Vertx.currentContext());
+                ctx.assertNotEquals(thisProducerCtx, Vertx.currentContext());
+                async.countDown();
+              });
+            }
+          }
         });
-        consumer.subscribe(Collections.singleton(topicName));
-        consumer.resume();
-      });
+      }
     });
 
+    vertx.deployVerticle(new AbstractVerticle() {
+      @Override
+      public void start() {
+        consumer = KafkaReadStream.create(vertx, config);
+        consumer.exceptionHandler(ctx::fail);
+        Context thisConsumerCtx = context;
+
+        vertx.deployVerticle(new AbstractVerticle() {
+          @Override
+          public void start() {
+            consumer.handler(record -> {
+              ctx.assertEquals(thisConsumerCtx, Vertx.currentContext());
+              ctx.assertNotEquals(context, Vertx.currentContext());
+              async.countDown();
+            });
+            consumer.subscribe(Collections.singleton(topicName));
+            consumer.resume();
+          }
+        });
+      }
+    });
     async.await();
   }
 }
