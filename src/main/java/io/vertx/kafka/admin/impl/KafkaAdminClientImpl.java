@@ -16,6 +16,9 @@
 
 package io.vertx.kafka.admin.impl;
 
+import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
+import io.vertx.kafka.client.common.TopicPartition;
+import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,11 +45,14 @@ import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
+import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 
@@ -298,8 +304,74 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
           consumerGroups.put(cgDescriptionEntry.getKey(), consumerGroupDescription);
         }
-
         promise.complete(consumerGroups);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  public void listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
+    listConsumerGroupOffsets(groupId, options).onComplete(completionHandler);
+  }
+
+  public Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<TopicPartition, OffsetAndMetadata>> promise = ctx.promise();
+
+    ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = this.adminClient.listConsumerGroupOffsets(groupId, Helper.to(options));
+    listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata().whenComplete((cgo, ex) -> {
+
+      if (ex == null) {
+        Map<TopicPartition, OffsetAndMetadata> consumerGroupOffsets = new HashMap<>();
+
+        for (Map.Entry<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.consumer.OffsetAndMetadata> cgoOffset : cgo.entrySet()) {
+          consumerGroupOffsets.put(Helper.from(cgoOffset.getKey()), Helper.from(cgoOffset.getValue()));
+        }
+        promise.complete(consumerGroupOffsets);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  @Override
+  public void deleteConsumerGroups(List<String> groupIds, Handler<AsyncResult<Void>> completionHandler) {
+    deleteConsumerGroups(groupIds).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Void> deleteConsumerGroups(List<String> groupIds) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Void> promise = ctx.promise();
+
+    DeleteConsumerGroupsResult deleteConsumerGroupsResult = this.adminClient.deleteConsumerGroups(groupIds);
+    deleteConsumerGroupsResult.all().whenComplete((v, ex) -> {
+      if (ex == null) {
+        promise.complete();
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  @Override
+  public void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
+    deleteConsumerGroupOffsets(groupId, partitions).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Void> deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Void> promise = ctx.promise();
+
+    DeleteConsumerGroupOffsetsResult deleteConsumerGroupOffsetsResult = this.adminClient.deleteConsumerGroupOffsets(groupId, Helper.toTopicPartitionSet(partitions));
+    deleteConsumerGroupOffsetsResult.all().whenComplete((v, ex) -> {
+      if (ex == null) {
+        promise.complete();
       } else {
         promise.fail(ex);
       }
