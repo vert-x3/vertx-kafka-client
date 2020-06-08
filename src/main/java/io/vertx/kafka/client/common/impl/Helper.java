@@ -20,6 +20,7 @@ import io.vertx.core.Handler;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
 import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.MemberAssignment;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.client.common.ConfigResource;
@@ -29,6 +30,7 @@ import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.RecordMetadata;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -201,5 +203,24 @@ public class Helper {
 
   public static MemberAssignment from(org.apache.kafka.clients.admin.MemberAssignment memberAssignment) {
     return new MemberAssignment(Helper.from(memberAssignment.topicPartitions()));
+  }
+
+  public static org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions to(ListConsumerGroupOffsetsOptions listConsumerGroupOffsetsOptions) {
+
+    org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions newListConsumerGroupOffsetsOptions = new org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions();
+
+    if (listConsumerGroupOffsetsOptions.topicPartitions() != null) {
+      List<org.apache.kafka.common.TopicPartition> topicPartitions = listConsumerGroupOffsetsOptions.topicPartitions().stream()
+        .map(tp -> new org.apache.kafka.common.TopicPartition(tp.getTopic(), tp.getPartition()))
+        .collect(Collectors.toList());
+
+      newListConsumerGroupOffsetsOptions.topicPartitions(topicPartitions);
+    }
+
+    return newListConsumerGroupOffsetsOptions;
+  }
+
+  public static Set<org.apache.kafka.common.TopicPartition> toTopicPartitionSet(Set<TopicPartition> partitions) {
+    return partitions.stream().map(Helper::to).collect(Collectors.toSet());
   }
 }

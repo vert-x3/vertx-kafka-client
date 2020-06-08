@@ -16,12 +16,6 @@
 
 package io.vertx.kafka.admin;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -31,6 +25,15 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
+import io.vertx.kafka.client.common.ConfigResource;
+import io.vertx.kafka.client.common.TopicPartition;
+import io.vertx.kafka.client.consumer.OffsetAndMetadata;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import org.apache.kafka.clients.admin.AdminClient;
 
 /**
  * Vert.x Kafka Admin client implementation
@@ -137,7 +140,7 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the consumer groups descriptions
    */
   @GenIgnore
-  void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
+  void describeConsumerGroups(List<String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
 
   /**
    * Close the admin client
@@ -150,6 +153,45 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the cluster description
    */
   void describeCluster(Handler<AsyncResult<ClusterDescription>> completionHandler);
+
+  /**
+   * Delete consumer groups from the cluster.
+   *
+   * @param groupIds the ids of the groups to delete
+   * @param completionHandler handler called on operation completed
+   */
+  void deleteConsumerGroups(List<String> groupIds, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * List the consumer group offsets available in the cluster.
+   *
+   * @param groupId The group id of the group whose offsets will be listed
+   * @param options The options to use when listing the consumer group offsets.
+   * @param completionHandler handler called on operation completed with the consumer groups offsets
+   */
+  @GenIgnore
+  void listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
+
+  /**
+   * List the consumer group offsets available in the cluster.
+   *
+   * @param groupId The group id of the group whose offsets will be listed
+   * @param completionHandler handler called on operation completed with the consumer groups offsets
+   */
+  @GenIgnore
+  default void listConsumerGroupOffsets(String groupId, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
+    listConsumerGroupOffsets(groupId, new ListConsumerGroupOffsetsOptions(), completionHandler);
+  }
+
+  /**
+   * Delete committed offsets for a set of partitions in a consumer group. This will
+   * succeed at the partition level only if the group is not actively subscribed
+   * to the corresponding topic.
+   *
+   * @param groupId The group id of the group whose offsets will be listed
+   * @param partitions The set of partitions in the consumer group whose offsets will be deleted
+   */
+  void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Close the admin client
