@@ -55,10 +55,9 @@ public class KafkaAdminClientExamples {
    * @param adminClient Kafka admin client instance
    */
   public void exampleListTopics(KafkaAdminClient adminClient) {
-
-    adminClient.listTopics(ar -> {
-      System.out.println("Topics= " + ar.result());
-    });
+    adminClient.listTopics().onSuccess(topics ->
+        System.out.println("Topics= " + topics)
+    );
   }
 
   /**
@@ -66,9 +65,8 @@ public class KafkaAdminClientExamples {
    * @param adminClient Kafka admin client instance
    */
   public void exampleDescribeTopics(KafkaAdminClient adminClient) {
-
-    adminClient.describeTopics(Collections.singletonList("my-topic"), ar -> {
-      TopicDescription topicDescription = ar.result().get("first-topic");
+    adminClient.describeTopics(Collections.singletonList("my-topic")).onSuccess(topics -> {
+      TopicDescription topicDescription = topics.get("first-topic");
 
       System.out.println("Topic name=" + topicDescription.getName() +
           " isInternal= " + topicDescription.isInternal() +
@@ -88,10 +86,13 @@ public class KafkaAdminClientExamples {
    * @param adminClient Kafka admin client instance
    */
   public void exampleDeleteTopics(KafkaAdminClient adminClient) {
-
-    adminClient.deleteTopics(Collections.singletonList("topicToDelete"), ar -> {
-      // check if they were deleted successfully
-    });
+    adminClient.deleteTopics(Collections.singletonList("topicToDelete"))
+      .onSuccess(v -> {
+        // topics deleted successfully
+      })
+      .onFailure(cause -> {
+        // something went wrong when removing the topics
+      });
   }
 
   /**
@@ -99,10 +100,13 @@ public class KafkaAdminClientExamples {
    * @param adminClient Kafka admin client instance
    */
   public void exampleCreateTopics(KafkaAdminClient adminClient) {
-
-    adminClient.createTopics(Collections.singletonList(new NewTopic("testCreateTopic", 1, (short)1)), ar -> {
-      // check if they were created successfully
-    });
+    adminClient.createTopics(Collections.singletonList(new NewTopic("testCreateTopic", 1, (short)1)))
+      .onSuccess(v -> {
+        // topics created successfully
+      })
+      .onFailure(cause -> {
+        // something went wrong when creating the topics
+      });
   }
 
   /**
@@ -110,11 +114,10 @@ public class KafkaAdminClientExamples {
    * @param adminClient Kafka admin client instance
    */
   public void exampleDescribeConfigs(KafkaAdminClient adminClient) {
-
     // describe configuration for a topic
     adminClient.describeConfigs(Collections.singletonList(
-      new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "my-topic")), ar -> {
-      // check the configuration
+      new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "my-topic"))).onSuccess(configs -> {
+      // check the configurations
     });
   }
 
@@ -123,16 +126,18 @@ public class KafkaAdminClientExamples {
    * @param adminClient Kafka admin client instance
    */
   public void exampleAlterConfigs(KafkaAdminClient adminClient) {
-
     ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "my-topic");
     // create a entry for updating the retention.ms value on the topic
     ConfigEntry retentionEntry = new ConfigEntry(TopicConfig.RETENTION_MS_CONFIG, "51000");
     Map<ConfigResource, Config> updateConfig = new HashMap<>();
     updateConfig.put(resource, new Config(Collections.singletonList(retentionEntry)));
-
-    adminClient.alterConfigs(updateConfig, ar -> {
-      // check the configuration was updated successfully
-    });
+    adminClient.alterConfigs(updateConfig)
+      .onSuccess(v -> {
+        // configuration altered successfully
+      })
+      .onFailure(cause -> {
+        // something went wrong when altering configs
+      });
   }
 
   /**
@@ -140,10 +145,9 @@ public class KafkaAdminClientExamples {
    * @param adminClient Kafka admin client instance
    */
   public void exampleListConsumerGroups(KafkaAdminClient adminClient) {
-
-    adminClient.listConsumerGroups(ar -> {
-      System.out.println("ConsumerGroups= " + ar.result());
-    });
+    adminClient.listConsumerGroups().onSuccess(consumerGroups ->
+      System.out.println("ConsumerGroups= " + consumerGroups)
+    );
   }
 
   /**
@@ -151,9 +155,8 @@ public class KafkaAdminClientExamples {
    * @param adminClient Kafka admin client instance
    */
   public void exampleDescribeConsumerGroups(KafkaAdminClient adminClient) {
-
-    adminClient.describeConsumerGroups(Collections.singletonList("my-group"), ar -> {
-      ConsumerGroupDescription consumerGroupDescription = ar.result().get("my-group");
+    adminClient.describeConsumerGroups(Collections.singletonList("my-group")).onSuccess(consumerGroups -> {
+      ConsumerGroupDescription consumerGroupDescription = consumerGroups.get("my-group");
 
       System.out.println("Group id=" + consumerGroupDescription.getGroupId() +
         " state= " + consumerGroupDescription.getState() +
