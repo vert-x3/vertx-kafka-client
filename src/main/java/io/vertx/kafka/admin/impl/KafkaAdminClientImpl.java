@@ -398,7 +398,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
           Collection<org.apache.kafka.common.Node> rnodes = describeClusterResult.nodes().get();
 
           Node controller = Helper.from(rcontroller);
-          Collection<Node> nodes = new ArrayList<Node>();
+          List<Node> nodes = new ArrayList<>();
           rnodes.forEach(rnode -> {
             nodes.add(Helper.from(rnode));
           });
