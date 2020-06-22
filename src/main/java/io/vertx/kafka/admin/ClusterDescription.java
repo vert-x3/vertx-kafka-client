@@ -20,7 +20,9 @@ import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.common.Node;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * A detailed description of the cluster
@@ -29,7 +31,7 @@ import java.util.Collection;
 public class ClusterDescription {
   private String clusterId;
   private Node controller;
-  private Collection<Node> nodes;
+  private List<Node> nodes;
 
   /**
    * Constructor
@@ -45,7 +47,7 @@ public class ClusterDescription {
    * @param controller The controller node.
    * @param nodes A collection of nodes belonging to this cluster.
    */
-  public ClusterDescription(String clusterId, Node controller, Collection<Node> nodes) {
+  public ClusterDescription(String clusterId, Node controller, List<Node> nodes) {
     this.clusterId = clusterId;
     this.controller = controller;
     this.nodes = nodes;
@@ -65,7 +67,7 @@ public class ClusterDescription {
    *
    * @return the nodes belonging to this cluster.
    */
-  public Collection<Node> getNodes() {
+  public List<Node> getNodes() {
     return nodes;
   }
 
@@ -75,8 +77,23 @@ public class ClusterDescription {
    * @param nodes the nodes
    * @return current instance of the class to be fluent
    */
-  public ClusterDescription setNodes(Collection<Node> nodes) {
+  public ClusterDescription setNodes(List<Node> nodes) {
     this.nodes = nodes;
+    return this;
+  }
+
+  /**
+   * Add a node belonging to this cluster to the current node list.
+   *
+   * @param node the node to add
+   * @return current instance of the class to be fluent
+   */
+  public ClusterDescription addNode(Node node) {
+    Objects.requireNonNull(node, "Cannot accept null node");
+    if (nodes == null) {
+      nodes = new ArrayList<>();
+    }
+    nodes.add(node);
     return this;
   }
 

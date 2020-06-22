@@ -24,6 +24,16 @@ public class ClusterDescriptionConverter {
             obj.setController(new io.vertx.kafka.client.common.Node((JsonObject)member.getValue()));
           }
           break;
+        case "nodes":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.ArrayList<io.vertx.kafka.client.common.Node> list =  new java.util.ArrayList<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof JsonObject)
+                list.add(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)item));
+            });
+            obj.setNodes(list);
+          }
+          break;
       }
     }
   }
@@ -38,6 +48,11 @@ public class ClusterDescriptionConverter {
     }
     if (obj.getController() != null) {
       json.put("controller", obj.getController().toJson());
+    }
+    if (obj.getNodes() != null) {
+      JsonArray array = new JsonArray();
+      obj.getNodes().forEach(item -> array.add(item.toJson()));
+      json.put("nodes", array);
     }
   }
 }
