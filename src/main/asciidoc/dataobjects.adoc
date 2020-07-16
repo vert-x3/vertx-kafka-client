@@ -18,6 +18,9 @@ Set the cluster ID
 |[[controller]]`@controller`|`link:dataobjects.html#Node[Node]`|+++
 Set the controller node.
 +++
+|[[nodes]]`@nodes`|`Array of link:dataobjects.html#Node[Node]`|+++
+Set the nodes belonging to this cluster
++++
 |===
 
 [[Config]]

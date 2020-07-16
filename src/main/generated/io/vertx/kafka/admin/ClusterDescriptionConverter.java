@@ -29,7 +29,7 @@ public class ClusterDescriptionConverter {
             java.util.ArrayList<io.vertx.kafka.client.common.Node> list =  new java.util.ArrayList<>();
             ((Iterable<Object>)member.getValue()).forEach( item -> {
               if (item instanceof JsonObject)
-                list.add(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)item));
+                list.add(new io.vertx.kafka.client.common.Node((JsonObject)item));
             });
             obj.setNodes(list);
           }
