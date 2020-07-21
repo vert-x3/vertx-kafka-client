@@ -86,9 +86,11 @@ public class KafkaReadStreamMockTest extends KafkaTestBase {
                 if(timer!=null) vertx.cancelTimer(timer);
                 timer = vertx.setTimer(5, (t)->{
                     consumerVertx.pause();
+                    ctx.assertEquals(0L, consumerVertx.currentFetchAmount());
                     vertx.getOrCreateContext().runOnContext((t1)->{
                         consumerVertx.commit();
                         consumerVertx.resume();
+                        ctx.assertEquals(Long.MAX_VALUE, consumerVertx.currentFetchAmount());
                         sendNextBatch(consumer);
                         // sends two batches of messages
                         vertx.getOrCreateContext().runOnContext((t2)->{
