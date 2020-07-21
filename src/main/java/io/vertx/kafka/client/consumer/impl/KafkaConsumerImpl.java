@@ -104,8 +104,8 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public long currentFetchAmount() {
-    return this.stream.currentFetchAmount();
+  public long demand() {
+    return this.stream.demand();
   }
 
   @Override

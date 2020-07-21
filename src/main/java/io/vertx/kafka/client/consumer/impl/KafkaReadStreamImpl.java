@@ -657,7 +657,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public long currentFetchAmount() {
+  public long demand() {
     return this.demand.get();
   }
 

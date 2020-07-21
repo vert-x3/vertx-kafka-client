@@ -177,16 +177,16 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   KafkaConsumer<K, V> endHandler(Handler<Void> endHandler);
 
   /**
-   * Returns the current fetch amount.
+   * Returns the current demand.
    *
    * <ul>
    *   <i>If the stream is in <i>flowing</i> mode will return {@link Long#MAX_VALUE}.</i>
    *   <li>If the stream is in <i>fetch</i> mode, will return the current number of elements still to be delivered or 0 if paused.</li>
    * </ul>
    *
-   * @return current fetch amount
+   * @return current demand
    */
-  long currentFetchAmount();
+  long demand();
 
   /**
    * Subscribe to the given topic to get dynamically assigned partitions.
