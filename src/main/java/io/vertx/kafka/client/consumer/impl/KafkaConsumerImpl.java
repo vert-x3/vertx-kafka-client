@@ -102,6 +102,10 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
     return this;
   }
 
+  public long demand() {
+    return this.stream.demand();
+  }
+
   @Override
   public KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions) {
     return this.pause(topicPartitions, null);

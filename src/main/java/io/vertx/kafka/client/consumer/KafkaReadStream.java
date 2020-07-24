@@ -52,6 +52,18 @@ import java.util.regex.Pattern;
 public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> {
 
   /**
+   * Returns the current demand.
+   *
+   * <ul>
+   *   <i>If the stream is in <i>flowing</i> mode will return {@link Long#MAX_VALUE}.</i>
+   *   <li>If the stream is in <i>fetch</i> mode, will return the current number of elements still to be delivered or 0 if paused.</li>
+   * </ul>
+   *
+   * @return current demand
+   */
+  long demand();
+
+  /**
    * Create a new KafkaReadStream instance
    *
    * @param vertx Vert.x instance to use
