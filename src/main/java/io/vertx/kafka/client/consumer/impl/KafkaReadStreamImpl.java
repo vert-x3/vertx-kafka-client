@@ -656,6 +656,11 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     return this;
   }
 
+  @Override
+  public long demand() {
+    return this.demand.get();
+  }
+
   private KafkaReadStreamImpl<K, V> startConsuming() {
     this.consuming.set(true);
     this.schedule(0);

@@ -104,6 +104,11 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public long demand() {
+    return this.stream.demand();
+  }
+
+  @Override
   public Future<Void> pause(Set<TopicPartition> topicPartitions) {
     Promise<Void> promise = Promise.promise();
     this.pause(topicPartitions, promise);
