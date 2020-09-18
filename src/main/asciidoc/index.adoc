@@ -469,4 +469,16 @@ stream of {@link org.apache.kafka.clients.producer.ProducerRecord}.
 The API exposed by these interfaces is mostly the same than the polyglot version.
 endif::[]
 
+== Automatic trace propagation
+
+When Vert.x is configured with Tracing enabled (see {@link io.vertx.core.VertxOptions#setTracingOptions}),
+traces will be automatically propagated with Kafka messages.
+
+Kafka producers will add a span to traces when a message is being written, trace contexts
+will be propagated as Kafka headers, and the consumers will also create a span while reading a message.
+
+The span tags follow the
+link:https://github.com/opentracing/specification/blob/master/semantic_conventions.md[OpenTracing semantic convention].
+
+
 include::admin.adoc[]

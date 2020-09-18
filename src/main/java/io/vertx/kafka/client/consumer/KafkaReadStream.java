@@ -23,6 +23,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.common.KafkaClientOptions;
+import io.vertx.kafka.client.common.tracing.ConsumerTracer;
 import io.vertx.kafka.client.consumer.impl.KafkaReadStreamImpl;
 import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -91,7 +92,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config) {
-    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
+    ConsumerTracer tracer = ConsumerTracer.create(vertx, config::getProperty);
+    return new KafkaReadStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.consumer.KafkaConsumer<>(config), tracer);
   }
 
   /**
@@ -119,7 +121,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
-    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
+    ConsumerTracer tracer = ConsumerTracer.create(vertx, config::getProperty);
+    return new KafkaReadStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer), tracer);
   }
 
   /**
@@ -130,7 +133,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config) {
-    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
+    ConsumerTracer tracer = ConsumerTracer.create(vertx, (k, d) -> (String)(config.getOrDefault(k, d)));
+    return new KafkaReadStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.consumer.KafkaConsumer<>(config), tracer);
   }
 
   /**
@@ -216,7 +220,8 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Consumer<K, V> consumer) {
-    return new KafkaReadStreamImpl<>(vertx.getOrCreateContext(), consumer);
+    ConsumerTracer tracer = ConsumerTracer.create(vertx, (k, d) -> d);
+    return new KafkaReadStreamImpl<>(vertx.getOrCreateContext(), consumer, tracer);
   }
 
   /**

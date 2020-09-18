@@ -24,6 +24,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
+import io.vertx.kafka.client.common.tracing.ProducerTracer;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Kafka write stream implementation
@@ -44,15 +44,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
+    ProducerTracer tracer = ProducerTracer.create(vertx, config::getProperty);
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config), tracer);
   }
 
   public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
+    ProducerTracer tracer = ProducerTracer.create(vertx, config::getProperty);
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer), tracer);
   }
 
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
+  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map config) {
+    ProducerTracer tracer = ProducerTracer.create(vertx, (k, d) -> (String)(config.getOrDefault(k, d)));
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config), tracer);
   }
 
   public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
@@ -81,10 +84,12 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   private Handler<Void> drainHandler;
   private Handler<Throwable> exceptionHandler;
   private final Context context;
+  private final ProducerTracer tracer;
 
-  public KafkaWriteStreamImpl(Context context, Producer<K, V> producer) {
+  public KafkaWriteStreamImpl(Context context, Producer<K, V> producer, ProducerTracer tracer) {
     this.producer = producer;
     this.context = context;
+    this.tracer = tracer;
   }
 
   private int len(Object value) {
@@ -100,6 +105,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   @Override
   public Future<RecordMetadata> send(ProducerRecord<K, V> record) {
     ContextInternal ctx = (ContextInternal) context.owner().getOrCreateContext();
+    ProducerTracer.StartedSpan startedSpan = this.tracer == null ? null : this.tracer.prepareSendMessage(ctx, record);
     Promise<RecordMetadata> trampolineProm = ctx.promise();
     int len = this.len(record.value());
     this.pending += len;
@@ -131,8 +137,14 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
           });
 
           if (err != null) {
+            if (startedSpan != null) {
+              startedSpan.fail(ctx, err);
+            }
             prom.fail(err);
           } else {
+            if (startedSpan != null) {
+              startedSpan.finish(ctx);
+            }
             prom.complete(metadata);
           }
         });
@@ -142,6 +154,9 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             Handler<Throwable> exceptionHandler = this.exceptionHandler;
             this.context.runOnContext(v3 -> exceptionHandler.handle(e));
           }
+        }
+        if (startedSpan != null) {
+          startedSpan.fail(ctx, e);
         }
         prom.fail(e);
       }
@@ -309,5 +324,4 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
     void execute();
   }
-
 }

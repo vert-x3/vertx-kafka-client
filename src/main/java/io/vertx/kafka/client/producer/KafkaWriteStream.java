@@ -170,7 +170,7 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @param producer  native Kafka producer instance
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Producer<K, V> producer) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), producer);
+    return KafkaWriteStreamImpl.create(vertx, producer);
   }
 
   @Fluent

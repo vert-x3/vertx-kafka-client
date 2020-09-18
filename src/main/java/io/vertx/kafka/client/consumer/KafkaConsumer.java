@@ -63,7 +63,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   @GenIgnore
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Consumer<K, V> consumer) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, consumer);
-    return new KafkaConsumerImpl<K, V>(stream);
+    return new KafkaConsumerImpl<>(stream);
   }
 
   /**

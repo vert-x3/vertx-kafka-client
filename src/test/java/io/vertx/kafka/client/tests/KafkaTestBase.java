@@ -45,13 +45,13 @@ public class KafkaTestBase {
     }
   }
 
-  static void close(TestContext ctx, KafkaWriteStream<?, ?> producer) {
+  public static void close(TestContext ctx, KafkaWriteStream<?, ?> producer) {
     if (producer != null) {
       close(ctx, handler -> producer.close(2000L, handler));
     }
   }
 
-  static void close(TestContext ctx, KafkaReadStream<?, ?> consumer) {
+  public static void close(TestContext ctx, KafkaReadStream<?, ?> consumer) {
     if (consumer != null) {
       KafkaTestBase.close(ctx, consumer::close);
     }
@@ -64,7 +64,7 @@ public class KafkaTestBase {
   }
 
 
-  static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Properties config) {
+  public static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Properties config) {
     return KafkaWriteStream.create(vertx, config);
   }
 

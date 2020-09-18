@@ -21,7 +21,9 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.kafka.client.common.impl.Helper;
+import io.vertx.kafka.client.common.tracing.ConsumerTracer;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -59,6 +61,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   private final Context context;
   private final AtomicBoolean closed = new AtomicBoolean(true);
   private final Consumer<K, V> consumer;
+  private final ConsumerTracer tracer;
 
   private final AtomicBoolean consuming = new AtomicBoolean(false);
   private final AtomicLong demand = new AtomicLong(Long.MAX_VALUE);
@@ -98,9 +101,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     }
   };
 
-  public KafkaReadStreamImpl(Context context, Consumer<K, V> consumer) {
+  public KafkaReadStreamImpl(Context context, Consumer<K, V> consumer, ConsumerTracer tracer) {
     this.context = context;
     this.consumer = consumer;
+    this.tracer = tracer;
   }
 
   private <T> void start(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task, Handler<AsyncResult<T>> handler) {
@@ -227,10 +231,25 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         }
 
         ConsumerRecord<K, V> next = this.current.next();
-        handler.handle(next);
+        this.tracedHandler(handler).handle(next);
       }
       this.schedule(0);
     }
+  }
+
+  private Handler<ConsumerRecord<K, V>> tracedHandler(Handler<ConsumerRecord<K, V>> handler) {
+    return this.tracer == null ? handler :
+      rec -> {
+        Context ctx = ((ContextInternal)this.context).duplicate();
+        ConsumerTracer.StartedSpan startedSpan = tracer.prepareMessageReceived(ctx, rec);
+        try {
+          handler.handle(rec);
+          startedSpan.finish(ctx);
+        } catch (Throwable t) {
+          startedSpan.fail(ctx, t);
+          throw t;
+        }
+      };
   }
 
   protected <T> void submitTask(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task,
