@@ -33,8 +33,10 @@ import io.vertx.kafka.admin.ClusterDescription;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.ListOffsetsResultInfo;
 import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
+import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
@@ -52,6 +54,7 @@ import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
+import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 
 import io.vertx.core.AsyncResult;
@@ -294,7 +297,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void describeCluster(Handler<AsyncResult<ClusterDescription>> completionHandler) {
-    
+
     DescribeClusterResult describeClusterResult = this.adminClient.describeCluster();
     KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
       if (ex == null) {
@@ -313,6 +316,22 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
         } catch (InterruptedException|ExecutionException e) {
           completionHandler.handle(Future.failedFuture(e));
         }
+      } else {
+        completionHandler.handle(Future.failedFuture(ex));
+      }
+    });
+  }
+
+  public void listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets, Handler<AsyncResult<Map<TopicPartition, ListOffsetsResultInfo>>> completionHandler) {
+    ListOffsetsResult listOffsetsResult = this.adminClient.listOffsets(Helper.toTopicPartitionOffsets(topicPartitionOffsets));
+    listOffsetsResult.all().whenComplete((o, ex) -> {
+      if (ex == null) {
+        Map<TopicPartition, ListOffsetsResultInfo> listOffsets = new HashMap<>();
+
+        for (Map.Entry<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo> oOffset : o.entrySet()) {
+          listOffsets.put(Helper.from(oOffset.getKey()), Helper.from(oOffset.getValue()));
+        }
+        completionHandler.handle(Future.succeededFuture(listOffsets));
       } else {
         completionHandler.handle(Future.failedFuture(ex));
       }

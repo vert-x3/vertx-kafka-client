@@ -25,7 +25,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
-import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.util.HashMap;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.kafka.clients.admin.AdminClient;
 
 /**
  * Vert.x Kafka Admin client implementation
@@ -192,6 +190,15 @@ public interface KafkaAdminClient {
    * @param partitions The set of partitions in the consumer group whose offsets will be deleted
    */
   void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * List the offsets available for a set of partitions.
+   *
+   * @param topicPartitionOffsets The options to use when listing the partition offsets.
+   * @param completionHandler handler called on operation completed with the partition offsets
+   */
+  @GenIgnore
+  void listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets, Handler<AsyncResult<Map<TopicPartition, ListOffsetsResultInfo>>> completionHandler);
 
   /**
    * Close the admin client

@@ -39,9 +39,11 @@ import java.util.stream.Collectors;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
+import io.vertx.kafka.admin.ListOffsetsResultInfo;
 import io.vertx.kafka.admin.MemberAssignment;
 import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
+import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
@@ -564,4 +566,49 @@ public class AdminClientTest extends KafkaClusterTestBase {
     }));
   }
 
+  @Test
+  public void testListOffsets(TestContext ctx) {
+    final String topicName = "list-offsets-topic";
+    kafkaCluster.createTopic(topicName, 1, 1);
+
+    Async producerAsync = ctx.async();
+    kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
+    producerAsync.awaitSuccess(10000);
+
+    final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    final TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
+
+    // BeginOffsets
+    Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.EARLIEST);
+    final Async async1 = ctx.async();
+    adminClient.listOffsets(topicPartitionBeginOffsets, ctx.asyncAssertSuccess(listOffsets -> {
+      ListOffsetsResultInfo offsets = listOffsets.get(topicPartition0);
+      ctx.assertNotNull(offsets);
+      ctx.assertEquals(0L, offsets.getOffset());
+      async1.complete();
+    }));
+
+    // EndOffsets
+    Map<TopicPartition, OffsetSpec> topicPartitionEndOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.LATEST);
+    final Async async2 = ctx.async();
+    adminClient.listOffsets(topicPartitionEndOffsets, ctx.asyncAssertSuccess(listOffsets -> {
+      ListOffsetsResultInfo offsets = listOffsets.get(topicPartition0);
+      ctx.assertNotNull(offsets);
+      ctx.assertEquals(6L, offsets.getOffset());
+      adminClient.close();
+      async2.complete();
+    }));
+  }
+
+  @Test
+  public void testListOffsetsNoTopic(TestContext ctx) {
+    final String topicName = "list-offsets-notopic";
+
+    final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    final TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
+
+    // BeginOffsets of a non existent topic-partition
+    Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.EARLIEST);
+    adminClient.listOffsets(topicPartitionBeginOffsets, ctx.asyncAssertFailure());
+  }
 }
