@@ -21,8 +21,10 @@ import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
 import io.vertx.kafka.admin.ConsumerGroupListing;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
+import io.vertx.kafka.admin.ListOffsetsResultInfo;
 import io.vertx.kafka.admin.MemberAssignment;
 import io.vertx.kafka.admin.NewTopic;
+import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
@@ -222,5 +224,26 @@ public class Helper {
 
   public static Set<org.apache.kafka.common.TopicPartition> toTopicPartitionSet(Set<TopicPartition> partitions) {
     return partitions.stream().map(Helper::to).collect(Collectors.toSet());
+  }
+
+  public static org.apache.kafka.clients.admin.OffsetSpec to(OffsetSpec os) {
+    if (os.EARLIEST == os) {
+      return org.apache.kafka.clients.admin.OffsetSpec.earliest();
+    } else if (os.LATEST == os) {
+      return org.apache.kafka.clients.admin.OffsetSpec.latest();
+    } else {
+      return org.apache.kafka.clients.admin.OffsetSpec.forTimestamp(os.getSpec());
+    }
+  }
+
+  public static Map<org.apache.kafka.common.TopicPartition, org.apache.kafka.clients.admin.OffsetSpec> toTopicPartitionOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets) {
+    return topicPartitionOffsets.entrySet().stream().collect(Collectors.toMap(
+      e -> new org.apache.kafka.common.TopicPartition(e.getKey().getTopic(), e.getKey().getPartition()),
+      e -> to(e.getValue())
+    ));
+  }
+
+  public static ListOffsetsResultInfo from(org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo lori) {
+    return new ListOffsetsResultInfo(lori.offset(), lori.timestamp(), lori.leaderEpoch());
   }
 }

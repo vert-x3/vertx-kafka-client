@@ -26,7 +26,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
-import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.util.HashMap;
@@ -34,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.kafka.clients.admin.AdminClient;
 
 /**
  * Vert.x Kafka Admin client implementation
@@ -257,6 +255,21 @@ public interface KafkaAdminClient {
    * Like {@link #deleteConsumerGroupOffsets(String, Set, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions);
+
+  /**
+   * List the offsets available for a set of partitions.
+   *
+   * @param topicPartitionOffsets The options to use when listing the partition offsets.
+   * @param completionHandler handler called on operation completed with the partition offsets
+   */
+  @GenIgnore
+  void listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets, Handler<AsyncResult<Map<TopicPartition, ListOffsetsResultInfo>>> completionHandler);
+
+  /**
+   * Like {@link #listOffsets(Map<TopicPartition, OffsetSpec>, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<Map<TopicPartition, ListOffsetsResultInfo>> listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets);
 
   /**
    * Close the admin client

@@ -165,6 +165,22 @@ Set if consumer group is simple or not
 ^|Name | Type ^| Description
 |===
 
+[[ListOffsetsResultInfo]]
+== ListOffsetsResultInfo
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[offset]]`@offset`|`Number (long)`|+++
+Set the offset
++++
+|[[timestamp]]`@timestamp`|`Number (long)`|+++
+Set the timestamp
++++
+|===
+
 [[MemberAssignment]]
 == MemberAssignment
 
@@ -303,6 +319,19 @@ Set the offset
 +++
 |[[timestamp]]`@timestamp`|`Number (long)`|+++
 Set the timestamp
++++
+|===
+
+[[OffsetSpec]]
+== OffsetSpec
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[spec]]`@spec`|`Number (long)`|+++
+Set the offset spec
 +++
 |===
 
