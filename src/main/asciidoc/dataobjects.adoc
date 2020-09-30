@@ -173,6 +173,9 @@ Set if consumer group is simple or not
 [frame="topbot"]
 |===
 ^|Name | Type ^| Description
+|[[leaderEpoch]]`@leaderEpoch`|`Number (Integer)`|+++
+Set the leader epoch
++++
 |[[offset]]`@offset`|`Number (long)`|+++
 Set the offset
 +++

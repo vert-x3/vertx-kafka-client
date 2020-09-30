@@ -244,6 +244,6 @@ public class Helper {
   }
 
   public static ListOffsetsResultInfo from(org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo lori) {
-    return new ListOffsetsResultInfo(lori.offset(), lori.timestamp(), lori.leaderEpoch());
+    return new ListOffsetsResultInfo(lori.offset(), lori.timestamp(), lori.leaderEpoch().orElse(null));
   }
 }

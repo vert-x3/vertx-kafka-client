@@ -16,6 +16,11 @@ public class ListOffsetsResultInfoConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ListOffsetsResultInfo obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
+        case "leaderEpoch":
+          if (member.getValue() instanceof Number) {
+            obj.setLeaderEpoch(((Number)member.getValue()).intValue());
+          }
+          break;
         case "offset":
           if (member.getValue() instanceof Number) {
             obj.setOffset(((Number)member.getValue()).longValue());
@@ -35,6 +40,9 @@ public class ListOffsetsResultInfoConverter {
   }
 
   public static void toJson(ListOffsetsResultInfo obj, java.util.Map<String, Object> json) {
+    if (obj.getLeaderEpoch() != null) {
+      json.put("leaderEpoch", obj.getLeaderEpoch());
+    }
     json.put("offset", obj.getOffset());
     json.put("timestamp", obj.getTimestamp());
   }

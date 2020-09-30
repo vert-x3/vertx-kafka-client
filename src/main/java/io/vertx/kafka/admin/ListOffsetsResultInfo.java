@@ -19,13 +19,11 @@ package io.vertx.kafka.admin;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
-import java.util.Optional;
-
 @DataObject(generateConverter = true)
 public class ListOffsetsResultInfo {
   private long offset;
   private long timestamp;
-  private Optional<Integer> leaderEpoch;
+  private Integer leaderEpoch;
 
   /**
    * Constructor
@@ -34,7 +32,7 @@ public class ListOffsetsResultInfo {
    * @param timestamp the timestamp
    * @param leaderEpoch the leader epoch
    */
-  public ListOffsetsResultInfo(long offset, long timestamp, Optional<Integer> leaderEpoch) {
+  public ListOffsetsResultInfo(long offset, long timestamp, Integer leaderEpoch) {
     this.offset = offset;
     this.timestamp = timestamp;
     this.leaderEpoch = leaderEpoch;
@@ -67,7 +65,7 @@ public class ListOffsetsResultInfo {
   /**
    * @return the leader epoch
    */
-  public Optional<Integer> getLeaderEpoch() {
+  public Integer getLeaderEpoch() {
     return leaderEpoch;
   }
 
@@ -97,7 +95,7 @@ public class ListOffsetsResultInfo {
    * @param leaderEpoch the leader epoch
    * @return current instance of the class to be fluent
    */
-  public ListOffsetsResultInfo setLeaderEpoch(Optional<Integer> leaderEpoch) {
+  public ListOffsetsResultInfo setLeaderEpoch(Integer leaderEpoch) {
     this.leaderEpoch = leaderEpoch;
     return this;
   }
@@ -119,7 +117,7 @@ public class ListOffsetsResultInfo {
     return "ListOffsetsResultInfo{" +
       "offset=" + this.offset +
       ",timestamp=" + this.timestamp +
-      (this.leaderEpoch.isPresent()? ",leaderEpoch=" + this.leaderEpoch.get(): "") +
+      (this.leaderEpoch != null ? ",leaderEpoch=" + this.leaderEpoch : "") +
       "}";
   }
 }
