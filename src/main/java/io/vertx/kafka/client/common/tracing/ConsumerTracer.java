@@ -17,11 +17,10 @@ package io.vertx.kafka.client.common.tracing;
 
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Context;
-import io.vertx.core.Vertx;
-import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.spi.tracing.TagExtractor;
 import io.vertx.core.spi.tracing.VertxTracer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
+import io.vertx.core.tracing.TracingPolicy;
+import io.vertx.kafka.client.common.KafkaClientOptions;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.utils.Utils;
@@ -29,7 +28,6 @@ import org.apache.kafka.common.utils.Utils;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.stream.StreamSupport;
 
 /**
@@ -40,16 +38,18 @@ public class ConsumerTracer<S> {
   private final String address;
   private final String hostname;
   private final String port;
+  private final TracingPolicy policy;
 
-  public static <S> @Nullable ConsumerTracer create(Vertx vertx, BiFunction<String, String, String> mapOrDefault) {
-    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
-    if (ctx.tracer() == null) {
+  public static <S> @Nullable ConsumerTracer create(VertxTracer tracer, KafkaClientOptions opts) {
+    TracingPolicy policy = opts.getTracingPolicy() != null ? opts.getTracingPolicy() : TracingPolicy.ALWAYS;
+    if (policy == TracingPolicy.IGNORE || tracer == null) {
+      // No need to create a tracer if it won't be used
       return null;
     }
-    return new ConsumerTracer<S>(ctx.tracer(), mapOrDefault.apply(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, ""));
+    return new ConsumerTracer<S>(tracer, policy, opts.getTracePeerAddress());
   }
 
-  private ConsumerTracer(VertxTracer<S, Void> tracer, String bootstrapServer) {
+  private ConsumerTracer(VertxTracer<S, Void> tracer, TracingPolicy policy, String bootstrapServer) {
     if (tracer == null) {
       throw new IllegalArgumentException("tracer should not be null");
     }
@@ -58,6 +58,7 @@ public class ConsumerTracer<S> {
     this.hostname = Utils.getHost(bootstrapServer);
     Integer port = Utils.getPort(bootstrapServer);
     this.port = port == null ? null : port.toString();
+    this.policy = policy;
   }
 
   private static Iterable<Map.Entry<String, String>> convertHeaders(Headers headers) {
@@ -70,7 +71,7 @@ public class ConsumerTracer<S> {
 
   public StartedSpan prepareMessageReceived(Context context, ConsumerRecord rec) {
     TraceContext tc = new TraceContext("consumer", address, hostname, port, rec.topic());
-    S span = tracer.receiveRequest(context, tc, "kafka_receive", convertHeaders(rec.headers()), TraceTags.TAG_EXTRACTOR);
+    S span = tracer.receiveRequest(context, policy, tc, "kafka_receive", convertHeaders(rec.headers()), TraceTags.TAG_EXTRACTOR);
     return new StartedSpan(span);
   }
 

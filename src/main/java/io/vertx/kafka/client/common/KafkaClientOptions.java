@@ -18,22 +18,59 @@ package io.vertx.kafka.client.common;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.tracing.TracingPolicy;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Generic KafkaClient options.
  */
 @DataObject(generateConverter = true)
 public class KafkaClientOptions {
+  /**
+   * Default registry name is 'default'
+   */
+  public static final String DEFAULT_TRACE_PEER_ADDRESS = "";
+
+  /**
+   * Default registry name is 'default'
+   */
+  public static final TracingPolicy DEFAULT_TRACING_POLICY = TracingPolicy.PROPAGATE;
 
   private Map<String, Object> config;
+  private String tracePeerAddress = DEFAULT_TRACE_PEER_ADDRESS;
+  private TracingPolicy tracingPolicy = DEFAULT_TRACING_POLICY;
 
   public KafkaClientOptions() {
   }
 
   public KafkaClientOptions(JsonObject json) {
+    this();
+    KafkaClientOptionsConverter.fromJson(json, this);
+  }
+
+  /**
+   * Create KafkaClientOptions from underlying Kafka config as map
+   * @param config config map to be passed down to underlying Kafka client
+   * @return an instance of KafkaClientOptions
+   */
+  public static KafkaClientOptions fromMap(Map<String, Object> config, boolean isProducer) {
+    String tracePeerAddress = (String) config.getOrDefault(isProducer ? ProducerConfig.BOOTSTRAP_SERVERS_CONFIG : ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "");
+    return new KafkaClientOptions().setTracePeerAddress(tracePeerAddress);
+  }
+
+  /**
+   * Create KafkaClientOptions from underlying Kafka config as Properties
+   * @param config config properties to be passed down to underlying Kafka client
+   * @return an instance of KafkaClientOptions
+   */
+  public static KafkaClientOptions fromProperties(Properties config, boolean isProducer) {
+    String tracePeerAddress = (String) config.getOrDefault(isProducer ? ProducerConfig.BOOTSTRAP_SERVERS_CONFIG : ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "");
+    return new KafkaClientOptions().setTracePeerAddress(tracePeerAddress);
   }
 
   /**
@@ -70,8 +107,47 @@ public class KafkaClientOptions {
     return this;
   }
 
+  /**
+   * @return the kafka tracing policy
+   */
+  public TracingPolicy getTracingPolicy() {
+    return tracingPolicy;
+  }
+
+  /**
+   * Set the Kafka tracing policy.
+   *
+   * @param tracingPolicy the tracing policy
+   * @return a reference to this, so the API can be used fluently
+   */
+  public KafkaClientOptions setTracingPolicy(TracingPolicy tracingPolicy) {
+    this.tracingPolicy = tracingPolicy;
+    return this;
+  }
+
+  /**
+   * @return the Kafka "peer address" to show in traces
+   */
+  public String getTracePeerAddress() {
+    // Search for peer address in config if not provided
+    if (config != null && tracePeerAddress == null) {
+      return (String) config.getOrDefault(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "");
+    }
+    return tracePeerAddress;
+  }
+
+  /**
+   * Set the Kafka address for traces.
+   *
+   * @param tracePeerAddress the Kafka "peer address" to show in traces
+   * @return a reference to this, so the API can be used fluently
+   */
+  public KafkaClientOptions setTracePeerAddress(String tracePeerAddress) {
+    this.tracePeerAddress = tracePeerAddress;
+    return this;
+  }
+
   public JsonObject toJson() {
     return new JsonObject();
   }
-
 }

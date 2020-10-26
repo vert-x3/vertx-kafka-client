@@ -167,6 +167,12 @@ Set if consumer group is simple or not
 [frame="topbot"]
 |===
 ^|Name | Type ^| Description
+|[[tracePeerAddress]]`@tracePeerAddress`|`String`|+++
+Set the Kafka address for traces.
++++
+|[[tracingPolicy]]`@tracingPolicy`|`link:enums.html#TracingPolicy[TracingPolicy]`|+++
+Set the Kafka tracing policy.
++++
 |===
 
 [[ListConsumerGroupOffsetsOptions]]

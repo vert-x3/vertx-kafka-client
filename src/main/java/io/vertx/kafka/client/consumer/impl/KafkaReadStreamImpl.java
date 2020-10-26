@@ -21,7 +21,9 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.common.tracing.ConsumerTracer;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
@@ -101,10 +103,11 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     }
   };
 
-  public KafkaReadStreamImpl(Context context, Consumer<K, V> consumer, ConsumerTracer tracer) {
-    this.context = context;
+  public KafkaReadStreamImpl(Vertx vertx, Consumer<K, V> consumer, KafkaClientOptions options) {
     this.consumer = consumer;
-    this.tracer = tracer;
+    ContextInternal ctxInt = (ContextInternal) vertx.getOrCreateContext();
+    this.context = ctxInt;
+    this.tracer = ConsumerTracer.create(ctxInt.tracer(), options);
   }
 
   private <T> void start(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task, Handler<AsyncResult<T>> handler) {

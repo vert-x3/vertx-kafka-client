@@ -17,15 +17,12 @@ package io.vertx.kafka.client.common.tracing;
 
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Context;
-import io.vertx.core.Vertx;
-import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.spi.tracing.TagExtractor;
 import io.vertx.core.spi.tracing.VertxTracer;
-import org.apache.kafka.clients.producer.ProducerConfig;
+import io.vertx.core.tracing.TracingPolicy;
+import io.vertx.kafka.client.common.KafkaClientOptions;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.utils.Utils;
-
-import java.util.function.BiFunction;
 
 /**
  * Tracer for Kafka producer, wrapping the generic tracer.
@@ -35,16 +32,18 @@ public class ProducerTracer<S> {
   private final String address;
   private final String hostname;
   private final String port;
+  private final TracingPolicy policy;
 
-  public static <S> @Nullable ProducerTracer create(Vertx vertx, BiFunction<String, String, String> mapOrDefault) {
-    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
-    if (ctx.tracer() == null) {
+  public static <S> @Nullable ProducerTracer create(VertxTracer tracer, KafkaClientOptions opts) {
+    TracingPolicy policy = opts.getTracingPolicy() != null ? opts.getTracingPolicy() : TracingPolicy.PROPAGATE;
+    if (policy == TracingPolicy.IGNORE || tracer == null) {
+      // No need to create a tracer if it won't be used
       return null;
     }
-    return new ProducerTracer<S>(ctx.tracer(), mapOrDefault.apply(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, ""));
+    return new ProducerTracer<S>(tracer, policy, opts.getTracePeerAddress());
   }
 
-  private ProducerTracer(VertxTracer<Void, S> tracer, String bootstrapServer) {
+  private ProducerTracer(VertxTracer<Void, S> tracer, TracingPolicy policy, String bootstrapServer) {
     if (tracer == null) {
       throw new IllegalArgumentException("tracer should not be null");
     }
@@ -53,11 +52,12 @@ public class ProducerTracer<S> {
     this.hostname = Utils.getHost(bootstrapServer);
     Integer port = Utils.getPort(bootstrapServer);
     this.port = port == null ? null : port.toString();
+    this.policy = policy;
   }
 
   public StartedSpan prepareSendMessage(Context context, ProducerRecord record) {
     TraceContext tc = new TraceContext("producer", address, hostname, port, record.topic());
-    S span = tracer.sendRequest(context, tc, "kafka_send", (k, v) -> record.headers().add(k, v.getBytes()), TraceTags.TAG_EXTRACTOR);
+    S span = tracer.sendRequest(context, policy, tc, "kafka_send", (k, v) -> record.headers().add(k, v.getBytes()), TraceTags.TAG_EXTRACTOR);
     return new StartedSpan(span);
   }
 

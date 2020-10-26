@@ -30,53 +30,14 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
-import org.apache.kafka.common.serialization.Serializer;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Kafka write stream implementation
  */
 public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config) {
-    ProducerTracer tracer = ProducerTracer.create(vertx, config::getProperty);
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config), tracer);
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    ProducerTracer tracer = ProducerTracer.create(vertx, config::getProperty);
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer), tracer);
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map config) {
-    ProducerTracer tracer = ProducerTracer.create(vertx, (k, d) -> (String)(config.getOrDefault(k, d)));
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config), tracer);
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, KafkaClientOptions options) {
-    Map<String, Object> config = new HashMap<>();
-    if (options.getConfig() != null) {
-      config.putAll(options.getConfig());
-    }
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, KafkaClientOptions options, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    Map<String, Object> config = new HashMap<>();
-    if (options.getConfig() != null) {
-      config.putAll(options.getConfig());
-    }
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
-  }
 
   private long maxSize = DEFAULT_MAX_SIZE;
   private long pending;
@@ -86,10 +47,11 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   private final Context context;
   private final ProducerTracer tracer;
 
-  public KafkaWriteStreamImpl(Context context, Producer<K, V> producer, ProducerTracer tracer) {
+  public KafkaWriteStreamImpl(Vertx vertx, Producer<K, V> producer, KafkaClientOptions options) {
     this.producer = producer;
-    this.context = context;
-    this.tracer = tracer;
+    ContextInternal ctxInt = (ContextInternal) vertx.getOrCreateContext();
+    this.context = ctxInt;
+    this.tracer = ProducerTracer.create(ctxInt.tracer(), options);
   }
 
   private int len(Object value) {
