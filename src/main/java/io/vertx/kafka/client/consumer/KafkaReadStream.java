@@ -22,6 +22,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.ReadStream;
+import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.consumer.impl.KafkaReadStreamImpl;
 import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -34,6 +35,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -156,6 +158,53 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
+    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
+  }
+
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param options  Kafka consumer options
+   * @return  an instance of the KafkaReadStream
+   */
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, KafkaClientOptions options) {
+    Map<String, Object> config = new HashMap<>();
+    if (options.getConfig() != null) {
+      config.putAll(options.getConfig());
+    }
+    return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config));
+  }
+
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param options  Kafka consumer options
+   * @param keyType class type for the key deserialization
+   * @param valueType class type for the value deserialization
+   * @return  an instance of the KafkaReadStream
+   */
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, KafkaClientOptions options, Class<K> keyType, Class<V> valueType) {
+    Deserializer<K> keyDeserializer = VertxSerdes.serdeFrom(keyType).deserializer();
+    Deserializer<V> valueDeserializer = VertxSerdes.serdeFrom(valueType).deserializer();
+    return create(vertx, options, keyDeserializer, valueDeserializer);
+  }
+
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx Vert.x instance to use
+   * @param options  Kafka consumer options
+   * @param keyDeserializer key deserializer
+   * @param valueDeserializer value deserializer
+   * @return  an instance of the KafkaReadStream
+   */
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, KafkaClientOptions options, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
+    Map<String, Object> config = new HashMap<>();
+    if (options.getConfig() != null) {
+      config.putAll(options.getConfig());
+    }
     return create(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer));
   }
 

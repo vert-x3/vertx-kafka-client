@@ -23,14 +23,15 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.serialization.Serializer;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -55,6 +56,22 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
+  }
+
+  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, KafkaClientOptions options) {
+    Map<String, Object> config = new HashMap<>();
+    if (options.getConfig() != null) {
+      config.putAll(options.getConfig());
+    }
+    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
+  }
+
+  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, KafkaClientOptions options, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    Map<String, Object> config = new HashMap<>();
+    if (options.getConfig() != null) {
+      config.putAll(options.getConfig());
+    }
     return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
   }
 

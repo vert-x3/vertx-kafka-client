@@ -155,6 +155,20 @@ Set if consumer group is simple or not
 +++
 |===
 
+[[KafkaClientOptions]]
+== KafkaClientOptions
+
+++++
+ Generic KafkaClient options.
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|===
+
 [[ListConsumerGroupOffsetsOptions]]
 == ListConsumerGroupOffsetsOptions
 

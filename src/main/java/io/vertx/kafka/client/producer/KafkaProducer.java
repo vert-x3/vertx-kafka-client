@@ -24,6 +24,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.streams.WriteStream;
+import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 import org.apache.kafka.clients.producer.Producer;
@@ -65,6 +66,18 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    */
   static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config) {
     return KafkaProducerImpl.createShared(vertx, name, config);
+  }
+
+  /**
+   * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   *
+   * @param vertx Vert.x instance to use
+   * @param name the producer name to identify it
+   * @param options  Kafka producer options
+   * @return  an instance of the KafkaProducer
+   */
+  static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options) {
+    return KafkaProducerImpl.createShared(vertx, name, options);
   }
 
   /**
@@ -124,6 +137,35 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
   @GenIgnore
   static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config, Class<K> keyType, Class<V> valueType) {
     return KafkaProducerImpl.createShared(vertx, name, config, keyType, valueType);
+  }
+
+  /**
+   * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   *
+   * @param vertx Vert.x instance to use
+   * @param name the producer name to identify it
+   * @param options  Kafka producer options
+   * @param keySerializer key serializer
+   * @param valueSerializer value serializer
+   * @return  an instance of the KafkaProducer
+   */
+  @GenIgnore
+  static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return KafkaProducerImpl.createShared(vertx, name, options, keySerializer, valueSerializer);
+  }
+
+  /**
+   * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   *
+   * @param vertx Vert.x instance to use
+   * @param name the producer name to identify it
+   * @param options  Kafka producer options
+   * @param keyType class type for the key serialization
+   * @param valueType class type for the value serialization
+   * @return  an instance of the KafkaProducer
+   */
+  static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options, Class<K> keyType, Class<V> valueType) {
+    return KafkaProducerImpl.createShared(vertx, name, options, keyType, valueType);
   }
 
   /**

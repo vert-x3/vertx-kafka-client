@@ -24,6 +24,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.common.PartitionInfo;
@@ -56,6 +57,10 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config)));
   }
 
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, options));
+  }
+
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config, Class<K> keyType, Class<V> valueType) {
     return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config, keyType, valueType));
   }
@@ -70,6 +75,14 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
     return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config), keySerializer, valueSerializer));
+  }
+
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options, Class<K> keyType, Class<V> valueType) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, options, keyType, valueType));
+  }
+
+  public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, options, keySerializer, valueSerializer));
   }
 
   private static class SharedProducer extends HashMap<Object, KafkaProducer> {
