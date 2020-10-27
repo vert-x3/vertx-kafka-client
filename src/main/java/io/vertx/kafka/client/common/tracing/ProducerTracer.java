@@ -15,12 +15,12 @@
  */
 package io.vertx.kafka.client.common.tracing;
 
-import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.Context;
 import io.vertx.core.spi.tracing.TagExtractor;
 import io.vertx.core.spi.tracing.VertxTracer;
 import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.kafka.client.common.KafkaClientOptions;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.utils.Utils;
 
@@ -34,19 +34,34 @@ public class ProducerTracer<S> {
   private final String port;
   private final TracingPolicy policy;
 
-  public static <S> @Nullable ProducerTracer create(VertxTracer tracer, KafkaClientOptions opts) {
+  /**
+   * Creates a ProducerTracer, which provides an opinionated facade for using {@link io.vertx.core.spi.tracing.VertxTracer}
+   * with a Kafka Producer use case.
+   * The method will return {@code null} if Tracing is not setup in Vert.x, or if {@code TracingPolicy.IGNORE} is used.
+   * @param tracer the generic tracer object
+   * @param opts Kafka client options
+   * @param <S> the type of spans that is going to be generated, depending on the tracing system (zipkin, opentracing ...)
+   * @return a new instance of {@code ProducerTracer}, or {@code null}
+   */
+  public static <S> ProducerTracer create(VertxTracer tracer, KafkaClientOptions opts) {
     TracingPolicy policy = opts.getTracingPolicy() != null ? opts.getTracingPolicy() : TracingPolicy.PROPAGATE;
     if (policy == TracingPolicy.IGNORE || tracer == null) {
       // No need to create a tracer if it won't be used
       return null;
     }
-    return new ProducerTracer<S>(tracer, policy, opts.getTracePeerAddress());
+    String address = opts.getTracePeerAddress();
+    // Search for peer address in config if not provided
+    if (address == null) {
+      if (opts.getConfig() != null) {
+        address = (String) opts.getConfig().getOrDefault(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "");
+      } else {
+        address = "";
+      }
+    }
+    return new ProducerTracer<S>(tracer, policy, address);
   }
 
   private ProducerTracer(VertxTracer<Void, S> tracer, TracingPolicy policy, String bootstrapServer) {
-    if (tracer == null) {
-      throw new IllegalArgumentException("tracer should not be null");
-    }
     this.tracer = tracer;
     this.address = bootstrapServer;
     this.hostname = Utils.getHost(bootstrapServer);

@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Tracing tests
@@ -68,6 +69,30 @@ public class TracingTest extends KafkaClusterTestBase {
     close(ctx, producer);
     close(ctx, consumer);
     vertx.close(ctx.asyncAssertSuccess());
+  }
+
+  private KafkaWriteStream<String, String> configureProducer(TestContext ctx, Consumer<KafkaClientOptions> addOpts) {
+    KafkaClientOptions options = new KafkaClientOptions()
+      .setConfig(mapConfig(kafkaCluster.useTo().getProducerProperties("testTracing_producer")))
+      .setConfig(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class)
+      .setConfig(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    addOpts.accept(options);
+
+    KafkaWriteStream<String, String> producer = producer(vertx, options);
+    producer.exceptionHandler(ctx::fail);
+    return producer;
+  }
+
+  private KafkaReadStream<String, String> configureConsumer(TestContext ctx, Consumer<KafkaClientOptions> addOpts) {
+    KafkaClientOptions options = new KafkaClientOptions()
+      .setConfig(mapConfig(kafkaCluster.useTo().getConsumerProperties("testTracing_consumer", "testTracing_consumer", OffsetResetStrategy.EARLIEST)))
+      .setConfig(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class)
+      .setConfig(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    addOpts.accept(options);
+
+    KafkaReadStream<String, String> consumer = KafkaReadStream.create(vertx, options);
+    consumer.exceptionHandler(ctx::fail);
+    return consumer;
   }
 
   @Test
@@ -113,26 +138,13 @@ public class TracingTest extends KafkaClusterTestBase {
   @Test
   public void testTracingIgnoreConsumer(TestContext ctx) {
     String topicName = "TestTracingIgnoreC";
-    KafkaClientOptions options = new KafkaClientOptions()
-      .setConfig(mapConfig(kafkaCluster.useTo().getProducerProperties("testTracing_producer")))
-      .setConfig(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class)
-      .setConfig(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class)
-      .setTracingPolicy(TracingPolicy.ALWAYS);
-
-    producer = producer(vertx, options);
-    producer.exceptionHandler(ctx::fail);
-    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
-
-    options = new KafkaClientOptions()
-      .setConfig(mapConfig(kafkaCluster.useTo().getConsumerProperties("testTracing_consumer", "testTracing_consumer", OffsetResetStrategy.EARLIEST)))
-      .setConfig(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class)
-      .setConfig(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class)
-      .setTracingPolicy(TracingPolicy.IGNORE);
-    consumer = KafkaReadStream.create(vertx, options);
-    consumer.exceptionHandler(ctx::fail);
-
     int numMessages = 10;
     Async done = ctx.async(numMessages);
+
+    producer = configureProducer(ctx, opts -> opts.setTracingPolicy(TracingPolicy.ALWAYS));
+    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
+
+    consumer = configureConsumer(ctx, opts -> opts.setTracingPolicy(TracingPolicy.IGNORE));
     consumer.handler(rec -> done.countDown());
     consumer.subscribe(Collections.singleton(topicName));
 
@@ -147,30 +159,59 @@ public class TracingTest extends KafkaClusterTestBase {
   @Test
   public void testTracingIgnoreProducer(TestContext ctx) {
     String topicName = "TestTracingIgnoreP";
-    KafkaClientOptions options = new KafkaClientOptions()
-      .setConfig(mapConfig(kafkaCluster.useTo().getProducerProperties("testTracing_producer")))
-      .setConfig(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class)
-      .setConfig(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class)
-      .setTracingPolicy(TracingPolicy.IGNORE);
-
-    producer = producer(vertx, options);
-    producer.exceptionHandler(ctx::fail);
-    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
-
-    options = new KafkaClientOptions()
-      .setConfig(mapConfig(kafkaCluster.useTo().getConsumerProperties("testTracing_consumer", "testTracing_consumer", OffsetResetStrategy.EARLIEST)))
-      .setConfig(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class)
-      .setConfig(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class)
-      .setTracingPolicy(TracingPolicy.ALWAYS);
-    consumer = KafkaReadStream.create(vertx, options);
-    consumer.exceptionHandler(ctx::fail);
-
     int numMessages = 10;
     Async done = ctx.async(numMessages);
+
+    producer = configureProducer(ctx, opts -> opts.setTracingPolicy(TracingPolicy.IGNORE));
+    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
+
+    consumer = configureConsumer(ctx, opts -> opts.setTracingPolicy(TracingPolicy.ALWAYS));
     consumer.handler(rec -> done.countDown());
     consumer.subscribe(Collections.singleton(topicName));
 
     tracer.init(topicName, 0, numMessages);
+    for (int i = 0; i < numMessages; i++) {
+      producer.write(KafkaProducerRecord.create(topicName, "key-" + i, "value-" + i, 0));
+    }
+    tracer.assertAllDone(0);
+    done.awaitSuccess(10000);
+  }
+
+  @Test
+  public void testTracingNullPeerAddress(TestContext ctx) {
+    String topicName = "TestTracingNullAddr";
+    int numMessages = 10;
+    Async done = ctx.async(numMessages);
+
+    producer = configureProducer(ctx, opts -> opts.setTracePeerAddress(null));
+    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
+
+    consumer = configureConsumer(ctx, opts -> opts.setTracePeerAddress(null));
+    consumer.handler(rec -> done.countDown());
+    consumer.subscribe(Collections.singleton(topicName));
+
+    tracer.init(topicName, numMessages, numMessages);
+    for (int i = 0; i < numMessages; i++) {
+      producer.write(KafkaProducerRecord.create(topicName, "key-" + i, "value-" + i, 0));
+    }
+    tracer.assertAllDone(0);
+    done.awaitSuccess(10000);
+  }
+
+  @Test
+  public void testTracingOtherPeerAddress(TestContext ctx) {
+    String topicName = "TestTracingOtherAddr";
+    int numMessages = 10;
+    Async done = ctx.async(numMessages);
+
+    producer = configureProducer(ctx, opts -> opts.setTracePeerAddress("http://other:9090"));
+    KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
+
+    consumer = configureConsumer(ctx, opts -> opts.setTracePeerAddress("http://other:9090"));
+    consumer.handler(rec -> done.countDown());
+    consumer.subscribe(Collections.singleton(topicName));
+
+    tracer.init(topicName, numMessages, numMessages, "http://other:9090", "other", "9090");
     for (int i = 0; i < numMessages; i++) {
       producer.write(KafkaProducerRecord.create(topicName, "key-" + i, "value-" + i, 0));
     }
@@ -185,6 +226,9 @@ public class TracingTest extends KafkaClusterTestBase {
     private LongAdder failuresCount;
     private LongAdder sentCount;
     private LongAdder receivedCount;
+    private String peerAddress;
+    private String host;
+    private String port;
 
     private TestTracer(TestContext ctx) {
       this.ctx = ctx;
@@ -199,9 +243,9 @@ public class TracingTest extends KafkaClusterTestBase {
       Map<String, String> tags = tagExtractor.extract(request);
       ctx.assertEquals("kafka_receive", operation);
       ctx.assertEquals("consumer", tags.get("span.kind"));
-      ctx.assertEquals("localhost:9092", tags.get("peer.address"));
-      ctx.assertEquals("localhost", tags.get("peer.hostname"));
-      ctx.assertEquals("9092", tags.get("peer.port"));
+      ctx.assertEquals(peerAddress, tags.get("peer.address"));
+      ctx.assertEquals(host, tags.get("peer.hostname"));
+      ctx.assertEquals(port, tags.get("peer.port"));
       ctx.assertEquals(topic, tags.get("message_bus.destination"));
       ctx.assertEquals("kafka", tags.get("peer.service"));
       done.countDown();
@@ -223,9 +267,9 @@ public class TracingTest extends KafkaClusterTestBase {
       Map<String, String> tags = tagExtractor.extract(request);
       ctx.assertEquals("kafka_send", operation);
       ctx.assertEquals("producer", tags.get("span.kind"));
-      ctx.assertEquals("localhost:9092", tags.get("peer.address"));
-      ctx.assertEquals("localhost", tags.get("peer.hostname"));
-      ctx.assertEquals("9092", tags.get("peer.port"));
+      ctx.assertEquals(peerAddress, tags.get("peer.address"));
+      ctx.assertEquals(host, tags.get("peer.hostname"));
+      ctx.assertEquals(port, tags.get("peer.port"));
       ctx.assertEquals(topic, tags.get("message_bus.destination"));
       ctx.assertEquals("kafka", tags.get("peer.service"));
       done.countDown();
@@ -242,6 +286,10 @@ public class TracingTest extends KafkaClusterTestBase {
     }
 
     void init(String topic, int sent, int received) {
+      init(topic, sent, received, "localhost:9092", "localhost", "9092");
+    }
+
+    void init(String topic, int sent, int received, String peerAddress, String host, String port) {
       sentCount = new LongAdder();
       sentCount.add(sent);
       receivedCount = new LongAdder();
@@ -249,6 +297,9 @@ public class TracingTest extends KafkaClusterTestBase {
       done = ctx.async(2 * sent + 2 * received);
       this.topic = topic;
       failuresCount = new LongAdder();
+      this.peerAddress = peerAddress;
+      this.host = host;
+      this.port = port;
     }
 
     void assertAllDone(int expectedFailures) {

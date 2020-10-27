@@ -32,12 +32,12 @@ import java.util.Properties;
 @DataObject(generateConverter = true)
 public class KafkaClientOptions {
   /**
-   * Default registry name is 'default'
+   * Default peer address to set in traces tags is null, and will automatically pick up bootstrap server from config
    */
-  public static final String DEFAULT_TRACE_PEER_ADDRESS = "";
+  public static final String DEFAULT_TRACE_PEER_ADDRESS = null;
 
   /**
-   * Default registry name is 'default'
+   * Default tracing policy is 'propagate'
    */
   public static final TracingPolicy DEFAULT_TRACING_POLICY = TracingPolicy.PROPAGATE;
 
@@ -126,20 +126,17 @@ public class KafkaClientOptions {
   }
 
   /**
-   * @return the Kafka "peer address" to show in traces
+   * @return the Kafka "peer address" to show in trace tags
    */
   public String getTracePeerAddress() {
-    // Search for peer address in config if not provided
-    if (config != null && tracePeerAddress == null) {
-      return (String) config.getOrDefault(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "");
-    }
     return tracePeerAddress;
   }
 
   /**
-   * Set the Kafka address for traces.
+   * Set the Kafka address to show in trace tags.
+   * Or leave it unset to automatically pick up bootstrap server from config instead.
    *
-   * @param tracePeerAddress the Kafka "peer address" to show in traces
+   * @param tracePeerAddress the Kafka "peer address" to show in trace tags
    * @return a reference to this, so the API can be used fluently
    */
   public KafkaClientOptions setTracePeerAddress(String tracePeerAddress) {
