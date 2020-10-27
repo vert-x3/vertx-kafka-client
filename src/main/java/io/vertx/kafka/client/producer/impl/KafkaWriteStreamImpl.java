@@ -24,56 +24,20 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
+import io.vertx.kafka.client.common.tracing.ProducerTracer;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
-import org.apache.kafka.common.serialization.Serializer;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Kafka write stream implementation
  */
 public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, Map<String, Object> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, KafkaClientOptions options) {
-    Map<String, Object> config = new HashMap<>();
-    if (options.getConfig() != null) {
-      config.putAll(options.getConfig());
-    }
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config));
-  }
-
-  public static <K, V> KafkaWriteStreamImpl<K, V> create(Vertx vertx, KafkaClientOptions options, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    Map<String, Object> config = new HashMap<>();
-    if (options.getConfig() != null) {
-      config.putAll(options.getConfig());
-    }
-    return new KafkaWriteStreamImpl<>(vertx.getOrCreateContext(), new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer));
-  }
 
   private long maxSize = DEFAULT_MAX_SIZE;
   private long pending;
@@ -81,10 +45,13 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   private Handler<Void> drainHandler;
   private Handler<Throwable> exceptionHandler;
   private final Context context;
+  private final ProducerTracer tracer;
 
-  public KafkaWriteStreamImpl(Context context, Producer<K, V> producer) {
+  public KafkaWriteStreamImpl(Vertx vertx, Producer<K, V> producer, KafkaClientOptions options) {
     this.producer = producer;
-    this.context = context;
+    ContextInternal ctxInt = (ContextInternal) vertx.getOrCreateContext();
+    this.context = ctxInt;
+    this.tracer = ProducerTracer.create(ctxInt.tracer(), options);
   }
 
   private int len(Object value) {
@@ -100,6 +67,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   @Override
   public Future<RecordMetadata> send(ProducerRecord<K, V> record) {
     ContextInternal ctx = (ContextInternal) context.owner().getOrCreateContext();
+    ProducerTracer.StartedSpan startedSpan = this.tracer == null ? null : this.tracer.prepareSendMessage(ctx, record);
     Promise<RecordMetadata> trampolineProm = ctx.promise();
     int len = this.len(record.value());
     this.pending += len;
@@ -131,8 +99,14 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
           });
 
           if (err != null) {
+            if (startedSpan != null) {
+              startedSpan.fail(ctx, err);
+            }
             prom.fail(err);
           } else {
+            if (startedSpan != null) {
+              startedSpan.finish(ctx);
+            }
             prom.complete(metadata);
           }
         });
@@ -142,6 +116,9 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
             Handler<Throwable> exceptionHandler = this.exceptionHandler;
             this.context.runOnContext(v3 -> exceptionHandler.handle(e));
           }
+        }
+        if (startedSpan != null) {
+          startedSpan.fail(ctx, e);
         }
         prom.fail(e);
       }
@@ -309,5 +286,4 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
     void execute();
   }
-
 }

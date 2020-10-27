@@ -21,6 +21,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.producer.Producer;
@@ -45,26 +46,29 @@ public class KafkaTestBase {
     }
   }
 
-  static void close(TestContext ctx, KafkaWriteStream<?, ?> producer) {
+  public static void close(TestContext ctx, KafkaWriteStream<?, ?> producer) {
     if (producer != null) {
       close(ctx, handler -> producer.close(2000L, handler));
     }
   }
 
-  static void close(TestContext ctx, KafkaReadStream<?, ?> consumer) {
+  public static void close(TestContext ctx, KafkaReadStream<?, ?> consumer) {
     if (consumer != null) {
       KafkaTestBase.close(ctx, consumer::close);
     }
   }
 
-  static Map<String, String> mapConfig(Properties cfg) {
-    Map<String ,String> map = new HashMap<>();
-    cfg.forEach((k, v) -> map.put("" + k, "" + v));
+  public static Map<String, Object> mapConfig(Properties cfg) {
+    Map<String, Object> map = new HashMap<>();
+    cfg.forEach((k, v) -> map.put("" + k, v));
     return map;
   }
 
+  public static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, KafkaClientOptions opts) {
+    return KafkaWriteStream.create(vertx, opts);
+  }
 
-  static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Properties config) {
+  public static <K, V> KafkaWriteStream<K, V> producer(Vertx vertx, Properties config) {
     return KafkaWriteStream.create(vertx, config);
   }
 
