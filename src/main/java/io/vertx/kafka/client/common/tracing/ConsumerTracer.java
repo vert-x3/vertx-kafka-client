@@ -16,6 +16,7 @@
 package io.vertx.kafka.client.common.tracing;
 
 import io.vertx.core.Context;
+import io.vertx.core.spi.tracing.SpanKind;
 import io.vertx.core.spi.tracing.TagExtractor;
 import io.vertx.core.spi.tracing.VertxTracer;
 import io.vertx.core.tracing.TracingPolicy;
@@ -86,7 +87,7 @@ public class ConsumerTracer<S> {
 
   public StartedSpan prepareMessageReceived(Context context, ConsumerRecord rec) {
     TraceContext tc = new TraceContext("consumer", address, hostname, port, rec.topic());
-    S span = tracer.receiveRequest(context, policy, tc, "kafka_receive", convertHeaders(rec.headers()), TraceTags.TAG_EXTRACTOR);
+    S span = tracer.receiveRequest(context, SpanKind.MESSAGING, policy, tc, "kafka_receive", convertHeaders(rec.headers()), TraceTags.TAG_EXTRACTOR);
     return new StartedSpan(span);
   }
 

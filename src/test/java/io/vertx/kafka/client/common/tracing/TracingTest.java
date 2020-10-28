@@ -18,6 +18,7 @@ package io.vertx.kafka.client.common.tracing;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.spi.tracing.SpanKind;
 import io.vertx.core.spi.tracing.TagExtractor;
 import io.vertx.core.spi.tracing.VertxTracer;
 import io.vertx.core.tracing.TracingOptions;
@@ -235,14 +236,14 @@ public class TracingTest extends KafkaClusterTestBase {
     }
 
     @Override
-    public <R> String receiveRequest(Context context, TracingPolicy policy, R request, String operation, Iterable<Map.Entry<String, String>> headers, TagExtractor<R> tagExtractor) {
+    public <R> String receiveRequest(Context context, SpanKind kind, TracingPolicy policy, R request, String operation, Iterable<Map.Entry<String, String>> headers, TagExtractor<R> tagExtractor) {
       receivedCount.decrement();
       if (receivedCount.intValue() < 0) {
         ctx.fail("Unexpected call to receiveRequest");
       }
+      ctx.assertEquals(SpanKind.MESSAGING, kind);
       Map<String, String> tags = tagExtractor.extract(request);
       ctx.assertEquals("kafka_receive", operation);
-      ctx.assertEquals("consumer", tags.get("span.kind"));
       ctx.assertEquals(peerAddress, tags.get("peer.address"));
       ctx.assertEquals(host, tags.get("peer.hostname"));
       ctx.assertEquals(port, tags.get("peer.port"));
@@ -259,14 +260,14 @@ public class TracingTest extends KafkaClusterTestBase {
     }
 
     @Override
-    public <R> String sendRequest(Context context, TracingPolicy policy, R request, String operation, BiConsumer<String, String> headers, TagExtractor<R> tagExtractor) {
+    public <R> String sendRequest(Context context, SpanKind kind, TracingPolicy policy, R request, String operation, BiConsumer<String, String> headers, TagExtractor<R> tagExtractor) {
       sentCount.decrement();
       if (sentCount.intValue() < 0) {
         ctx.fail("Unexpected call to sendRequest");
       }
+      ctx.assertEquals(SpanKind.MESSAGING, kind);
       Map<String, String> tags = tagExtractor.extract(request);
       ctx.assertEquals("kafka_send", operation);
-      ctx.assertEquals("producer", tags.get("span.kind"));
       ctx.assertEquals(peerAddress, tags.get("peer.address"));
       ctx.assertEquals(host, tags.get("peer.hostname"));
       ctx.assertEquals(port, tags.get("peer.port"));

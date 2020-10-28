@@ -16,6 +16,7 @@
 package io.vertx.kafka.client.common.tracing;
 
 import io.vertx.core.Context;
+import io.vertx.core.spi.tracing.SpanKind;
 import io.vertx.core.spi.tracing.TagExtractor;
 import io.vertx.core.spi.tracing.VertxTracer;
 import io.vertx.core.tracing.TracingPolicy;
@@ -72,7 +73,7 @@ public class ProducerTracer<S> {
 
   public StartedSpan prepareSendMessage(Context context, ProducerRecord record) {
     TraceContext tc = new TraceContext("producer", address, hostname, port, record.topic());
-    S span = tracer.sendRequest(context, policy, tc, "kafka_send", (k, v) -> record.headers().add(k, v.getBytes()), TraceTags.TAG_EXTRACTOR);
+    S span = tracer.sendRequest(context, SpanKind.MESSAGING, policy, tc, "kafka_send", (k, v) -> record.headers().add(k, v.getBytes()), TraceTags.TAG_EXTRACTOR);
     return new StartedSpan(span);
   }
 

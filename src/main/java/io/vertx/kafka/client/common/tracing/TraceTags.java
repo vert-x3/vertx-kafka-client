@@ -24,7 +24,6 @@ import java.util.function.Function;
  */
 public enum TraceTags {
   // See https://github.com/opentracing/specification/blob/master/semantic_conventions.md
-  SPAN_KIND("span.kind", q -> q.kind),
   PEER_ADDRESS("peer.address", q -> q.address),
   PEER_HOSTNAME("peer.hostname", q -> q.hostname),
   PEER_PORT("peer.port", q -> q.port),
