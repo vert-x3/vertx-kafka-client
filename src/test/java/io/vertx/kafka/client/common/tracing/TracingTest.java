@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -54,6 +55,7 @@ import java.util.function.Consumer;
  */
 public class TracingTest extends KafkaClusterTestBase {
 
+  private static String CONTEXT_CONSUMER_SPAN = "--received-rq--";
   private Vertx vertx;
   private KafkaWriteStream<String, String> producer;
   private KafkaReadStream<String, String> consumer;
@@ -111,10 +113,17 @@ public class TracingTest extends KafkaClusterTestBase {
     cConf.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     consumer = KafkaReadStream.create(vertx, cConf);
     consumer.exceptionHandler(ctx::fail);
-    consumer.handler(rec -> {});
-    consumer.subscribe(Collections.singleton(topicName));
 
     int numMessages = 1000;
+    AtomicInteger expectedSpanCountOnContext = new AtomicInteger(numMessages);
+    consumer.handler(rec -> {
+      Context currentContext = Vertx.currentContext();
+      ctx.assertNotNull(currentContext);
+      String spanName = currentContext.getLocal(CONTEXT_CONSUMER_SPAN);
+      ctx.assertEquals("span-" + expectedSpanCountOnContext.decrementAndGet(), spanName);
+    });
+    consumer.subscribe(Collections.singleton(topicName));
+
     tracer.init(topicName, numMessages, numMessages);
     for (int i = 0; i < numMessages; i++) {
       producer.write(KafkaProducerRecord.create(topicName, "key-" + i, "value-" + i, 0));
@@ -242,6 +251,7 @@ public class TracingTest extends KafkaClusterTestBase {
         ctx.fail("Unexpected call to receiveRequest");
       }
       ctx.assertEquals(SpanKind.MESSAGING, kind);
+      context.putLocal(CONTEXT_CONSUMER_SPAN, "span-" + receivedCount.intValue());
       Map<String, String> tags = tagExtractor.extract(request);
       ctx.assertEquals("kafka_receive", operation);
       ctx.assertEquals(peerAddress, tags.get("peer.address"));
@@ -256,6 +266,7 @@ public class TracingTest extends KafkaClusterTestBase {
     @Override
     public <R> void sendResponse(Context context, R response, String payload, Throwable failure, TagExtractor<R> tagExtractor) {
       ctx.assertEquals("SPAN-CONSUMER", payload);
+      context.removeLocal(CONTEXT_CONSUMER_SPAN);
       done.countDown();
     }
 
