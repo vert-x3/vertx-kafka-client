@@ -462,4 +462,14 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     });
     return promise.future();
   }
+
+  @Override
+  public void close(Handler<AsyncResult<Void>> handler) {
+    close().onComplete(handler);
+  }
+
+  @Override
+  public void close(long timeout, Handler<AsyncResult<Void>> handler) {
+    close(timeout).onComplete(handler);
+  }
 }

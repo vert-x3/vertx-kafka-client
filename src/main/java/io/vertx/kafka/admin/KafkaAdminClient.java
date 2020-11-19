@@ -274,7 +274,12 @@ public interface KafkaAdminClient {
   /**
    * Close the admin client
    *
-   * @return a {@code Future} completed with the operation result
+   * @param handler a {@code Handler} completed with the operation result
+   */
+  void close(Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Like {@link #close(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> close();
 
@@ -282,7 +287,12 @@ public interface KafkaAdminClient {
    * Close the admin client
    *
    * @param timeout timeout to wait for closing
-   * @return a {@code Future} completed with the operation result
+   * @param handler a {@code Handler} completed with the operation result
+   */
+  void close(long timeout, Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Like {@link #close(long, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> close(long timeout);
 }
