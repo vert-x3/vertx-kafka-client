@@ -218,12 +218,22 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   KafkaWriteStream<K, V> initTransactions(Handler<AsyncResult<Void>> handler);
 
   /**
+   * Like {@link #initTransactions(Handler)} but with a future of the result
+   */
+  Future<Void> initTransactions();
+
+  /**
    * Starts a new kafka transaction. See {@link KafkaProducer#beginTransaction()}
    *
    * @param handler handler called on operation completed
    * @return current KafkaWriteStream instance
    */
   KafkaWriteStream<K, V> beginTransaction(Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Like {@link #beginTransaction(Handler)} but with a future of the result
+   */
+  Future<Void> beginTransaction();
 
   /**
    * Commits the ongoing transaction. See {@link KafkaProducer#commitTransaction()}
@@ -234,12 +244,22 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   KafkaWriteStream<K, V> commitTransaction(Handler<AsyncResult<Void>> handler);
 
   /**
+   * Like {@link #commitTransaction(Handler)} but with a future of the result
+   */
+  Future<Void> commitTransaction();
+
+  /**
    * Aborts the ongoing transaction. See {@link org.apache.kafka.clients.producer.KafkaProducer#abortTransaction()}
    *
    * @param handler handler called on operation completed
    * @return current KafkaWriteStream instance
    */
   KafkaWriteStream<K, V> abortTransaction(Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Like {@link #abortTransaction(Handler)} but with a future of the result
+   */
+  Future<Void> abortTransaction();
 
   /**
    * Asynchronously write a record to a topic

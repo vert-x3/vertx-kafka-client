@@ -265,17 +265,61 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
     return new KafkaProducerImpl<>(vertx, stream).registerCloseHook();
   }
 
+  /**
+   * Initializes the underlying kafka transactional producer. See {@link KafkaProducer#initTransactions()} ()}
+   *
+   * @param handler handler called on operation completed
+   * @return current KafkaWriteStream instance
+   */
   @Fluent
   KafkaProducer<K, V> initTransactions(Handler<AsyncResult<Void>> handler);
 
+  /**
+   * Like {@link #initTransactions(Handler)} but with a future of the result
+   */
+  Future<Void> initTransactions();
+
+  /**
+   * Starts a new kafka transaction. See {@link KafkaProducer#beginTransaction()}
+   *
+   * @param handler handler called on operation completed
+   * @return current KafkaWriteStream instance
+   */
   @Fluent
   KafkaProducer<K, V> beginTransaction(Handler<AsyncResult<Void>> handler);
 
+  /**
+   * Like {@link #beginTransaction(Handler)} but with a future of the result
+   */
+  Future<Void> beginTransaction();
+
+  /**
+   * Commits the ongoing transaction. See {@link KafkaProducer#commitTransaction()}
+   *
+   * @param handler handler called on operation completed
+   * @return current KafkaWriteStream instance
+   */
   @Fluent
   KafkaProducer<K, V> commitTransaction(Handler<AsyncResult<Void>> handler);
 
+  /**
+   * Like {@link #commitTransaction(Handler)} but with a future of the result
+   */
+  Future<Void> commitTransaction();
+
+  /**
+   * Aborts the ongoing transaction. See {@link org.apache.kafka.clients.producer.KafkaProducer#abortTransaction()}
+   *
+   * @param handler handler called on operation completed
+   * @return current KafkaWriteStream instance
+   */
   @Fluent
   KafkaProducer<K, V> abortTransaction(Handler<AsyncResult<Void>> handler);
+
+  /**
+   * Like {@link #abortTransaction(Handler)} but with a future of the result
+   */
+  Future<Void> abortTransaction();
 
   @Fluent
   @Override

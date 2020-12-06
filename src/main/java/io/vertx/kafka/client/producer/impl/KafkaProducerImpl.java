@@ -153,9 +153,19 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
+  public Future<Void> initTransactions() {
+    return this.stream.initTransactions();
+  }
+
+  @Override
   public KafkaProducer<K, V> beginTransaction(Handler<AsyncResult<Void>> handler) {
     this.stream.beginTransaction(handler);
     return this;
+  }
+
+  @Override
+  public Future<Void> beginTransaction() {
+    return this.stream.beginTransaction();
   }
 
   @Override
@@ -165,9 +175,19 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
+  public Future<Void> commitTransaction() {
+    return this.stream.commitTransaction();
+  }
+
+  @Override
   public KafkaProducer<K, V> abortTransaction(Handler<AsyncResult<Void>> handler) {
     this.stream.abortTransaction(handler);
     return this;
+  }
+
+  @Override
+  public Future<Void> abortTransaction() {
+    return this.stream.abortTransaction();
   }
 
   @Override

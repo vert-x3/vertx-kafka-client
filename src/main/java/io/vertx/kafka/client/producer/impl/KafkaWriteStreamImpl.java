@@ -168,22 +168,46 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   @Override
   public KafkaWriteStream<K, V> initTransactions(Handler<AsyncResult<Void>> handler) {
-    return executeBlocking(handler, this.producer::initTransactions);
+    initTransactions().onComplete(handler);
+    return this;
+  }
+
+  @Override
+  public Future<Void> initTransactions() {
+    return executeBlocking(this.producer::initTransactions);
   }
 
   @Override
   public KafkaWriteStream<K, V> beginTransaction(Handler<AsyncResult<Void>> handler) {
-    return executeBlocking(handler, this.producer::beginTransaction);
+    beginTransaction().onComplete(handler);
+    return this;
+  }
+
+  @Override
+  public Future<Void> beginTransaction() {
+    return executeBlocking(this.producer::beginTransaction);
   }
 
   @Override
   public KafkaWriteStream<K, V> commitTransaction(Handler<AsyncResult<Void>> handler) {
-    return executeBlocking(handler, this.producer::commitTransaction);
+    commitTransaction().onComplete(handler);
+    return this;
+  }
+
+  @Override
+  public Future<Void> commitTransaction() {
+    return executeBlocking(this.producer::commitTransaction);
   }
 
   @Override
   public KafkaWriteStream<K, V> abortTransaction(Handler<AsyncResult<Void>> handler) {
-    return executeBlocking(handler, this.producer::abortTransaction);
+    abortTransaction().onComplete(handler);
+    return this;
+  }
+
+  @Override
+  public Future<Void> abortTransaction() {
+    return executeBlocking(this.producer::abortTransaction);
   }
 
   @Override
@@ -269,16 +293,15 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     return this.producer;
   }
 
-  private KafkaWriteStreamImpl<K, V> executeBlocking(final Handler<AsyncResult<Void>> handler, final BlockingStatement statement) {
-    this.context.executeBlocking(promise -> {
+  Future<Void> executeBlocking(final BlockingStatement statement) {
+    return this.context.executeBlocking(promise -> {
       try {
         statement.execute();
         promise.complete();
       } catch (Exception e) {
         promise.fail(e);
       }
-    }, handler);
-    return this;
+    });
   }
 
   @FunctionalInterface
