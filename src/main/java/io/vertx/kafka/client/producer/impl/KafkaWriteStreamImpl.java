@@ -22,17 +22,16 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
-import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.serialization.Serializer;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -230,10 +229,9 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
-
     this.context.executeBlocking(future -> {
       if (timeout > 0) {
-        this.producer.close(timeout, TimeUnit.MILLISECONDS);
+        this.producer.close(Duration.ofMillis(timeout));
       } else {
         this.producer.close();
       }
