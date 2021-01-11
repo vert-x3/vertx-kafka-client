@@ -449,10 +449,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public Future<Void> close(long timeout) {
-    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
-    Promise<Void> promise = ctx.promise();
-
-    ctx.executeBlocking(prom -> {
+    return vertx.executeBlocking(prom -> {
       if (timeout > 0) {
         adminClient.close(Duration.ofMillis(timeout));
       } else {
@@ -460,7 +457,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
       prom.complete();
     });
-    return promise.future();
   }
 
   @Override
