@@ -31,8 +31,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 
+import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Kafka write stream implementation
@@ -272,14 +272,14 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   public Future<Void> close(long timeout) {
     ContextInternal ctx = (ContextInternal) context.owner().getOrCreateContext();
     Promise<Void> trampolineProm = ctx.promise();
-    this.context.<Void>executeBlocking(prom -> {
+    this.context.executeBlocking(prom -> {
       if (timeout > 0) {
-        this.producer.close(timeout, TimeUnit.MILLISECONDS);
+        this.producer.close(Duration.ofMillis(timeout));
       } else {
         this.producer.close();
       }
       prom.complete();
-    }).onComplete(trampolineProm);
+    }, trampolineProm);
     return trampolineProm.future(); // Trampoline on caller context
   }
 
