@@ -611,4 +611,12 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.EARLIEST);
     adminClient.listOffsets(topicPartitionBeginOffsets, ctx.asyncAssertFailure());
   }
+
+  @Test
+  public void testAsyncClose(TestContext ctx) {
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
+      adminClient.close(ctx.asyncAssertSuccess());
+    }));
+  }
 }
