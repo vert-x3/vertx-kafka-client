@@ -234,7 +234,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Void> promise = ctx.promise();
 
-    AlterConfigsResult alterConfigsResult = this.adminClient.alterConfigs(Helper.toConfigMaps(configs));
+    AlterConfigsResult alterConfigsResult = this.adminClient.incrementalAlterConfigs(Helper.toConfigMaps(configs));
     alterConfigsResult.all().whenComplete((v, ex) -> {
 
       if (ex == null) {
