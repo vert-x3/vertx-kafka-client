@@ -187,7 +187,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   @Override
   public void alterConfigs(Map<ConfigResource,Config> configs, Handler<AsyncResult<Void>> completionHandler) {
 
-    AlterConfigsResult alterConfigsResult = this.adminClient.alterConfigs(Helper.toConfigMaps(configs));
+    AlterConfigsResult alterConfigsResult = this.adminClient.incrementalAlterConfigs(Helper.toConfigMaps(configs));
     alterConfigsResult.all().whenComplete((v, ex) -> {
 
       if (ex == null) {

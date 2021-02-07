@@ -31,8 +31,8 @@ import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.RecordMetadata;
+import org.apache.kafka.clients.admin.AlterConfigOp;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -172,19 +172,17 @@ public class Helper {
     return configResources.stream().map(Helper::to).collect(Collectors.toList());
   }
 
-  public static Collection<org.apache.kafka.clients.admin.ConfigEntry> toConfigEntryList(List<ConfigEntry> configEntries) {
-    return configEntries.stream().map(Helper::to).collect(Collectors.toList());
-  }
-
   public static org.apache.kafka.clients.admin.ConfigEntry to(ConfigEntry configEntry) {
     return new org.apache.kafka.clients.admin.ConfigEntry(configEntry.getName(), configEntry.getValue());
   }
 
-  public static Map<org.apache.kafka.common.config.ConfigResource, org.apache.kafka.clients.admin.Config> toConfigMaps(Map<ConfigResource, Config> configs) {
+  public static Map<org.apache.kafka.common.config.ConfigResource, Collection<AlterConfigOp>> toConfigMaps(Map<ConfigResource, Config> configs) {
+
     return configs.entrySet().stream().collect(Collectors.toMap(
-      e -> new org.apache.kafka.common.config.ConfigResource(e.getKey().getType(), e.getKey().getName()),
-      e -> new org.apache.kafka.clients.admin.Config(Helper.toConfigEntryList(e.getValue().getEntries()))
-    ));
+            e -> new org.apache.kafka.common.config.ConfigResource(e.getKey().getType(), e.getKey().getName()),
+            e -> e.getValue().getEntries().stream().map(
+                    v -> new AlterConfigOp(to(v), AlterConfigOp.OpType.SET)).collect(Collectors.toList())));
+
   }
 
   public static ConfigEntry from(org.apache.kafka.clients.admin.ConfigEntry configEntry) {
