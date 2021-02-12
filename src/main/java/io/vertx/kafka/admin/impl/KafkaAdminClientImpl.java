@@ -46,6 +46,7 @@ import io.vertx.kafka.client.common.TopicPartitionInfo;
 import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
+import org.apache.kafka.clients.admin.AlterConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
@@ -360,6 +361,28 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     });
     return promise.future();
   }
+
+  @Override
+  public void alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Void>> completionHandler) {
+    alterConsumerGroupOffsets(groupId, offsets).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Void> alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Void> promise = ctx.promise();
+
+    AlterConsumerGroupOffsetsResult alterConsumerGroupOffsetsResult = this.adminClient.alterConsumerGroupOffsets(groupId, Helper.to(offsets));
+    alterConsumerGroupOffsetsResult.all().whenComplete((v, ex) -> {
+      if (ex == null) {
+        promise.complete();
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
 
   @Override
   public void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {

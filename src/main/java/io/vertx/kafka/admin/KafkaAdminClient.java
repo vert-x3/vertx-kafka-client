@@ -246,7 +246,7 @@ public interface KafkaAdminClient {
    * succeed at the partition level only if the group is not actively subscribed
    * to the corresponding topic.
    *
-   * @param groupId The group id of the group whose offsets will be listed
+   * @param groupId The group id of the group whose offsets will be deleted
    * @param partitions The set of partitions in the consumer group whose offsets will be deleted
    */
   void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
@@ -255,6 +255,19 @@ public interface KafkaAdminClient {
    * Like {@link #deleteConsumerGroupOffsets(String, Set, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions);
+
+  /**
+   * Alter committed offsets for a set of partitions in a consumer group.
+   *
+   * @param groupId The group id of the group whose offsets will be altered
+   * @param offsets The map of offsets in the consumer group which will be altered
+   */
+  void alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Like {@link #alterConsumerGroupOffsets(String, Map, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets);
 
   /**
    * List the offsets available for a set of partitions.
