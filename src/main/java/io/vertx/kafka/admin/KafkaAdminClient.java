@@ -262,11 +262,13 @@ public interface KafkaAdminClient {
    * @param groupId The group id of the group whose offsets will be altered
    * @param offsets The map of offsets in the consumer group which will be altered
    */
+  @GenIgnore
   void alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Like {@link #alterConsumerGroupOffsets(String, Map, Handler)} but returns a {@code Future} of the asynchronous result
    */
+  @GenIgnore
   Future<Void> alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets);
 
   /**
