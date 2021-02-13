@@ -567,6 +567,53 @@ public class AdminClientTest extends KafkaClusterTestBase {
   }
 
   @Test
+  public void testAlterConsumerGroupOffsets(TestContext ctx) throws InterruptedException {
+
+    final String topicName = "alter-offsets";
+    kafkaCluster.createTopic(topicName, 2, 1);
+
+    Async producerAsync = ctx.async();
+    kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
+    producerAsync.awaitSuccess(10000);
+
+    final String groupId = "group-id";
+    final String clientId = "client-id";
+    final AtomicInteger counter = new AtomicInteger();
+    final OffsetCommitCallback offsetCommitCallback = new OffsetCommitCallback() {
+      @Override
+      public void onComplete(Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> map, Exception e) {
+      }
+    };
+    final Async consumerAsync = ctx.async();
+
+    kafkaCluster.useTo().consume(groupId, clientId, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
+            () -> counter.get() < 6, offsetCommitCallback, consumerAsync::complete, Collections.singletonList(topicName),
+            record -> { counter.incrementAndGet(); });
+    consumerAsync.awaitSuccess(10000);
+
+    final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    final Async async = ctx.async();
+
+    final TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
+    long newOffset = 42L;
+    String newMetadata = "vertx-rulezz";
+
+    io.vertx.kafka.client.consumer.OffsetAndMetadata oam = new io.vertx.kafka.client.consumer.OffsetAndMetadata(newOffset, newMetadata);
+    adminClient.alterConsumerGroupOffsets(groupId, Collections.singletonMap(topicPartition0, oam), ctx.asyncAssertSuccess(v -> {
+      adminClient.listConsumerGroupOffsets(groupId, ctx.asyncAssertSuccess(consumerGroupOffsets -> {
+
+        final TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(0);
+        ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition1));
+        ctx.assertEquals(newOffset, consumerGroupOffsets.get(topicPartition1).getOffset());
+        ctx.assertEquals(newMetadata, consumerGroupOffsets.get(topicPartition1).getMetadata());
+
+        adminClient.close();
+        async.complete();
+      }));
+    }));
+  }
+
+  @Test
   public void testListOffsets(TestContext ctx) {
     final String topicName = "list-offsets-topic";
     kafkaCluster.createTopic(topicName, 1, 1);
