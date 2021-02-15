@@ -44,6 +44,7 @@ import io.vertx.kafka.client.common.TopicPartitionInfo;
 import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
+import org.apache.kafka.clients.admin.AlterConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
@@ -287,6 +288,18 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   public void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
     DeleteConsumerGroupOffsetsResult deleteConsumerGroupOffsetsResult = this.adminClient.deleteConsumerGroupOffsets(groupId, Helper.toTopicPartitionSet(partitions));
     deleteConsumerGroupOffsetsResult.all().whenComplete((v, ex) -> {
+      if (ex == null) {
+        completionHandler.handle(Future.succeededFuture());
+      } else {
+        completionHandler.handle(Future.failedFuture(ex));
+      }
+    });
+  }
+
+  @Override
+  public void alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Void>> completionHandler) {
+    AlterConsumerGroupOffsetsResult alterConsumerGroupOffsetsResult = this.adminClient.alterConsumerGroupOffsets(groupId, Helper.to(offsets));
+    alterConsumerGroupOffsetsResult.all().whenComplete((v, ex) -> {
       if (ex == null) {
         completionHandler.handle(Future.succeededFuture());
       } else {
