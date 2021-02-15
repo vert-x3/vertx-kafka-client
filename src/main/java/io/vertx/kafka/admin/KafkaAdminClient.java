@@ -192,6 +192,15 @@ public interface KafkaAdminClient {
   void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
+   * Alter committed offsets for a set of partitions in a consumer group.
+   *
+   * @param groupId The group id of the group whose offsets will be altered
+   * @param offsets The map of offsets in the consumer group which will be altered
+   */
+  @GenIgnore
+  void alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
    * List the offsets available for a set of partitions.
    *
    * @param topicPartitionOffsets The options to use when listing the partition offsets.
