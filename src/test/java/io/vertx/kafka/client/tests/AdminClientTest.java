@@ -665,7 +665,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    kafkaCluster.createTopic("topicToUpdatePartitions", 1, 1);
+    kafkaCluster.createTopic("testCreateNewPartitionInTopic", 1, 1);
 
     Async async = ctx.async();
 
@@ -674,11 +674,11 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
       adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
 
-        ctx.assertTrue(topics.contains("topicToUpdatePartitions"));
+        ctx.assertTrue(topics.contains("testCreateNewPartitionInTopic"));
 
-        adminClient.createPartitions(Collections.singletonMap("topicToUpdatePartitions", new NewPartitions(3, null)), ctx.asyncAssertSuccess(v -> {
-          adminClient.describeTopics(Collections.singletonList("topicToUpdatePartitions"), ctx.asyncAssertSuccess(s -> {
-            ctx.assertTrue(s.get("topicToUpdatePartitions").getPartitions().size() == 3);
+        adminClient.createPartitions(Collections.singletonMap("testCreateNewPartitionInTopic", new NewPartitions(3, null)), ctx.asyncAssertSuccess(v -> {
+          adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic"), ctx.asyncAssertSuccess(s -> {
+            ctx.assertTrue(s.get("testCreateNewPartitionInTopic").getPartitions().size() == 3);
             adminClient.close();
             async.complete();
           }));
@@ -692,7 +692,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    kafkaCluster.createTopic("topicToUpdatePartitions", 3, 1);
+    kafkaCluster.createTopic("testDecreasePartitionInTopic", 3, 1);
 
     Async async = ctx.async();
 
@@ -701,9 +701,9 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
       adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
 
-        ctx.assertTrue(topics.contains("topicToUpdatePartitions"));
+        ctx.assertTrue(topics.contains("testDecreasePartitionInTopic"));
 
-        adminClient.createPartitions(Collections.singletonMap("topicToUpdatePartitions", new NewPartitions(1, null)), ctx.asyncAssertFailure(v -> {
+        adminClient.createPartitions(Collections.singletonMap("testDecreasePartitionInTopic", new NewPartitions(1, null)), ctx.asyncAssertFailure(v -> {
           ctx.assertTrue(v.getMessage().equals("Topic currently has 3 partitions, which is higher than the requested 1."));
           adminClient.close();
           async.complete();
