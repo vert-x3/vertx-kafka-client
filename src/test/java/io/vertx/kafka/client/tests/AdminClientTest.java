@@ -42,6 +42,7 @@ import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.ListOffsetsResultInfo;
 import io.vertx.kafka.admin.MemberAssignment;
 import io.vertx.kafka.admin.MemberDescription;
+import io.vertx.kafka.admin.NewPartitions;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.admin.TopicDescription;
@@ -658,6 +659,59 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.EARLIEST);
     adminClient.listOffsets(topicPartitionBeginOffsets, ctx.asyncAssertFailure());
   }
+
+  @Test
+  public void testCreateNewPartitionInTopic(TestContext ctx) {
+
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    kafkaCluster.createTopic("topicToUpdatePartitions", 1, 1);
+
+    Async async = ctx.async();
+
+    // timer because, Kafka cluster takes time to create topics
+    vertx.setTimer(1000, t -> {
+
+      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
+
+        ctx.assertTrue(topics.contains("topicToUpdatePartitions"));
+
+        adminClient.createPartitions(Collections.singletonMap("topicToUpdatePartitions", new NewPartitions(3, null)), ctx.asyncAssertSuccess(v -> {
+          adminClient.describeTopics(Collections.singletonList("topicToUpdatePartitions"), ctx.asyncAssertSuccess(s -> {
+            ctx.assertTrue(s.get("topicToUpdatePartitions").getPartitions().size() == 3);
+            adminClient.close();
+            async.complete();
+          }));
+        }));
+      }));
+    });
+  }
+
+  @Test
+  public void testDecreasePartitionInTopic(TestContext ctx) {
+
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    kafkaCluster.createTopic("topicToUpdatePartitions", 3, 1);
+
+    Async async = ctx.async();
+
+    // timer because, Kafka cluster takes time to create topics
+    vertx.setTimer(1000, t -> {
+
+      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
+
+        ctx.assertTrue(topics.contains("topicToUpdatePartitions"));
+
+        adminClient.createPartitions(Collections.singletonMap("topicToUpdatePartitions", new NewPartitions(1, null)), ctx.asyncAssertFailure(v -> {
+          ctx.assertTrue(v.getMessage().equals("Topic currently has 3 partitions, which is higher than the requested 1."));
+          adminClient.close();
+          async.complete();
+        }));
+      }));
+    });
+  }
+
 
   @Test
   public void testAsyncClose(TestContext ctx) {
