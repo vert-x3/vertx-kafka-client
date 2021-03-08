@@ -132,8 +132,13 @@ public interface KafkaAdminClient {
    * @param partitions partitions to create
    * @param completionHandler handler called on operation completed
    */
-  @GenIgnore
   void createPartitions(Map<String, io.vertx.kafka.admin.NewPartitions> partitions, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Like {@link #createPartitions(Map, Handler)} but returns a {@code Future} of the asynchronous result
+   * @param partitions
+   */
+  Future<Void> createPartitions(Map<String, io.vertx.kafka.admin.NewPartitions> partitions);
 
 
   /**

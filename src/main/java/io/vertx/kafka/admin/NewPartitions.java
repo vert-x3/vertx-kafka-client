@@ -22,7 +22,9 @@ import io.vertx.core.json.JsonObject;
 import java.util.List;
 
 /**
- * A new partitions to be created
+ * An update to the number of partitions including assignment.
+ * Partitions can be increased only. If decrease, an exception from Kafka broker is received.
+ * If no assignment is specifies brokers will randomly assign the partitions.
  */
 @DataObject(generateConverter = true)
 public class NewPartitions {
@@ -83,7 +85,7 @@ public class NewPartitions {
     }
 
     /**
-     * Set the number of partitions for the topic
+     * Set the assignment for the new partitions
      * @param assignments assignments of the partitions to the brokers
      * @return current instance of the class to be fluent
      */

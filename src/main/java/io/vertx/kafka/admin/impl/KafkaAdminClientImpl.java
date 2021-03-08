@@ -196,15 +196,23 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public void createPartitions(Map<String, NewPartitions> partitions, Handler<AsyncResult<Void>> completionHandler) {
+    createPartitions(partitions).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Void> createPartitions(Map<String, NewPartitions> partitions) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Void> promise = ctx.promise();
     CreatePartitionsResult createPartitionsResult = this.adminClient.createPartitions(Helper.toPartitions(partitions));
     createPartitionsResult.all().whenComplete((v, ex) -> {
 
       if (ex == null) {
-        completionHandler.handle(Future.succeededFuture());
+        promise.handle(Future.succeededFuture());
       } else {
-        completionHandler.handle(Future.failedFuture(ex));
+        promise.handle(Future.failedFuture(ex));
       }
     });
+    return promise.future();
   }
 
 
