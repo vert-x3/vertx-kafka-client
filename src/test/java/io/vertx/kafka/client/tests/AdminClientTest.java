@@ -136,11 +136,11 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
         TopicPartitionInfo topicPartitionInfo = topicDescription.getPartitions().get(0);
         ctx.assertEquals(0, topicPartitionInfo.getPartition());
-        ctx.assertEquals(1, topicPartitionInfo.getLeader().getId());
+        ctx.assertTrue(topicPartitionInfo.getLeader().getId() == 1 || topicPartitionInfo.getLeader().getId() == 2);
         ctx.assertEquals(1, topicPartitionInfo.getReplicas().size());
-        ctx.assertEquals(1, topicPartitionInfo.getReplicas().get(0).getId());
+        ctx.assertTrue(topicPartitionInfo.getReplicas().get(0).getId() == 1 || topicPartitionInfo.getReplicas().get(0).getId() == 2);
         ctx.assertEquals(1, topicPartitionInfo.getIsr().size());
-        ctx.assertEquals(1, topicPartitionInfo.getIsr().get(0).getId());
+        ctx.assertTrue(topicPartitionInfo.getIsr().get(0).getId() == 1 || topicPartitionInfo.getIsr().get(0).getId() == 2);
 
         adminClient.close();
         async.complete();
@@ -466,7 +466,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
         ctx.assertEquals(null, controller.rack());
         Collection<Node> nodes = cluster.getNodes();
         ctx.assertNotNull(nodes);
-        ctx.assertEquals(1, nodes.size());
+        ctx.assertEquals(2, nodes.size());
         ctx.assertEquals(1, nodes.iterator().next().getId());
         adminClient.close();
         async.complete();
