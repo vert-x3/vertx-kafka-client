@@ -136,11 +136,11 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
         TopicPartitionInfo topicPartitionInfo = topicDescription.getPartitions().get(0);
         ctx.assertEquals(0, topicPartitionInfo.getPartition());
-        ctx.assertEquals(1, topicPartitionInfo.getLeader().getId());
+        ctx.assertTrue(1 == topicPartitionInfo.getLeader().getId() || 2 == topicPartitionInfo.getLeader().getId());
         ctx.assertEquals(1, topicPartitionInfo.getReplicas().size());
-        ctx.assertEquals(1, topicPartitionInfo.getReplicas().get(0).getId());
+        ctx.assertTrue(1 == topicPartitionInfo.getReplicas().get(0).getId() || 2 == topicPartitionInfo.getReplicas().get(0).getId());
         ctx.assertEquals(1, topicPartitionInfo.getIsr().size());
-        ctx.assertEquals(1, topicPartitionInfo.getIsr().get(0).getId());
+        ctx.assertTrue(1 == topicPartitionInfo.getIsr().get(0).getId() || 2 == topicPartitionInfo.getIsr().get(0).getId());
 
         adminClient.close();
         async.complete();
