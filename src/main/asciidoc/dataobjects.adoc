@@ -242,6 +242,25 @@ Set the host where the group member is running
 +++
 |===
 
+[[NewPartitions]]
+== NewPartitions
+
+++++
+ An update to the number of partitions including assignment.
+ Partitions can be increased only. If decrease, an exception from Kafka broker is received.
+ If no assignment is specifies brokers will randomly assign the partitions.
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[totalCount]]`@totalCount`|`Number (int)`|+++
+Set the number of partitions for the topic
++++
+|===
+
 [[NewTopic]]
 == NewTopic
 

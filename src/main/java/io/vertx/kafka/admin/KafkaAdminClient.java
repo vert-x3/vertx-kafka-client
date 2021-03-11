@@ -107,6 +107,15 @@ public interface KafkaAdminClient {
   void deleteTopics(List<String> topicNames, Handler<AsyncResult<Void>> completionHandler);
 
   /**
+   * Creates a batch of new partitions in the Kafka topic
+   *
+   * @param partitions partitions to create
+   * @param completionHandler handler called on operation completed
+   */
+  @GenIgnore
+  void createPartitions(Map<String, io.vertx.kafka.admin.NewPartitions> partitions, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
    * Get the configuration for the specified resources with the default options
    *
    * @param configResources the resources (topic and broker resource types are currently supported)
