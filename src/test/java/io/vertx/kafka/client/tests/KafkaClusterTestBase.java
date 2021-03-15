@@ -46,7 +46,7 @@ public class KafkaClusterTestBase extends KafkaTestBase {
 
   @BeforeClass
   public static void setUp() throws IOException {
-    kafkaCluster = kafkaCluster().deleteDataPriorToStartup(true).addBrokers(1).startup();
+    kafkaCluster = kafkaCluster().deleteDataPriorToStartup(true).addBrokers(2).startup();
   }
 
 
