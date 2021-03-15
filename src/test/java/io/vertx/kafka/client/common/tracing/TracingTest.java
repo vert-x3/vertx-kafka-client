@@ -298,7 +298,7 @@ public class TracingTest extends KafkaClusterTestBase {
     }
 
     void init(String topic, int sent, int received) {
-      init(topic, sent, received, "localhost:9092", "localhost", "9092");
+      init(topic, sent, received, "localhost:9092,localhost:9093", "localhost", "9093");
     }
 
     void init(String topic, int sent, int received, String peerAddress, String host, String port) {
