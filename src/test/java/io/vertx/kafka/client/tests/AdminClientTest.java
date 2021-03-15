@@ -107,7 +107,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
       adminClient.listTopics(ctx.asyncAssertSuccess(res ->{
         ctx.assertTrue(res.containsAll(topics), "Was expecting topics " + topics + " to be in " + res);
 
@@ -125,7 +125,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
 
       adminClient.describeTopics(Collections.singletonList("first-topic"), ctx.asyncAssertSuccess(map -> {
         TopicDescription topicDescription = map.get("first-topic");
@@ -215,7 +215,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
 
       adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
 
@@ -242,7 +242,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
 
       adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
 
@@ -268,7 +268,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
 
       adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
 
@@ -280,11 +280,11 @@ public class AdminClientTest extends KafkaClusterTestBase {
         List sublist2 = new ArrayList<Integer>();
         sublist2.add(1);
 
-        List assigmnments = new ArrayList<List<Integer>>();
-        assigmnments.add(sublist1);
-        assigmnments.add(sublist2);
+        List assignments = new ArrayList<List<Integer>>();
+        assignments.add(sublist1);
+        assignments.add(sublist2);
 
-        adminClient.createPartitions(Collections.singletonMap("testCreatePartitionInTopicWithAssignment", new NewPartitions(3, assigmnments)), ctx.asyncAssertSuccess(v -> {
+        adminClient.createPartitions(Collections.singletonMap("testCreatePartitionInTopicWithAssignment", new NewPartitions(3, assignments)), ctx.asyncAssertSuccess(v -> {
           adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment"), ctx.asyncAssertSuccess(s -> {
             ctx.assertTrue(s.get("testCreatePartitionInTopicWithAssignment").getPartitions().size() == 3);
             ctx.assertTrue(s.get("testCreatePartitionInTopicWithAssignment").getPartitions().get(1).getReplicas().get(0).getId() == 2);
@@ -307,7 +307,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
 
       adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
 
@@ -376,7 +376,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
       Collections.singleton("first-topic"), c -> { });
 
     // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
 
       adminClient.listConsumerGroups(ctx.asyncAssertSuccess(groups -> {
 
@@ -403,7 +403,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
       Collections.singleton("first-topic"), c -> { });
 
     // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
 
       adminClient.describeConsumerGroups(Collections.singletonList("groupId"), ctx.asyncAssertSuccess(groups -> {
 
@@ -542,7 +542,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(2000, t -> {
 
       adminClient.describeCluster(ctx.asyncAssertSuccess(cluster -> {
         ctx.assertNotNull(cluster.getClusterId());
