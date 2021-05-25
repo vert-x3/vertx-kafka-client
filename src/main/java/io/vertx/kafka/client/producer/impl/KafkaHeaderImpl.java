@@ -19,6 +19,8 @@ package io.vertx.kafka.client.producer.impl;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.kafka.client.producer.KafkaHeader;
 
+import java.util.Objects;
+
 /**
  * Vert.x Kafka producer record header implementation
  */
@@ -44,6 +46,24 @@ public class KafkaHeaderImpl implements KafkaHeader {
   @Override
   public Buffer value() {
     return value;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    KafkaHeaderImpl that = (KafkaHeaderImpl) o;
+    return Objects.equals(key, that.key) && Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(key, value);
+  }
+
+  @Override
+  public String toString() {
+    return "KafkaHeaderImpl{'" + key + "': " + value + '}';
   }
 
 }
