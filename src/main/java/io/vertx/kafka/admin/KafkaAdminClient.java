@@ -28,6 +28,8 @@ import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.acl.AclBinding;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -300,6 +302,22 @@ public interface KafkaAdminClient {
    */
   @GenIgnore
   Future<Map<TopicPartition, ListOffsetsResultInfo>> listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets);
+
+
+  /**
+   * Describe the ACL rules.
+   *
+   * @param aclBindingFilter The filter to use.
+   * @param completionHandler handler called on operation completed with the ACl description result.
+   */
+  @GenIgnore
+  void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+
+  /**
+   * Like {@link #describeAcls(AclBindingFilter, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<List<AclBinding>> describeAcls(AclBindingFilter aclBindingFilter);
 
   /**
    * Close the admin client

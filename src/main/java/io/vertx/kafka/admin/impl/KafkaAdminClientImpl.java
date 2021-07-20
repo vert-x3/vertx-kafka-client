@@ -16,6 +16,7 @@
 
 package io.vertx.kafka.admin.impl;
 
+import io.vertx.kafka.admin.AclBindingFilter;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.NewPartitions;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -53,6 +54,7 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
+import org.apache.kafka.clients.admin.DescribeAclsResult;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
@@ -68,6 +70,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.acl.AclBinding;
 
 public class KafkaAdminClientImpl implements KafkaAdminClient {
 
@@ -482,6 +485,27 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
           listOffsets.put(Helper.from(oOffset.getKey()), Helper.from(oOffset.getValue()));
         }
         promise.complete(listOffsets);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  public void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    describeAcls(aclBindingFilter).onComplete(completionHandler);
+  }
+
+  public Future<List<AclBinding>> describeAcls(AclBindingFilter aclBindingFilter) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<List<AclBinding>> promise = ctx.promise();
+
+    DescribeAclsResult describeAclsResult = this.adminClient.describeAcls(Helper.to(aclBindingFilter));
+    describeAclsResult.values().whenComplete((o, ex) -> {
+      if (ex == null) {
+        List<AclBinding> describeAcl = new ArrayList();
+
+        promise.complete(describeAcl);
       } else {
         promise.fail(ex);
       }

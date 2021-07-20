@@ -26,6 +26,8 @@ import io.vertx.kafka.admin.MemberAssignment;
 import io.vertx.kafka.admin.NewPartitions;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.OffsetSpec;
+import io.vertx.kafka.admin.PatternType;
+import io.vertx.kafka.admin.ResourcePatternFilter;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
@@ -251,5 +253,36 @@ public class Helper {
 
   public static ListOffsetsResultInfo from(org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo lori) {
     return new ListOffsetsResultInfo(lori.offset(), lori.timestamp(), lori.leaderEpoch().orElse(null));
+  }
+
+  public static org.apache.kafka.common.acl.AclBindingFilter to(io.vertx.kafka.admin.AclBindingFilter aclBindingFilter) {
+    return new org.apache.kafka.common.acl.AclBindingFilter(Helper.to(aclBindingFilter.patternFilter()),
+            Helper.to(aclBindingFilter.entryFilter()));
+  }
+
+  private static org.apache.kafka.common.acl.AccessControlEntryFilter to(io.vertx.kafka.admin.AccessControlEntryFilter entryFilter) {
+    return new org.apache.kafka.common.acl.AccessControlEntryFilter(entryFilter.principal(), entryFilter.host(),
+            Helper.to(entryFilter.operation()), Helper.to(entryFilter.permissionType()));
+  }
+
+  private static org.apache.kafka.common.acl.AclPermissionType to(io.vertx.kafka.admin.AclPermissionType permissionType) {
+    return org.apache.kafka.common.acl.AclPermissionType.fromCode(permissionType.code());
+  }
+
+  private static org.apache.kafka.common.acl.AclOperation to(io.vertx.kafka.admin.AclOperation operation) {
+    return org.apache.kafka.common.acl.AclOperation.fromCode(operation.code());
+  }
+
+  private static org.apache.kafka.common.resource.ResourcePatternFilter to(ResourcePatternFilter patternFilter) {
+    return new org.apache.kafka.common.resource.ResourcePatternFilter(Helper.to(patternFilter.resourceType()),
+            patternFilter.name(), Helper.to(patternFilter.patternType()));
+  }
+
+  private static org.apache.kafka.common.resource.PatternType to(PatternType patternType) {
+    return org.apache.kafka.common.resource.PatternType.valueOf(patternType.name());
+  }
+
+  private static org.apache.kafka.common.resource.ResourceType to(io.vertx.kafka.admin.ResourceType resourceType) {
+    return org.apache.kafka.common.resource.ResourceType.fromCode(resourceType.code());
   }
 }

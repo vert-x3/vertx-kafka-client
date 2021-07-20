@@ -25,28 +25,35 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Base class for tests providing a Kafka cluster
  */
 @RunWith(VertxUnitRunner.class)
-public class KafkaClusterTestBase extends KafkaTestBase {
+public abstract class KafkaClusterTestBase extends KafkaTestBase {
 
-  private static File dataDir;
+  protected static File dataDir;
   protected static KafkaCluster kafkaCluster;
+  protected static boolean ACL = false;
 
-  protected static KafkaCluster kafkaCluster() {
+  public static KafkaCluster kafkaCluster(boolean acl) {
     if (kafkaCluster != null) {
       throw new IllegalStateException();
     }
     dataDir = Testing.Files.createTestingDirectory("cluster");
-    kafkaCluster = new KafkaCluster().usingDirectory(dataDir).withPorts(2181, 9092);
+    Properties kafkaProps = new Properties();
+    if (acl) {
+      kafkaProps.put("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
+      kafkaProps.put("super.users", "User:ANONYMOUS");
+    }
+    kafkaCluster = new KafkaCluster().usingDirectory(dataDir).withPorts(2181, 9092).withKafkaConfiguration(kafkaProps);
     return kafkaCluster;
   }
 
   @BeforeClass
   public static void setUp() throws IOException {
-    kafkaCluster = kafkaCluster().deleteDataPriorToStartup(true).addBrokers(2).startup();
+    kafkaCluster = kafkaCluster(false).deleteDataPriorToStartup(true).addBrokers(2).startup();
   }
 
 

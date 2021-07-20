@@ -712,8 +712,6 @@ public class AdminClientTest extends KafkaClusterTestBase {
     });
   }
 
-
-
   @Test
   public void testCreatePartitionInTopicWithAssignment(TestContext ctx) throws IOException {
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
