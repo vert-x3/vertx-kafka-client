@@ -16,6 +16,7 @@
 
 package io.vertx.kafka.admin.impl;
 
+import io.vertx.kafka.admin.AclBinding;
 import io.vertx.kafka.admin.AclBindingFilter;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.NewPartitions;
@@ -49,6 +50,7 @@ import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.AlterConsumerGroupOffsetsResult;
+import org.apache.kafka.clients.admin.CreateAclsResult;
 import org.apache.kafka.clients.admin.CreatePartitionsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
@@ -70,7 +72,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.KafkaFuture;
-import org.apache.kafka.common.acl.AclBinding;
 
 public class KafkaAdminClientImpl implements KafkaAdminClient {
 
@@ -503,9 +504,27 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     DescribeAclsResult describeAclsResult = this.adminClient.describeAcls(Helper.to(aclBindingFilter));
     describeAclsResult.values().whenComplete((o, ex) -> {
       if (ex == null) {
-        List<AclBinding> describeAcl = new ArrayList();
+        List list = o.stream().map(entry -> new AclBinding(Helper.from(entry.pattern()), Helper.from(entry.entry()))).collect(Collectors.toList());
+        promise.complete(list);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
 
-        promise.complete(describeAcl);
+  public void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    createAcls(aclBindings).onComplete(completionHandler);
+  }
+
+  public Future<List<AclBinding>> createAcls(Collection<AclBinding> aclBindings) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<List<AclBinding>> promise = ctx.promise();
+
+    CreateAclsResult createAclsResult = this.adminClient.createAcls(Helper.to(aclBindings));
+    createAclsResult.all().whenComplete((o, ex) -> {
+      if (ex == null) {
+        promise.complete();
       } else {
         promise.fail(ex);
       }

@@ -4,12 +4,15 @@ import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.admin.AccessControlEntry;
 import io.vertx.kafka.admin.AccessControlEntryFilter;
+import io.vertx.kafka.admin.AclBinding;
 import io.vertx.kafka.admin.AclBindingFilter;
 import io.vertx.kafka.admin.AclOperation;
 import io.vertx.kafka.admin.AclPermissionType;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.admin.PatternType;
+import io.vertx.kafka.admin.ResourcePattern;
 import io.vertx.kafka.admin.ResourcePatternFilter;
 import io.vertx.kafka.admin.ResourceType;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -19,6 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -26,15 +30,6 @@ import java.util.Set;
 public class AdminClientAclTest extends KafkaClusterTestBase {
     private Vertx vertx;
     private Properties config;
-    protected static boolean ACL = true;
-
-    private static Set<String> topics = new HashSet<>();
-
-    static {
-        topics.add("first-topic");
-        topics.add("second-topic");
-//    topics.add("offsets-topic");
-    }
 
     @Before
     public void beforeTest() {
@@ -51,7 +46,6 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
     @BeforeClass
     public static void setUp() throws IOException {
         kafkaCluster = kafkaCluster(true).deleteDataPriorToStartup(true).addBrokers(2).startup();
-        kafkaCluster.createTopics(topics);
     }
 
     @Test
@@ -63,5 +57,30 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
             ctx.assertTrue(list.isEmpty());
             adminClient.close();
         }));
+    }
+
+    @Test
+    public void testCreateDescribeAcl(TestContext ctx) {
+        String topicName = "create-describe-topic";
+        String host = "localhost:9092";
+        String principal = "User:ANONYMOUS";
+        KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+        ResourcePattern resourcePattern = new ResourcePattern(ResourceType.TOPIC, topicName, PatternType.LITERAL);
+        AccessControlEntry ace = new AccessControlEntry(principal, host, AclOperation.ALL, AclPermissionType.ALLOW);
+        AclBinding aclBinding = new AclBinding(resourcePattern, ace);
+
+        ResourcePatternFilter rpf = new ResourcePatternFilter(ResourceType.TOPIC, topicName, PatternType.LITERAL);
+        AccessControlEntryFilter acef = new AccessControlEntryFilter(principal, host, AclOperation.ALL, AclPermissionType.ALLOW);
+        adminClient.createAcls(Collections.singleton(aclBinding)).onComplete(ctx.asyncAssertSuccess(i ->
+            adminClient.describeAcls(new AclBindingFilter(rpf, acef), ctx.asyncAssertSuccess(list -> {
+                ctx.assertTrue(list.get(0).entry().host().equals(host));
+                ctx.assertTrue(list.get(0).entry().principal().equals(principal));
+                ctx.assertTrue(list.get(0).entry().operation().equals(AclOperation.ALL));
+                ctx.assertTrue(list.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
+                ctx.assertTrue(list.get(0).pattern().name().equals(topicName));
+                ctx.assertTrue(list.get(0).pattern().patternType().equals(PatternType.LITERAL));
+                ctx.assertTrue(list.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
+                adminClient.close();
+            }))));
     }
 }

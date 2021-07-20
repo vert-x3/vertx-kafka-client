@@ -1,9 +1,6 @@
 package io.vertx.kafka.admin;
 
 
-import org.apache.kafka.common.acl.AccessControlEntry;
-import org.apache.kafka.common.resource.ResourcePattern;
-
 import java.util.Objects;
 
 public class AclBinding {
@@ -19,13 +16,6 @@ public class AclBinding {
     public AclBinding(ResourcePattern pattern, AccessControlEntry entry) {
         this.pattern = Objects.requireNonNull(pattern, "pattern");
         this.entry = Objects.requireNonNull(entry, "entry");
-    }
-
-    /**
-     * @return true if this binding has any UNKNOWN components.
-     */
-    public boolean isUnknown() {
-        return pattern.isUnknown() || entry.isUnknown();
     }
 
     /**

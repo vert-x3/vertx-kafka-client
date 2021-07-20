@@ -28,8 +28,8 @@ import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
-import org.apache.kafka.common.acl.AclBinding;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -303,12 +303,11 @@ public interface KafkaAdminClient {
   @GenIgnore
   Future<Map<TopicPartition, ListOffsetsResultInfo>> listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets);
 
-
   /**
    * Describe the ACL rules.
    *
    * @param aclBindingFilter The filter to use.
-   * @param completionHandler handler called on operation completed with the ACl description result.
+   * @param completionHandler handler called on operation completed with the ACL description result.
    */
   @GenIgnore
   void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler);
@@ -318,6 +317,21 @@ public interface KafkaAdminClient {
    */
   @GenIgnore
   Future<List<AclBinding>> describeAcls(AclBindingFilter aclBindingFilter);
+
+  /**
+   * Create the ACL rules.
+   *
+   * @param aclBindings The ACL to create.
+   * @param completionHandler handler called on operation completed with the ACL creation result.
+   */
+  @GenIgnore
+  void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+
+  /**
+   * Like {@link #createAcls(Collection)} (Collection<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<List<AclBinding>> createAcls(Collection<AclBinding> aclBindings);
 
   /**
    * Close the admin client
