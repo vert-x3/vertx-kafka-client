@@ -27,6 +27,8 @@ import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
+
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,6 +210,33 @@ public interface KafkaAdminClient {
    */
   @GenIgnore
   void listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets, Handler<AsyncResult<Map<TopicPartition, ListOffsetsResultInfo>>> completionHandler);
+
+  /**
+   * Describe the ACL rules.
+   *
+   * @param aclBindingFilter The filter to use.
+   * @param completionHandler handler called on operation completed with the ACL description result.
+   */
+  @GenIgnore
+  void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+
+  /**
+   * Create the ACL rules.
+   *
+   * @param aclBindings The ACL to create.
+   * @param completionHandler handler called on operation completed with the ACL creation result.
+   */
+  @GenIgnore
+  void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+
+  /**
+   * Delete the ACL rules.
+   *
+   * @param aclBindings The filter to delete matching ACLs.
+   * @param completionHandler handler called on operation completed with the ACL deletion result.
+   */
+  @GenIgnore
+  void deleteAcls(Collection<AclBindingFilter> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
    * Close the admin client

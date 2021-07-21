@@ -16,6 +16,8 @@
 
 package io.vertx.kafka.admin.impl;
 
+import io.vertx.kafka.admin.AclBinding;
+import io.vertx.kafka.admin.AclBindingFilter;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
@@ -45,10 +47,13 @@ import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.AlterConsumerGroupOffsetsResult;
+import org.apache.kafka.clients.admin.CreateAclsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteAclsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
+import org.apache.kafka.clients.admin.DescribeAclsResult;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
@@ -345,6 +350,40 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
           listOffsets.put(Helper.from(oOffset.getKey()), Helper.from(oOffset.getValue()));
         }
         completionHandler.handle(Future.succeededFuture(listOffsets));
+      } else {
+        completionHandler.handle(Future.failedFuture(ex));
+      }
+    });
+  }
+
+  public void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    DescribeAclsResult describeAclsResult = this.adminClient.describeAcls(Helper.to(aclBindingFilter));
+    describeAclsResult.values().whenComplete((o, ex) -> {
+      if (ex == null) {
+        List list = o.stream().map(entry -> new AclBinding(Helper.from(entry.pattern()), Helper.from(entry.entry()))).collect(Collectors.toList());
+        completionHandler.handle(Future.succeededFuture(list));
+      } else {
+        completionHandler.handle(Future.failedFuture(ex));
+      }
+    });
+  }
+
+  public void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    CreateAclsResult createAclsResult = this.adminClient.createAcls(Helper.to2(aclBindings));
+    createAclsResult.all().whenComplete((o, ex) -> {
+      if (ex == null) {
+        completionHandler.handle(Future.succeededFuture());
+      } else {
+        completionHandler.handle(Future.failedFuture(ex));
+      }
+    });
+  }
+
+  public void deleteAcls(Collection<AclBindingFilter> aclBindingsFilters, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    DeleteAclsResult deleteAclsResult = this.adminClient.deleteAcls(Helper.to(aclBindingsFilters));
+    deleteAclsResult.all().whenComplete((o, ex) -> {
+      if (ex == null) {
+        completionHandler.handle(Future.succeededFuture(Helper.from2(o)));
       } else {
         completionHandler.handle(Future.failedFuture(ex));
       }
