@@ -19,6 +19,7 @@ package io.vertx.kafka.client.common.impl;
 import io.vertx.core.Handler;
 import io.vertx.kafka.admin.AccessControlEntry;
 import io.vertx.kafka.admin.AclBinding;
+import io.vertx.kafka.admin.AclBindingFilter;
 import io.vertx.kafka.admin.AclOperation;
 import io.vertx.kafka.admin.AclPermissionType;
 import io.vertx.kafka.admin.Config;
@@ -292,8 +293,9 @@ public class Helper {
     return org.apache.kafka.common.resource.ResourceType.fromCode(resourceType.code());
   }
 
-  public static Collection<org.apache.kafka.common.acl.AclBinding> to(Collection<AclBinding> aclBindings) {
-    return aclBindings.stream().map(entry -> new org.apache.kafka.common.acl.AclBinding(Helper.to(entry.pattern()), Helper.to(entry.entry()))).collect(Collectors.toList());
+  public static Collection<org.apache.kafka.common.acl.AclBinding> to2(Collection<AclBinding> aclBindings) {
+    return aclBindings.stream().map(entry -> new org.apache.kafka.common.acl.AclBinding(Helper.to(entry.pattern()),
+                                                                                        Helper.to(entry.entry()))).collect(Collectors.toList());
   }
 
   private static org.apache.kafka.common.acl.AccessControlEntry to(io.vertx.kafka.admin.AccessControlEntry entry) {
@@ -326,5 +328,19 @@ public class Helper {
 
   private static AclOperation from(org.apache.kafka.common.acl.AclOperation operation) {
     return AclOperation.valueOf(operation.name());
+  }
+
+  public static Collection<org.apache.kafka.common.acl.AclBindingFilter> to(Collection<AclBindingFilter> aclBindingsFilters) {
+    return aclBindingsFilters.stream().map(aclBindingsFilter ->
+            new org.apache.kafka.common.acl.AclBindingFilter(Helper.to(aclBindingsFilter.patternFilter()),
+                                                            Helper.to(aclBindingsFilter.entryFilter()))).collect(Collectors.toList());
+  }
+
+  public static List<AclBinding> from2(Collection<org.apache.kafka.common.acl.AclBinding> bindings) {
+    return bindings.stream().map(entry -> Helper.from(entry)).collect(Collectors.toList());
+  }
+
+  private static AclBinding from(org.apache.kafka.common.acl.AclBinding entry) {
+    return new AclBinding(Helper.from(entry.pattern()), Helper.from(entry.entry()));
   }
 }

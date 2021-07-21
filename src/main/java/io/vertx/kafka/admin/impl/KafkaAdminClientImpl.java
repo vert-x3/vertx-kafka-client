@@ -53,6 +53,7 @@ import org.apache.kafka.clients.admin.AlterConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.CreateAclsResult;
 import org.apache.kafka.clients.admin.CreatePartitionsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteAclsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
@@ -521,10 +522,29 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<AclBinding>> promise = ctx.promise();
 
-    CreateAclsResult createAclsResult = this.adminClient.createAcls(Helper.to(aclBindings));
+    CreateAclsResult createAclsResult = this.adminClient.createAcls(Helper.to2(aclBindings));
     createAclsResult.all().whenComplete((o, ex) -> {
       if (ex == null) {
         promise.complete();
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  public void deleteAcls(Collection<AclBindingFilter> aclBindingsFilters, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    deleteAcls(aclBindingsFilters).onComplete(completionHandler);
+  }
+
+  public Future<List<AclBinding>> deleteAcls(Collection<AclBindingFilter> aclBindingsFilters) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<List<AclBinding>> promise = ctx.promise();
+
+    DeleteAclsResult deleteAclsResult = this.adminClient.deleteAcls(Helper.to(aclBindingsFilters));
+    deleteAclsResult.all().whenComplete((o, ex) -> {
+      if (ex == null) {
+        promise.complete(Helper.from2(o));
       } else {
         promise.fail(ex);
       }

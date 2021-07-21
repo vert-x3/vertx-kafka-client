@@ -334,6 +334,21 @@ public interface KafkaAdminClient {
   Future<List<AclBinding>> createAcls(Collection<AclBinding> aclBindings);
 
   /**
+   * Delete the ACL rules.
+   *
+   * @param aclBindings The filter to delete matching ACLs.
+   * @param completionHandler handler called on operation completed with the ACL deletion result.
+   */
+  @GenIgnore
+  void deleteAcls(Collection<AclBindingFilter> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+
+  /**
+   * Like {@link #deleteAcls(Collection)} (Collection<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<List<AclBinding>> deleteAcls(Collection<AclBindingFilter> aclBindings);
+
+  /**
    * Close the admin client
    *
    * @param handler a {@code Handler} completed with the operation result
