@@ -92,7 +92,7 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
                     ctx.assertTrue(deleted.get(0).pattern().name().equals(topicName));
                     ctx.assertTrue(deleted.get(0).pattern().patternType().equals(PatternType.LITERAL));
                     ctx.assertTrue(deleted.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
-                    adminClient.describeAcls(abf, ctx.asyncAssertSuccess(list2 -> {
+                    adminClient.describeAcls(abf).onComplete(ctx.asyncAssertSuccess(list2 -> {
                         ctx.assertTrue(list2.isEmpty());
                         adminClient.close();
                     }));

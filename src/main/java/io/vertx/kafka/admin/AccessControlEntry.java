@@ -52,5 +52,4 @@ public class AccessControlEntry {
     public AclPermissionType permissionType() {
         return data.permissionType();
     }
-
 }

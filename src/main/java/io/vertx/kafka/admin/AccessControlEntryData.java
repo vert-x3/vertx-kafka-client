@@ -56,4 +56,3 @@ class AccessControlEntryData {
         return operation.isUnknown() || permissionType.isUnknown();
     }
 }
-
