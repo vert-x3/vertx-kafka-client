@@ -68,12 +68,6 @@ public class KafkaConsumerRecordImpl<K, V> implements KafkaConsumerRecord<K, V> 
     return this.record.timestampType();
   }
 
-  @Deprecated
-  @Override
-  public long checksum() {
-    return this.record.checksum();
-  }
-
   @Override
   public K key() {
     return this.record.key();
