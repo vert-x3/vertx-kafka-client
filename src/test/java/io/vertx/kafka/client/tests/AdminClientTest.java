@@ -16,36 +16,10 @@
 
 package io.vertx.kafka.client.tests;
 
-import io.vertx.kafka.admin.ConsumerGroupListing;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import io.vertx.kafka.admin.Config;
-import io.vertx.kafka.admin.ConfigEntry;
-import io.vertx.kafka.admin.ConsumerGroupDescription;
-import io.vertx.kafka.admin.ListOffsetsResultInfo;
-import io.vertx.kafka.admin.MemberAssignment;
-import io.vertx.kafka.admin.MemberDescription;
-import io.vertx.kafka.admin.NewPartitions;
-import io.vertx.kafka.admin.NewTopic;
-import io.vertx.kafka.admin.OffsetSpec;
-import io.vertx.kafka.admin.TopicDescription;
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.admin.*;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -62,10 +36,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.admin.KafkaAdminClient;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -758,5 +737,111 @@ public class AdminClientTest extends KafkaClusterTestBase {
     adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
       adminClient.close(ctx.asyncAssertSuccess());
     }));
+  }
+
+  @Test
+  public void testDescribeLogDirs(TestContext ctx) {
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    Async async = ctx.async();
+
+    vertx.setTimer(1000, t -> {
+      adminClient.describeLogDirs(Stream.of(1, 2).collect(Collectors.toList()), ctx.asyncAssertSuccess(map -> {
+        ctx.assertEquals(map.size(), 2);
+
+
+        List<LogDirInfo> infosBroker1 = map.get(1);
+        ctx.assertNotNull(infosBroker1);
+        ctx.assertEquals(infosBroker1.size(), 1);
+        ctx.assertTrue(infosBroker1.get(0).getPath().endsWith("/data/cluster/kafka/broker1"));
+
+        List<LogDirInfo> infosBroker2 = map.get(2);
+        ctx.assertNotNull(infosBroker2);
+        ctx.assertEquals(infosBroker2.size(), 1);
+        ctx.assertTrue(infosBroker2.get(0).getPath().endsWith("/data/cluster/kafka/broker2"));
+
+        ctx.assertEquals(
+          (int) infosBroker1.get(0).getReplicaInfos().stream()
+            .filter(f -> topics.contains(f.getTopicPartition().topic()))
+            .count()
+            +
+            (int) infosBroker2.get(0).getReplicaInfos().stream()
+              .filter(f -> topics.contains(f.getTopicPartition().topic()))
+              .count(), 2
+        );
+
+        adminClient.close();
+        async.complete();
+      }));
+    });
+  }
+
+  @Test
+  public void testDescribeLogDirsSeveralPartitions(TestContext ctx) {
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    Async async = ctx.async();
+    adminClient.createTopics(Collections.singletonList(new NewTopic("testDescribeTopic", 4, (short) 1)),
+      ctx.asyncAssertSuccess(v -> {
+        adminClient.describeLogDirs(Stream.of(1, 2).collect(Collectors.toList()), ctx.asyncAssertSuccess(map -> {
+          List<LogDirInfo> infosBroker1 = map.get(1);
+          List<LogDirInfo> infosBroker2 = map.get(2);
+
+          ctx.assertNotNull(infosBroker1);
+          ctx.assertEquals(infosBroker1.size(), 1);
+          ctx.assertNotNull(infosBroker2);
+          ctx.assertEquals(infosBroker2.size(), 1);
+
+          ctx.assertEquals(
+            (int) infosBroker1.get(0).getReplicaInfos().stream()
+              .filter(f -> f.getTopicPartition().topic().equals("testDescribeTopic"))
+              .count()
+              +
+              (int) infosBroker2.get(0).getReplicaInfos().stream()
+                .filter(f -> f.getTopicPartition().topic().equals("testDescribeTopic"))
+                .count()
+            , 4);
+
+          adminClient.deleteTopics(Collections.singletonList("testDescribeTopic"), ctx.asyncAssertSuccess(v1 -> {
+            async.complete();
+            adminClient.close();
+          }));
+        }));
+      }));
+  }
+
+  @Test
+  public void testDescribeLogDirsWithMessages(TestContext ctx) {
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    Async async = ctx.async();
+    adminClient.createTopics(Collections.singletonList(new NewTopic("testDescribeTopic", 1, (short) 1)),
+      ctx.asyncAssertSuccess(v -> {
+        kafkaCluster.useTo().produceIntegers("testDescribeTopic", 6, 1, () -> {
+          adminClient.describeLogDirs(Stream.of(1, 2).collect(Collectors.toList()), ctx.asyncAssertSuccess(map -> {
+            List<LogDirInfo> infosBroker1 = map.get(1);
+            List<LogDirInfo> infosBroker2 = map.get(2);
+
+            ctx.assertNotNull(infosBroker1);
+            ctx.assertEquals(infosBroker1.size(), 1);
+            ctx.assertNotNull(infosBroker2);
+            ctx.assertEquals(infosBroker2.size(), 1);
+
+            ctx.assertTrue(
+              infosBroker1.get(0).getReplicaInfos().stream()
+                .filter(f -> f.getTopicPartition().topic().equals("testDescribeTopic"))
+                .map(i -> i.getReplicaInfo().getSize())
+                .reduce(0L, Long::sum)
+                +
+                infosBroker2.get(0).getReplicaInfos().stream()
+                  .filter(f -> f.getTopicPartition().topic().equals("testDescribeTopic"))
+                  .map(i -> i.getReplicaInfo().getSize())
+                  .reduce(0L, Long::sum)
+                > 0L);
+
+            adminClient.deleteTopics(Collections.singletonList("testDescribeTopic"), ctx.asyncAssertSuccess(v1 -> {
+              async.complete();
+              adminClient.close();
+            }));
+          }));
+        });
+      }));
   }
 }

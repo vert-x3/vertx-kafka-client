@@ -17,15 +17,7 @@
 package io.vertx.kafka.client.common.impl;
 
 import io.vertx.core.Handler;
-import io.vertx.kafka.admin.Config;
-import io.vertx.kafka.admin.ConfigEntry;
-import io.vertx.kafka.admin.ConsumerGroupListing;
-import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
-import io.vertx.kafka.admin.ListOffsetsResultInfo;
-import io.vertx.kafka.admin.MemberAssignment;
-import io.vertx.kafka.admin.NewPartitions;
-import io.vertx.kafka.admin.NewTopic;
-import io.vertx.kafka.admin.OffsetSpec;
+import io.vertx.kafka.admin.*;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
@@ -33,6 +25,7 @@ import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.common.requests.DescribeLogDirsResponse;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -251,5 +244,9 @@ public class Helper {
 
   public static ListOffsetsResultInfo from(org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo lori) {
     return new ListOffsetsResultInfo(lori.offset(), lori.timestamp(), lori.leaderEpoch().orElse(null));
+  }
+
+  public static ReplicaInfo from(DescribeLogDirsResponse.ReplicaInfo replicaInfo) {
+    return new ReplicaInfo(replicaInfo.size, replicaInfo.offsetLag, replicaInfo.isFuture);
   }
 }

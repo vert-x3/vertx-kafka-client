@@ -16,58 +16,33 @@
 
 package io.vertx.kafka.admin.impl;
 
-import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
-import io.vertx.kafka.admin.NewPartitions;
-import io.vertx.kafka.client.common.TopicPartition;
-import io.vertx.kafka.client.consumer.OffsetAndMetadata;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import io.vertx.core.Promise;
+import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.kafka.admin.ClusterDescription;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.ConsumerGroupListing;
-import io.vertx.kafka.admin.ListOffsetsResultInfo;
+import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.MemberDescription;
+import io.vertx.kafka.admin.NewPartitions;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.admin.TopicDescription;
+import io.vertx.kafka.admin.*;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
+import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import io.vertx.kafka.client.common.impl.Helper;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AlterConfigsResult;
-import org.apache.kafka.clients.admin.AlterConsumerGroupOffsetsResult;
-import org.apache.kafka.clients.admin.CreatePartitionsResult;
-import org.apache.kafka.clients.admin.CreateTopicsResult;
-import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
-import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
-import org.apache.kafka.clients.admin.DeleteTopicsResult;
-import org.apache.kafka.clients.admin.DescribeClusterResult;
-import org.apache.kafka.clients.admin.DescribeConfigsResult;
-import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
-import org.apache.kafka.clients.admin.DescribeTopicsResult;
-import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
-import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
-import org.apache.kafka.clients.admin.ListOffsetsResult;
-import org.apache.kafka.clients.admin.ListTopicsResult;
-
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.client.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.requests.DescribeLogDirsResponse;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class KafkaAdminClientImpl implements KafkaAdminClient {
 
@@ -514,5 +489,39 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   @Override
   public void close(long timeout, Handler<AsyncResult<Void>> handler) {
     close(timeout).onComplete(handler);
+  }
+
+  @Override
+  public void describeLogDirs(List<Integer> brokerIds, Handler<AsyncResult<Map<Integer, List<LogDirInfo>>>> completionHandler) {
+    describeLogDirs(brokerIds).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Map<Integer, List<LogDirInfo>>> describeLogDirs(List<Integer> brokerIds) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<Integer, List<LogDirInfo>>> promise = ctx.promise();
+    DescribeLogDirsResult describeLogDirsResult = this.adminClient.describeLogDirs(brokerIds);
+    describeLogDirsResult.all().whenComplete((t, ex) -> {
+      if (ex == null) {
+        Map<Integer, List<LogDirInfo>> brokerInfos = new HashMap<>();
+        for (Map.Entry<Integer, Map<String, DescribeLogDirsResponse.LogDirInfo>> brokerEntry : t.entrySet()) {
+          List<LogDirInfo> logDirInfos = new ArrayList<>();
+          for (Map.Entry<String, DescribeLogDirsResponse.LogDirInfo> logDirEntry : brokerEntry.getValue().entrySet()) {
+            LogDirInfo logDirInfo = new LogDirInfo();
+            logDirInfo
+              .setPath(logDirEntry.getKey())
+              .setReplicaInfos(logDirEntry.getValue().replicaInfos.entrySet().stream()
+                .map(v -> new TopicPartitionReplicaInfo(v.getKey(), Helper.from(v.getValue())))
+                .collect(Collectors.toList()));
+            logDirInfos.add(logDirInfo);
+          }
+          brokerInfos.put(brokerEntry.getKey(), logDirInfos);
+        }
+        promise.complete(brokerInfos);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
   }
 }
