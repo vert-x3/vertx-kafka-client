@@ -16,36 +16,10 @@
 
 package io.vertx.kafka.client.tests;
 
-import io.vertx.kafka.admin.ConsumerGroupListing;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import io.vertx.kafka.admin.Config;
-import io.vertx.kafka.admin.ConfigEntry;
-import io.vertx.kafka.admin.ConsumerGroupDescription;
-import io.vertx.kafka.admin.ListOffsetsResultInfo;
-import io.vertx.kafka.admin.MemberAssignment;
-import io.vertx.kafka.admin.MemberDescription;
-import io.vertx.kafka.admin.NewPartitions;
-import io.vertx.kafka.admin.NewTopic;
-import io.vertx.kafka.admin.OffsetSpec;
-import io.vertx.kafka.admin.TopicDescription;
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.admin.*;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -62,10 +36,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.admin.KafkaAdminClient;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -758,5 +736,24 @@ public class AdminClientTest extends KafkaClusterTestBase {
     adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
       adminClient.close(ctx.asyncAssertSuccess());
     }));
+  }
+
+  @Test
+  public void testDeleteRecords(TestContext ctx) {
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    Async async = ctx.async();
+    TopicPartition partition = new TopicPartition("testTopicForDelete", 0);
+    AtomicInteger messagesCnt = new AtomicInteger();
+    adminClient.createTopics(Collections.singletonList(new NewTopic("testTopicForDelete", 1, (short) 1)),
+      ctx.asyncAssertSuccess(v -> kafkaCluster.useTo().produceIntegers("testTopicForDelete", 7, 1, () -> {
+        adminClient.deleteRecords(Collections.singletonMap(partition, 5L),
+          ctx.asyncAssertSuccess(r -> adminClient.listOffsets(Collections.singletonMap(partition, OffsetSpec.EARLIEST), ctx.asyncAssertSuccess(ar -> {
+            ctx.assertEquals(ar.get(partition).getOffset(), 5L);
+            adminClient.deleteTopics(Collections.singletonList("testTopicForDelete"), ctx.asyncAssertSuccess(v1 -> {
+              async.complete();
+              adminClient.close();
+            }));
+          }))));
+      })));
   }
 }
