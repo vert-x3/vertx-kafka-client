@@ -499,19 +499,26 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   public Future<Void> deleteRecords(Map<TopicPartition, Long> recordsToDelete) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Void> promise = ctx.promise();
-
-    DeleteRecordsResult deleteRecordsResult = this.adminClient.deleteRecords(recordsToDelete.entrySet().stream()
-      .collect(Collectors.toMap(
-        e -> Helper.to(e.getKey()),
-        e -> RecordsToDelete.beforeOffset(e.getValue()))));
-
-    deleteRecordsResult.all().whenComplete((v, ex) -> {
-      if (ex == null) {
-        promise.complete();
-      } else {
-        promise.fail(ex);
-      }
-    });
+    deleteRecordsInner(recordsToDelete, promise);
     return promise.future();
+  }
+
+  private void deleteRecordsInner(Map<TopicPartition, Long> recordsToDelete, Promise<Void> promise) {
+    try {
+      DeleteRecordsResult deleteRecordsResult = this.adminClient.deleteRecords(recordsToDelete.entrySet().stream()
+        .collect(Collectors.toMap(
+          e -> Helper.to(e.getKey()),
+          e -> RecordsToDelete.beforeOffset(e.getValue()))));
+
+      deleteRecordsResult.all().whenComplete((v, ex) -> {
+        if (ex == null) {
+          promise.complete();
+        } else {
+          promise.fail(ex);
+        }
+      });
+    } catch (Exception e) {
+      promise.fail(e);
+    }
   }
 }
