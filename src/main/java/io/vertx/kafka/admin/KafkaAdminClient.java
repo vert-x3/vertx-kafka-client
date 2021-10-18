@@ -325,4 +325,11 @@ public interface KafkaAdminClient {
    * Like {@link #close(long, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> close(long timeout);
+
+  @GenIgnore
+  void describeLogDirs(List<Integer> brokerIds, Handler<AsyncResult<Map<Integer, List<LogDirInfo>>>> completionHandler);
+
+  @GenIgnore
+  Future<Map<Integer, List<LogDirInfo>>> describeLogDirs(List<Integer> brokerIds);
+
 }
