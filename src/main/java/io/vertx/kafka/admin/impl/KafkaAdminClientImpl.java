@@ -37,6 +37,12 @@ import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.requests.DescribeLogDirsResponse;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import java.time.Duration;
 import java.util.*;
@@ -520,5 +526,39 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     } catch (Exception e) {
       promise.fail(e);
     }
+  }
+
+  @Override
+  public void describeLogDirs(List<Integer> brokerIds, Handler<AsyncResult<Map<Integer, List<LogDirInfo>>>> completionHandler) {
+    describeLogDirs(brokerIds).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Map<Integer, List<LogDirInfo>>> describeLogDirs(List<Integer> brokerIds) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<Integer, List<LogDirInfo>>> promise = ctx.promise();
+    DescribeLogDirsResult describeLogDirsResult = this.adminClient.describeLogDirs(brokerIds);
+    describeLogDirsResult.all().whenComplete((t, ex) -> {
+      if (ex == null) {
+        Map<Integer, List<LogDirInfo>> brokerInfos = new HashMap<>();
+        for (Map.Entry<Integer, Map<String, DescribeLogDirsResponse.LogDirInfo>> brokerEntry : t.entrySet()) {
+          List<LogDirInfo> logDirInfos = new ArrayList<>();
+          for (Map.Entry<String, DescribeLogDirsResponse.LogDirInfo> logDirEntry : brokerEntry.getValue().entrySet()) {
+            LogDirInfo logDirInfo = new LogDirInfo();
+            logDirInfo
+              .setPath(logDirEntry.getKey())
+              .setReplicaInfos(logDirEntry.getValue().replicaInfos.entrySet().stream()
+                .map(v -> new TopicPartitionReplicaInfo(v.getKey(), Helper.from(v.getValue())))
+                .collect(Collectors.toList()));
+            logDirInfos.add(logDirInfo);
+          }
+          brokerInfos.put(brokerEntry.getKey(), logDirInfos);
+        }
+        promise.complete(brokerInfos);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
   }
 }

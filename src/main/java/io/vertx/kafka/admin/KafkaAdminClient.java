@@ -323,6 +323,13 @@ public interface KafkaAdminClient {
   Future<Void> close(long timeout);
 
   @GenIgnore
+  void describeLogDirs(List<Integer> brokerIds, Handler<AsyncResult<Map<Integer, List<LogDirInfo>>>> completionHandler);
+
+  @GenIgnore
+  Future<Map<Integer, List<LogDirInfo>>> describeLogDirs(List<Integer> brokerIds);
+
+
+  @GenIgnore
   void deleteRecords(Map<TopicPartition, Long> recordsToDelete, Handler<AsyncResult<Void>> completionHandler);
 
   @GenIgnore
