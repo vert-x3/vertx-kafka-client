@@ -309,13 +309,13 @@ public interface KafkaAdminClient {
    * @param aclBindingFilter The filter to use.
    * @param completionHandler handler called on operation completed with the ACL description result.
    */
-  @GenIgnore
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
    * Like {@link #describeAcls(AclBindingFilter, Handler)} but returns a {@code Future} of the asynchronous result
    */
-  @GenIgnore
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<List<AclBinding>> describeAcls(AclBindingFilter aclBindingFilter);
 
   /**
@@ -324,13 +324,13 @@ public interface KafkaAdminClient {
    * @param aclBindings The ACL to create.
    * @param completionHandler handler called on operation completed with the ACL creation result.
    */
-  @GenIgnore
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
    * Like {@link #createAcls(Collection)} (Collection<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
    */
-  @GenIgnore
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<List<AclBinding>> createAcls(Collection<AclBinding> aclBindings);
 
   /**
@@ -339,13 +339,13 @@ public interface KafkaAdminClient {
    * @param aclBindings The filter to delete matching ACLs.
    * @param completionHandler handler called on operation completed with the ACL deletion result.
    */
-  @GenIgnore
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   void deleteAcls(Collection<AclBindingFilter> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
    * Like {@link #deleteAcls(Collection)} (Collection<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
    */
-  @GenIgnore
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<List<AclBinding>> deleteAcls(Collection<AclBindingFilter> aclBindings);
 
   /**
