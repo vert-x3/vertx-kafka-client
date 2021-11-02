@@ -740,6 +740,25 @@ public class AdminClientTest extends KafkaClusterTestBase {
   }
 
   @Test
+  public void testDeleteRecords(TestContext ctx) {
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    Async async = ctx.async();
+    TopicPartition partition = new TopicPartition("testTopicForDelete", 0);
+    AtomicInteger messagesCnt = new AtomicInteger();
+    adminClient.createTopics(Collections.singletonList(new NewTopic("testTopicForDelete", 1, (short) 1)),
+      ctx.asyncAssertSuccess(v -> kafkaCluster.useTo().produceIntegers("testTopicForDelete", 7, 1, () -> {
+        adminClient.deleteRecords(Collections.singletonMap(partition, 5L),
+          ctx.asyncAssertSuccess(r -> adminClient.listOffsets(Collections.singletonMap(partition, OffsetSpec.EARLIEST), ctx.asyncAssertSuccess(ar -> {
+            ctx.assertEquals(ar.get(partition).getOffset(), 5L);
+            adminClient.deleteTopics(Collections.singletonList("testTopicForDelete"), ctx.asyncAssertSuccess(v1 -> {
+              async.complete();
+              adminClient.close();
+            }));
+          }))));
+      })));
+  }
+
+  @Test
   public void testDescribeLogDirs(TestContext ctx) {
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
     Async async = ctx.async();
