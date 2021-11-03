@@ -39,7 +39,7 @@ public interface KafkaAdminClient {
   /**
    * Create a new KafkaAdminClient instance
    *
-   * @param vertx Vert.x instance to use
+   * @param vertx       Vert.x instance to use
    * @param adminClient Kafka native Admin client instance
    * @return an instance of the KafkaAdminClient
    */
@@ -51,7 +51,7 @@ public interface KafkaAdminClient {
   /**
    * Create a new KafkaAdminClient instance
    *
-   * @param vertx Vert.x instance to use
+   * @param vertx  Vert.x instance to use
    * @param config Kafka admin client configuration
    * @return an instance of the KafkaAdminClient
    */
@@ -62,7 +62,7 @@ public interface KafkaAdminClient {
   /**
    * Create a new KafkaAdminClient instance
    *
-   * @param vertx Vert.x instance to use
+   * @param vertx  Vert.x instance to use
    * @param config Kafka admin client configuration
    * @return an instance of the KafkaAdminClient
    */
@@ -86,7 +86,7 @@ public interface KafkaAdminClient {
   /**
    * Describe some topics in the cluster, with the default options.
    *
-   * @param topicNames the names of the topics to describe
+   * @param topicNames        the names of the topics to describe
    * @param completionHandler handler called on operation completed with the topics descriptions
    */
   void describeTopics(List<String> topicNames, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
@@ -99,7 +99,7 @@ public interface KafkaAdminClient {
   /**
    * Creates a batch of new Kafka topics
    *
-   * @param topics topics to create
+   * @param topics            topics to create
    * @param completionHandler handler called on operation completed
    */
   void createTopics(List<NewTopic> topics, Handler<AsyncResult<Void>> completionHandler);
@@ -112,7 +112,7 @@ public interface KafkaAdminClient {
   /**
    * Deletes a batch of Kafka topics
    *
-   * @param topicNames the names of the topics to delete
+   * @param topicNames        the names of the topics to delete
    * @param completionHandler handler called on operation completed
    */
   void deleteTopics(List<String> topicNames, Handler<AsyncResult<Void>> completionHandler);
@@ -125,13 +125,14 @@ public interface KafkaAdminClient {
   /**
    * Creates a batch of new partitions in the Kafka topic
    *
-   * @param partitions partitions to create
+   * @param partitions        partitions to create
    * @param completionHandler handler called on operation completed
    */
   void createPartitions(Map<String, io.vertx.kafka.admin.NewPartitions> partitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Like {@link #createPartitions(Map, Handler)} but returns a {@code Future} of the asynchronous result
+   *
    * @param partitions
    */
   Future<Void> createPartitions(Map<String, io.vertx.kafka.admin.NewPartitions> partitions);
@@ -140,7 +141,7 @@ public interface KafkaAdminClient {
   /**
    * Get the configuration for the specified resources with the default options
    *
-   * @param configResources the resources (topic and broker resource types are currently supported)
+   * @param configResources   the resources (topic and broker resource types are currently supported)
    * @param completionHandler handler called on operation completed with the configurations
    */
   @GenIgnore
@@ -155,17 +156,17 @@ public interface KafkaAdminClient {
   /**
    * Update the configuration for the specified resources with the default options
    *
-   * @param configs The resources with their configs (topic is the only resource type with configs that can be updated currently)
+   * @param configs           The resources with their configs (topic is the only resource type with configs that can be updated currently)
    * @param completionHandler handler called on operation completed
    */
   @GenIgnore
-  void alterConfigs(Map<ConfigResource,Config> configs, Handler<AsyncResult<Void>> completionHandler);
+  void alterConfigs(Map<ConfigResource, Config> configs, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Like {@link #alterConfigs(Map, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore
-  Future<Void> alterConfigs(Map<ConfigResource,Config> configs);
+  Future<Void> alterConfigs(Map<ConfigResource, Config> configs);
 
   /**
    * Get the the consumer groups available in the cluster with the default options
@@ -182,7 +183,7 @@ public interface KafkaAdminClient {
   /**
    * Describe some group ids in the cluster, with the default options
    *
-   * @param groupIds the ids of the groups to describe
+   * @param groupIds          the ids of the groups to describe
    * @param completionHandler handler called on operation completed with the consumer groups descriptions
    */
   void describeConsumerGroups(List<String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
@@ -207,7 +208,7 @@ public interface KafkaAdminClient {
   /**
    * Delete consumer groups from the cluster.
    *
-   * @param groupIds the ids of the groups to delete
+   * @param groupIds          the ids of the groups to delete
    * @param completionHandler handler called on operation completed
    */
   void deleteConsumerGroups(List<String> groupIds, Handler<AsyncResult<Void>> completionHandler);
@@ -220,8 +221,8 @@ public interface KafkaAdminClient {
   /**
    * List the consumer group offsets available in the cluster.
    *
-   * @param groupId The group id of the group whose offsets will be listed
-   * @param options The options to use when listing the consumer group offsets.
+   * @param groupId           The group id of the group whose offsets will be listed
+   * @param options           The options to use when listing the consumer group offsets.
    * @param completionHandler handler called on operation completed with the consumer groups offsets
    */
   @GenIgnore
@@ -236,7 +237,7 @@ public interface KafkaAdminClient {
   /**
    * List the consumer group offsets available in the cluster.
    *
-   * @param groupId The group id of the group whose offsets will be listed
+   * @param groupId           The group id of the group whose offsets will be listed
    * @param completionHandler handler called on operation completed with the consumer groups offsets
    */
   @GenIgnore
@@ -257,7 +258,7 @@ public interface KafkaAdminClient {
    * succeed at the partition level only if the group is not actively subscribed
    * to the corresponding topic.
    *
-   * @param groupId The group id of the group whose offsets will be deleted
+   * @param groupId    The group id of the group whose offsets will be deleted
    * @param partitions The set of partitions in the consumer group whose offsets will be deleted
    */
   void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
@@ -286,7 +287,7 @@ public interface KafkaAdminClient {
    * List the offsets available for a set of partitions.
    *
    * @param topicPartitionOffsets The options to use when listing the partition offsets.
-   * @param completionHandler handler called on operation completed with the partition offsets
+   * @param completionHandler     handler called on operation completed with the partition offsets
    */
   @GenIgnore
   void listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets, Handler<AsyncResult<Map<TopicPartition, ListOffsetsResultInfo>>> completionHandler);
@@ -334,5 +335,11 @@ public interface KafkaAdminClient {
 
   @GenIgnore
   Future<Void> deleteRecords(Map<TopicPartition, Long> recordsToDelete);
+
+  @GenIgnore
+  void describeFeatures(Handler<AsyncResult<Void>> completionHandler);
+
+  @GenIgnore
+  Future<Void> describeFeatures();
 
 }
