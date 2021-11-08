@@ -337,9 +337,9 @@ public interface KafkaAdminClient {
   Future<Void> deleteRecords(Map<TopicPartition, Long> recordsToDelete);
 
   @GenIgnore
-  void describeFeatures(Handler<AsyncResult<Void>> completionHandler);
+  void describeFeatures(Handler<AsyncResult<FeatureMetadata>> completionHandler);
 
   @GenIgnore
-  Future<Void> describeFeatures();
+  Future<FeatureMetadata> describeFeatures();
 
 }

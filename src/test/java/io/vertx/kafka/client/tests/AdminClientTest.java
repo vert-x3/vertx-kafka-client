@@ -19,15 +19,29 @@ package io.vertx.kafka.client.tests;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.admin.Config;
+import io.vertx.kafka.admin.ConfigEntry;
+import io.vertx.kafka.admin.ConsumerGroupDescription;
+import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.admin.MemberAssignment;
+import io.vertx.kafka.admin.MemberDescription;
+import io.vertx.kafka.admin.NewPartitions;
+import io.vertx.kafka.admin.NewTopic;
+import io.vertx.kafka.admin.OffsetSpec;
+import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.admin.*;
+import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
-import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.FeatureMetadata;
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -46,7 +60,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class AdminClientTest extends KafkaClusterTestBase {
   private Vertx vertx;
@@ -877,13 +892,110 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
   @Test
   public void testDescribeFeatures(TestContext ctx) {
-    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    String finalizedFeatureName = "some_finalized_feature";
+    short minFinalizedFeature = 1;
+    short maxFinalizedFeature = 3;
+
+    Long finalizedFeatureEpoch = 2L;
+
+    String supportedFeatureName = "some_supported_feature";
+    short minSupportedFeature = 4;
+    short maxSupportedFeature = 6;
+
+    FinalizedVersionRange finalizedVersionRange = mock(FinalizedVersionRange.class);
+    when(finalizedVersionRange.minVersionLevel()).thenReturn(minFinalizedFeature);
+    when(finalizedVersionRange.maxVersionLevel()).thenReturn(maxFinalizedFeature);
+    Map<String, FinalizedVersionRange> finalizedVersionRangeMap = Collections.singletonMap(finalizedFeatureName, finalizedVersionRange);
+
+    SupportedVersionRange supportedVersionRange = mock(SupportedVersionRange.class);
+    when(supportedVersionRange.minVersion()).thenReturn(minSupportedFeature);
+    when(supportedVersionRange.maxVersion()).thenReturn(maxSupportedFeature);
+    Map<String, SupportedVersionRange> supportedVersionRangeMap = Collections.singletonMap(supportedFeatureName, supportedVersionRange);
+
+    FeatureMetadata featureMetadata = mock(FeatureMetadata.class);
+    when(featureMetadata.finalizedFeatures()).thenReturn(finalizedVersionRangeMap);
+    when(featureMetadata.supportedFeatures()).thenReturn(supportedVersionRangeMap);
+    when(featureMetadata.finalizedFeaturesEpoch()).thenReturn(Optional.of(finalizedFeatureEpoch));
+
+    AdminClient adminClient = mock(AdminClient.class);
+    DescribeFeaturesResult describeFeaturesResult = mock(DescribeFeaturesResult.class);
+    when(describeFeaturesResult.featureMetadata()).thenReturn(KafkaFuture.completedFuture(featureMetadata));
+    when(adminClient.describeFeatures()).thenReturn(describeFeaturesResult);
+    KafkaAdminClient kafkaAdminClient = spy(new KafkaAdminClientImpl(vertx, adminClient));
     Async async = ctx.async();
-    adminClient.describeFeatures(
+    kafkaAdminClient.describeFeatures(
       ctx.asyncAssertSuccess(v1 -> {
+        verify(adminClient).describeFeatures();
+        assertEquals(1, v1.getFinalizedFeaturesData().size());
+        FinalizedFeature finalizedFeature = v1.getFinalizedFeaturesData().get(0);
+        assertEquals(finalizedFeatureName, finalizedFeature.getFeatureName());
+        assertEquals(minFinalizedFeature, finalizedFeature.getMinVersionLevel());
+        assertEquals(maxFinalizedFeature, finalizedFeature.getMaxVersionLevel());
+
+        assertEquals(1, v1.getSupportedFeaturesData().size());
+        SupportedFeature supportedFeature = v1.getSupportedFeaturesData().get(0);
+        assertEquals(supportedFeatureName, supportedFeature.getFeatureName());
+        assertEquals(minSupportedFeature, supportedFeature.getMinVersionLevel());
+        assertEquals(maxSupportedFeature, supportedFeature.getMaxVersionLevel());
+
+        assertEquals(finalizedFeatureEpoch, v1.getFinalizedFeaturesEpoch());
+
         async.complete();
         adminClient.close();
       }));
   }
 
+  @Test
+  public void testDescribeFeaturesEpochNull(TestContext ctx) {
+    String finalizedFeatureName = "some_finalized_feature";
+    short minFinalizedFeature = 1;
+    short maxFinalizedFeature = 3;
+
+    String supportedFeatureName = "some_supported_feature";
+    short minSupportedFeature = 4;
+    short maxSupportedFeature = 6;
+
+    FinalizedVersionRange finalizedVersionRange = mock(FinalizedVersionRange.class);
+    when(finalizedVersionRange.minVersionLevel()).thenReturn(minFinalizedFeature);
+    when(finalizedVersionRange.maxVersionLevel()).thenReturn(maxFinalizedFeature);
+    Map<String, FinalizedVersionRange> finalizedVersionRangeMap = Collections.singletonMap(finalizedFeatureName, finalizedVersionRange);
+
+    SupportedVersionRange supportedVersionRange = mock(SupportedVersionRange.class);
+    when(supportedVersionRange.minVersion()).thenReturn(minSupportedFeature);
+    when(supportedVersionRange.maxVersion()).thenReturn(maxSupportedFeature);
+    Map<String, SupportedVersionRange> supportedVersionRangeMap = Collections.singletonMap(supportedFeatureName, supportedVersionRange);
+
+    FeatureMetadata featureMetadata = mock(FeatureMetadata.class);
+    when(featureMetadata.finalizedFeatures()).thenReturn(finalizedVersionRangeMap);
+    when(featureMetadata.supportedFeatures()).thenReturn(supportedVersionRangeMap);
+    when(featureMetadata.finalizedFeaturesEpoch()).thenReturn(Optional.empty());
+
+    AdminClient adminClient = mock(AdminClient.class);
+    DescribeFeaturesResult describeFeaturesResult = mock(DescribeFeaturesResult.class);
+    when(describeFeaturesResult.featureMetadata()).thenReturn(KafkaFuture.completedFuture(featureMetadata));
+    when(adminClient.describeFeatures()).thenReturn(describeFeaturesResult);
+    KafkaAdminClient kafkaAdminClient = spy(new KafkaAdminClientImpl(vertx, adminClient));
+    Async async = ctx.async();
+    kafkaAdminClient.describeFeatures(
+      ctx.asyncAssertSuccess(v1 -> {
+        verify(adminClient).describeFeatures();
+        assertEquals(1, v1.getFinalizedFeaturesData().size());
+        FinalizedFeature finalizedFeature = v1.getFinalizedFeaturesData().get(0);
+        assertEquals(finalizedFeatureName, finalizedFeature.getFeatureName());
+        assertEquals(minFinalizedFeature, finalizedFeature.getMinVersionLevel());
+        assertEquals(maxFinalizedFeature, finalizedFeature.getMaxVersionLevel());
+
+        assertEquals(1, v1.getSupportedFeaturesData().size());
+        SupportedFeature supportedFeature = v1.getSupportedFeaturesData().get(0);
+        assertEquals(supportedFeatureName, supportedFeature.getFeatureName());
+        assertEquals(minSupportedFeature, supportedFeature.getMinVersionLevel());
+        assertEquals(maxSupportedFeature, supportedFeature.getMaxVersionLevel());
+
+        assertNull(v1.getFinalizedFeaturesEpoch());
+
+        async.complete();
+        adminClient.close();
+      }));
+  }
 }
+

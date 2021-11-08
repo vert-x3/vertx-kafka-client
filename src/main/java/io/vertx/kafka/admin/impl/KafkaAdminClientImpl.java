@@ -21,6 +21,7 @@ import io.vertx.core.impl.ContextInternal;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConsumerGroupDescription;
 import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.FeatureMetadata;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.MemberDescription;
@@ -566,24 +567,37 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
-  public void describeFeatures(Handler<AsyncResult<Void>> completionHandler) {
+  public void describeFeatures(Handler<AsyncResult<FeatureMetadata>> completionHandler) {
     describeFeatures().onComplete(completionHandler);
   }
 
   @Override
-  public Future<Void> describeFeatures() {
+  public Future<FeatureMetadata> describeFeatures() {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
-    Promise<Void> promise = ctx.promise();
+    Promise<FeatureMetadata> promise = ctx.promise();
     describeFeaturesInner(promise);
     return promise.future();
   }
 
-  private void describeFeaturesInner(Promise<Void> promise) {
+  private void describeFeaturesInner(Promise<FeatureMetadata> promise) {
     try {
       DescribeFeaturesResult describeFeaturesResult = this.adminClient.describeFeatures();
       describeFeaturesResult.featureMetadata().whenComplete((p, ex) -> {
         if (ex == null) {
-          promise.complete();
+          List<FinalizedFeature> finalizedFeatures = p.finalizedFeatures().entrySet().stream().map(finalizedFeatureData ->
+            new FinalizedFeature(
+              finalizedFeatureData.getKey(),
+              finalizedFeatureData.getValue().minVersionLevel(),
+              finalizedFeatureData.getValue().maxVersionLevel()
+            )).collect(Collectors.toList());
+          List<SupportedFeature> supportedFeatures = p.supportedFeatures().entrySet().stream().map(supportedFeatureData ->
+            new SupportedFeature(
+              supportedFeatureData.getKey(),
+              supportedFeatureData.getValue().minVersion(),
+              supportedFeatureData.getValue().maxVersion()
+            )).collect(Collectors.toList());
+          Long finalizedFeaturesEpoch = p.finalizedFeaturesEpoch().orElse(null);
+          promise.complete(new FeatureMetadata(finalizedFeatures, supportedFeatures, finalizedFeaturesEpoch));
         } else {
           promise.fail(ex);
         }
