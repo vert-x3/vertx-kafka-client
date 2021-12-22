@@ -29,13 +29,13 @@
       
     <artifactId>vertx-kafka-client</artifactId>
       
-    <version>3.9.12-SNAPSHOT</version>
+    <version>3.9.12</version>
       
     <name>Vert.x Kafka Client</name>
       
     <properties>
             
-        <stack.version>3.9.12-SNAPSHOT</stack.version>
+        <stack.version>3.9.12</stack.version>
             
         <kafka.version>2.6.0</kafka.version>
             
