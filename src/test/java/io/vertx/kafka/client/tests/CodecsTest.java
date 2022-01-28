@@ -16,6 +16,7 @@
 
 package io.vertx.kafka.client.tests;
 
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
@@ -27,6 +28,9 @@ import io.vertx.kafka.client.serialization.BufferSerializer;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.serialization.VertxSerdes;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -36,6 +40,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -124,6 +129,8 @@ public class CodecsTest extends KafkaClusterTestBase {
       cfg -> {
         cfg.put("key.serializer", BufferSerializer.class);
         cfg.put("value.serializer", BufferSerializer.class);
+        cfg.put("enable.idempotence", true);
+        cfg.put("max.in.flight.requests.per.connection", 1);
         return KafkaWriteStream.create(vertx, cfg);
       },
       cfg -> {
@@ -145,30 +152,57 @@ public class CodecsTest extends KafkaClusterTestBase {
     KafkaWriteStream<K, V> writeStream = producerFactory.apply(producerConfig);
     producer = writeStream;
     writeStream.exceptionHandler(ctx::fail);
-    int numMessages = 100000;
-    for (int i = 0;i < numMessages;i++) {
-      K key = keyConv.apply(i);
-      V value = valueConv.apply(i);
-      writeStream.write(new ProducerRecord<>(prefix + topic, 0, key, value));
-    }
-    Async done = ctx.async();
-    Properties consumerConfig = kafkaCluster.useTo().getConsumerProperties(prefix+"the_consumer", prefix+"the_consumer", OffsetResetStrategy.EARLIEST);
-    KafkaReadStream<K, V> readStream = consumerFactory.apply(consumerConfig);
-    consumer = readStream;
-    AtomicInteger count = new AtomicInteger(numMessages);
-    readStream.exceptionHandler(ctx::fail);
-    AtomicInteger seq = new AtomicInteger();
-    readStream.handler(rec -> {
-      int idx = seq.getAndIncrement();
-      K key = keyConv.apply(idx);
-      ctx.assertEquals(key, rec.key());
-      V value = valueConv.apply(idx);
-      ctx.assertEquals(value, rec.value());
-      if (count.decrementAndGet() == 0) {
-        done.complete();
+    final int numMessages = 100_000;
+    vertx.getOrCreateContext().runOnContext(v -> {
+      for (int i = 0;i < numMessages;i++) {
+        K key = keyConv.apply(i);
+        V value = valueConv.apply(i);
+        writeStream.write(new ProducerRecord<>(prefix + topic, 0, key, value));
       }
     });
-    readStream.subscribe(Collections.singleton(prefix + topic));
+    // Async done = ctx.async();
+    Properties consumerConfig = kafkaCluster.useTo().getConsumerProperties(prefix+"the_consumer", prefix+"the_consumer", OffsetResetStrategy.EARLIEST);
+    // KafkaReadStream<K, V> readStream = consumerFactory.apply(consumerConfig);
+    Deserializer<K> keyDeserializer = (Deserializer<K>) VertxSerdes.serdeFrom(String.class).deserializer();
+    Deserializer<V> valueDeserializer = (Deserializer<V>) VertxSerdes.serdeFrom(String.class).deserializer();
+    Consumer<K, V> actual = new org.apache.kafka.clients.consumer.KafkaConsumer<>(consumerConfig, keyDeserializer, valueDeserializer);
+    actual.subscribe(Collections.singleton(prefix + topic));
+    AtomicInteger seq = new AtomicInteger();
+    while (seq.get() < numMessages) {
+      ConsumerRecords<K, V> records = actual.poll(Duration.ofSeconds(10));
+      records.forEach(rec -> {
+        int idx = seq.getAndIncrement();
+        K key = keyConv.apply(idx);
+        ctx.assertEquals(key, rec.key());
+        V value = valueConv.apply(idx);
+        ctx.assertEquals(value, rec.value());
+      });
+    }
+    System.out.println("DONE");
+//    consumer = readStream;
+//    AtomicInteger count = new AtomicInteger(numMessages);
+//    readStream.exceptionHandler(ctx::fail);
+//    readStream.handler(new Handler<ConsumerRecord<K, V>>() {
+//      volatile Thread th;
+//      int seq;
+//      @Override
+//      public void handle(ConsumerRecord<K, V> rec) {
+//        if (th == null) {
+//          th = Thread.currentThread();
+//        } else if (th != Thread.currentThread()) {
+//          System.out.println("NOT SAME THREAD");
+//        }
+//        int idx = seq++;
+//        K key = keyConv.apply(idx);
+//        ctx.assertEquals(key, rec.key());
+//        V value = valueConv.apply(idx);
+//        ctx.assertEquals(value, rec.value());
+//        if (count.decrementAndGet() == 0) {
+//          done.complete();
+//        }
+//      }
+//    });
+//    readStream.subscribe(Collections.singleton(prefix + topic));
   }
 
   @Test

@@ -17,7 +17,6 @@
 package io.vertx.kafka.client.consumer.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -60,7 +59,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   private static final AtomicInteger threadCount = new AtomicInteger(0);
 
-  private final Context context;
+  private final ContextInternal context;
   private final AtomicBoolean closed = new AtomicBoolean(true);
   private final Consumer<K, V> consumer;
   private final ConsumerTracer tracer;
@@ -144,14 +143,30 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     });
   }
 
+  private final AtomicInteger seq = new AtomicInteger();
+
   private void pollRecords(Handler<ConsumerRecords<K, V>> handler) {
-      if(this.polling.compareAndSet(false, true)){
+      if(this.polling.compareAndSet(false, true)) {
           this.worker.submit(() -> {
              boolean submitted = false;
              try {
                 if (!this.closed.get()) {
                   try {
+                    int ticket = seq.incrementAndGet();
                     ConsumerRecords<K, V> records = this.consumer.poll(pollTimeout);
+
+                    Iterator<ConsumerRecord<K, V>> it = records.iterator();
+                    while (it.hasNext()) {
+                      ConsumerRecord<K, V> next = it.next();
+                      String s = ((String) next.key()).substring("key-".length());
+                      int val2 = Integer.parseInt(s);
+                      if (val2 - val1 != 1) {
+                        System.out.println(ticket + " - BUG in READ STREAM !!!!!!!!!!" + val2 + " " + val1);
+                      }
+                      val1 = val2;
+                    }
+
+
                     if (records != null && records.count() > 0) {
                       submitted = true; // sets false only when the iterator is overwritten
                       this.context.runOnContext(v -> {
@@ -187,7 +202,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
       this.context.runOnContext(v1 -> {
         if (delay > 0) {
-          this.context.owner().setTimer(delay, v2 -> run(handler));
+          this.context.setTimer(delay, v2 -> run(handler));
         } else {
           run(handler);
         }
@@ -234,16 +249,19 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         }
 
         ConsumerRecord<K, V> next = this.current.next();
+
         this.tracedHandler(handler).handle(next);
       }
       this.schedule(0);
     }
   }
 
+  private volatile int val1 = -1;
+
   private Handler<ConsumerRecord<K, V>> tracedHandler(Handler<ConsumerRecord<K, V>> handler) {
     return this.tracer == null ? handler :
       rec -> {
-        ContextInternal ctx = ((ContextInternal)this.context).duplicate();
+        ContextInternal ctx = this.context.duplicate();
         ctx.emit(v -> {
           ConsumerTracer.StartedSpan startedSpan = tracer.prepareMessageReceived(ctx, rec);
           try {

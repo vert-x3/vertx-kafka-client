@@ -22,6 +22,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.common.tracing.ProducerTracer;
@@ -32,7 +33,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Kafka write stream implementation
@@ -64,16 +67,40 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     }
   }
 
+  private AtomicInteger curr = new AtomicInteger();
+  private int seq1 = 0;
+  private int seq2 = 0;
+
+  private final ConcurrentHashSet<Thread> threads = new ConcurrentHashSet<>();
+
   @Override
   public Future<RecordMetadata> send(ProducerRecord<K, V> record) {
     ContextInternal ctx = (ContextInternal) context.owner().getOrCreateContext();
     ProducerTracer.StartedSpan startedSpan = this.tracer == null ? null : this.tracer.prepareSendMessage(ctx, record);
     Promise<RecordMetadata> trampolineProm = ctx.promise();
     int len = this.len(record.value());
+    String s = ((String) record.key()).substring("key-".length());
+    int val2 = Integer.parseInt(s);
+    int val = curr.getAndIncrement();
+    int s1 = seq1++;
+    if (s1 != val2) {
+      System.out.println("WTF 1!!!! " + s1 + " " + val2);
+    }
     this.pending += len;
     this.context.<RecordMetadata>executeBlocking(prom -> {
       try {
+        int s2 = seq2++;
+        if (s1 != s2) {
+          System.out.println("WTF 2!!!! " + s1 + " " + s2);
+        }
+        threads.add(Thread.currentThread());
+
         this.producer.send(record, (metadata, err) -> {
+
+          long offset = metadata.offset();
+          if (offset != val2) {
+            System.out.println("HOLA!!! " + offset + " " + val2 + " " + val + " " + new ArrayList<>(threads));
+          }
 
           // callback from IO thread
           this.context.runOnContext(v1 -> {
