@@ -58,6 +58,8 @@ Likewise a producer can be created
 {@link examples.VertxKafkaClientExamples#createProducer}
 ----
 
+NOTE: The event loop that creates the {@link io.vertx.kafka.client.consumer.KafkaConsumer} will be the one to handle its messages. For example if you want messages to be handled on a Verticle's event loop, create the Kafka Consumer within the Verticle's start method.
+
 ifdef::java,groovy,kotlin[]
 Another way is to use a {@link java.util.Properties} instance instead of the map.
 
