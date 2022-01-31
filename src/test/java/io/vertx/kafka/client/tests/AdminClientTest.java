@@ -678,7 +678,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
         adminClient.createPartitions(Collections.singletonMap("testCreateNewPartitionInTopic", new NewPartitions(3, null)), ctx.asyncAssertSuccess(v -> {
           adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic"), ctx.asyncAssertSuccess(s -> {
-            ctx.assertTrue(s.get("testCreateNewPartitionInTopic").getPartitions().size() == 3);
+            ctx.assertEquals(3, s.get("testCreateNewPartitionInTopic").getPartitions().size());
             adminClient.close();
             async.complete();
           }));
