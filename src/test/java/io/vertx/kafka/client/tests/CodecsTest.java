@@ -28,6 +28,7 @@ import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -142,6 +143,8 @@ public class CodecsTest extends KafkaClusterTestBase {
                                 Function<Integer, K> keyConv,
                                 Function<Integer, V> valueConv) throws Exception {
     Properties producerConfig = kafkaCluster.useTo().getProducerProperties(prefix+"the_producer");
+    // Use this setting because we are going to send many records
+    producerConfig.setProperty(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1");
     KafkaWriteStream<K, V> writeStream = producerFactory.apply(producerConfig);
     producer = writeStream;
     writeStream.exceptionHandler(ctx::fail);
