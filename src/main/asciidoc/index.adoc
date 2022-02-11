@@ -490,6 +490,4 @@ span tags are:
 - `peer.service` is always `kafka`
 - `message_bus.destination`, which is set to the topic in use
 
-NOTE: If Vert.x is _not_ configured with Tracing enabled, messages consumed by a Kafka Consumer will _not_ have a unique local context. Keep this in mind if you want to use a context's local data between handlers.
-
 include::admin.adoc[]
