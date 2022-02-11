@@ -234,26 +234,24 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         }
 
         ConsumerRecord<K, V> next = this.current.next();
-        this.tracedHandler(handler).handle(next);
+        ContextInternal ctx = ((ContextInternal)this.context).duplicate();
+        ctx.emit(v -> this.tracedHandler(ctx, handler).handle(next));
       }
       this.schedule(0);
     }
   }
 
-  private Handler<ConsumerRecord<K, V>> tracedHandler(Handler<ConsumerRecord<K, V>> handler) {
+  private Handler<ConsumerRecord<K, V>> tracedHandler(Context ctx, Handler<ConsumerRecord<K, V>> handler) {
     return this.tracer == null ? handler :
       rec -> {
-        ContextInternal ctx = ((ContextInternal)this.context).duplicate();
-        ctx.emit(v -> {
-          ConsumerTracer.StartedSpan startedSpan = tracer.prepareMessageReceived(ctx, rec);
-          try {
-            handler.handle(rec);
-            startedSpan.finish(ctx);
-          } catch (Throwable t) {
-            startedSpan.fail(ctx, t);
-            throw t;
-          }
-        });
+        ConsumerTracer.StartedSpan startedSpan = tracer.prepareMessageReceived(ctx, rec);
+        try {
+          handler.handle(rec);
+          startedSpan.finish(ctx);
+        } catch (Throwable t) {
+          startedSpan.fail(ctx, t);
+          throw t;
+        }
       };
   }
 
