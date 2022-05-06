@@ -55,7 +55,9 @@ import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
+import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
+import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
@@ -90,6 +92,56 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     Promise<Map<String, TopicDescription>> promise = ctx.promise();
 
     DescribeTopicsResult describeTopicsResult = this.adminClient.describeTopics(topicNames);
+    describeTopicsResult.all().whenComplete((t, ex) -> {
+      if (ex == null) {
+
+        Map<String, TopicDescription> topics = new HashMap<>();
+
+        for (Map.Entry<String, org.apache.kafka.clients.admin.TopicDescription> topicDescriptionEntry : t.entrySet()) {
+
+          List<TopicPartitionInfo> partitions = new ArrayList<>();
+
+          for (org.apache.kafka.common.TopicPartitionInfo kafkaPartitionInfo : topicDescriptionEntry.getValue().partitions()) {
+
+            TopicPartitionInfo topicPartitionInfo = new TopicPartitionInfo();
+            topicPartitionInfo.setIsr(
+              kafkaPartitionInfo.isr().stream().map(Helper::from).collect(Collectors.toList()))
+              .setLeader(Helper.from(kafkaPartitionInfo.leader()))
+              .setPartition(kafkaPartitionInfo.partition())
+              .setReplicas(
+                kafkaPartitionInfo.replicas().stream().map(Helper::from).collect(Collectors.toList()));
+
+            partitions.add(topicPartitionInfo);
+          }
+
+          TopicDescription topicDescription = new TopicDescription();
+
+          topicDescription.setInternal(topicDescriptionEntry.getValue().isInternal())
+            .setName(topicDescriptionEntry.getKey())
+            .setPartitions(partitions);
+
+          topics.put(topicDescriptionEntry.getKey(), topicDescription);
+        }
+
+        promise.complete(topics);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  @Override
+  public void describeTopics(List<String> topicNames, DescribeTopicsOptions options, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler) {
+    describeTopics(topicNames, options).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Map<String, TopicDescription>> describeTopics(List<String> topicNames, DescribeTopicsOptions options) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<String, TopicDescription>> promise = ctx.promise();
+
+    DescribeTopicsResult describeTopicsResult = this.adminClient.describeTopics(topicNames, options);
     describeTopicsResult.all().whenComplete((t, ex) -> {
       if (ex == null) {
 
@@ -304,6 +356,53 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     Promise<Map<String, ConsumerGroupDescription>> promise = ctx.promise();
 
     DescribeConsumerGroupsResult describeConsumerGroupsResult = this.adminClient.describeConsumerGroups(groupIds);
+    describeConsumerGroupsResult.all().whenComplete((cg, ex) -> {
+      if (ex == null) {
+        Map<String, ConsumerGroupDescription> consumerGroups = new HashMap<>();
+
+        for (Map.Entry<String, org.apache.kafka.clients.admin.ConsumerGroupDescription> cgDescriptionEntry: cg.entrySet()) {
+          List<MemberDescription> members = new ArrayList<>();
+
+          for (org.apache.kafka.clients.admin.MemberDescription memberDescription : cgDescriptionEntry.getValue().members()) {
+            MemberDescription m = new MemberDescription();
+            m.setConsumerId(memberDescription.consumerId())
+              .setClientId(memberDescription.clientId())
+              .setAssignment(Helper.from(memberDescription.assignment()))
+              .setHost(memberDescription.host());
+
+            members.add(m);
+          }
+
+          ConsumerGroupDescription consumerGroupDescription = new ConsumerGroupDescription();
+
+          consumerGroupDescription.setGroupId(cgDescriptionEntry.getValue().groupId())
+            .setCoordinator(Helper.from(cgDescriptionEntry.getValue().coordinator()))
+            .setMembers(members)
+            .setPartitionAssignor(cgDescriptionEntry.getValue().partitionAssignor())
+            .setSimpleConsumerGroup(cgDescriptionEntry.getValue().isSimpleConsumerGroup())
+            .setState(cgDescriptionEntry.getValue().state());
+
+          consumerGroups.put(cgDescriptionEntry.getKey(), consumerGroupDescription);
+        }
+        promise.complete(consumerGroups);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  @Override
+  public void describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler) {
+    describeConsumerGroups(groupIds, options).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<String, ConsumerGroupDescription>> promise = ctx.promise();
+
+    DescribeConsumerGroupsResult describeConsumerGroupsResult = this.adminClient.describeConsumerGroups(groupIds, options);
     describeConsumerGroupsResult.all().whenComplete((cg, ex) -> {
       if (ex == null) {
         Map<String, ConsumerGroupDescription> consumerGroups = new HashMap<>();

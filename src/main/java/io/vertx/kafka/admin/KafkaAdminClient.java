@@ -20,6 +20,8 @@ import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.Future;
 import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
+import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
@@ -95,10 +97,20 @@ public interface KafkaAdminClient {
    */
   void describeTopics(List<String> topicNames, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
 
+    /**
+   * Like {@link #describeTopics(List, Handler)} but allows for customised otions
+   */
+  void describeTopics(List<String> topicNames, DescribeTopicsOptions options, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
+
   /**
    * Like {@link #describeTopics(List, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Map<String, TopicDescription>> describeTopics(List<String> topicNames);
+
+  /**
+   * Like {@link #describeTopics(List, DescribeTopicsOptions, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Map<String, TopicDescription>> describeTopics(List<String> topicNames, DescribeTopicsOptions options);
 
   /**
    * Creates a batch of new Kafka topics
@@ -195,6 +207,17 @@ public interface KafkaAdminClient {
    * Like {@link #describeConsumerGroups(List, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds);
+
+  /**
+   * Like {@link #describeConsumerGroups(List, Handler)} but allows customized options
+   */
+  void describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
+  
+  /**
+   * Like {@link #describeConsumerGroups(List, DescribeConsumerGroupsOptions, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options);
+  
 
   /**
    * Describe the nodes in the cluster with the default options
