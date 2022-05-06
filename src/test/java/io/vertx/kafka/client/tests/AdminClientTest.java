@@ -51,6 +51,7 @@ import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.DescribeClusterOptions;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -518,6 +519,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     assertEquals(2, (int)consumers.get("your-topic"));
     assertEquals(2, (int)consumers.get("his-topic"));
   }
+
   @Test
   public void testDescribeCluster(TestContext ctx) {
 
@@ -549,6 +551,41 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     });
   }
+
+  @Test
+  public void testDescribeClusterWithOptions(TestContext ctx) {
+
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+
+    DescribeClusterOptions options = new DescribeClusterOptions();
+
+    // timer because, Kafka cluster takes time to start consumer
+    vertx.setTimer(1000, t -> {
+
+      adminClient.describeCluster(options, ctx.asyncAssertSuccess(cluster -> {
+        ctx.assertNotNull(cluster.getClusterId());
+        Node controller = cluster.getController();
+        ctx.assertNotNull(controller);
+        ctx.assertEquals(1, controller.getId());
+        ctx.assertEquals("localhost", controller.getHost());
+        ctx.assertEquals(false, controller.hasRack());
+        ctx.assertEquals("1", controller.getIdString());
+        ctx.assertEquals(false, controller.isEmpty());
+        ctx.assertEquals(9092, controller.getPort());
+        ctx.assertEquals(null, controller.rack());
+        Collection<Node> nodes = cluster.getNodes();
+        ctx.assertNotNull(nodes);
+        ctx.assertEquals(2, nodes.size());
+        ctx.assertEquals(1, nodes.iterator().next().getId());
+        adminClient.close();
+        async.complete();
+      }));
+
+    });
+  }
+
 
   private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
     Set<Object> seen = ConcurrentHashMap.newKeySet();

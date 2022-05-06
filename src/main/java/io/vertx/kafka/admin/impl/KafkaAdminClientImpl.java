@@ -53,6 +53,7 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
+import org.apache.kafka.clients.admin.DescribeClusterOptions;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
@@ -539,6 +540,41 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     Promise<ClusterDescription> promise = ctx.promise();
 
     DescribeClusterResult describeClusterResult = this.adminClient.describeCluster();
+    KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
+      if (ex == null) {
+        try {
+          String clusterId = describeClusterResult.clusterId().get();
+          org.apache.kafka.common.Node rcontroller = describeClusterResult.controller().get();
+          Collection<org.apache.kafka.common.Node> rnodes = describeClusterResult.nodes().get();
+
+          Node controller = Helper.from(rcontroller);
+          List<Node> nodes = new ArrayList<>();
+          rnodes.forEach(rnode -> {
+            nodes.add(Helper.from(rnode));
+          });
+          ClusterDescription clusterDescription = new ClusterDescription(clusterId, controller, nodes);
+          promise.complete(clusterDescription);
+        } catch (InterruptedException|ExecutionException e) {
+          promise.fail(e);
+        }
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  @Override
+  public void describeCluster(DescribeClusterOptions options, Handler<AsyncResult<ClusterDescription>> completionHandler) {
+    describeCluster(options).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<ClusterDescription> describeCluster(DescribeClusterOptions options) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<ClusterDescription> promise = ctx.promise();
+
+    DescribeClusterResult describeClusterResult = this.adminClient.describeCluster(options);
     KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
       if (ex == null) {
         try {

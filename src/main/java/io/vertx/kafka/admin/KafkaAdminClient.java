@@ -20,6 +20,7 @@ import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.Future;
 import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DescribeClusterOptions;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
 import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 
@@ -230,6 +231,16 @@ public interface KafkaAdminClient {
    * Like {@link #describeCluster(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<ClusterDescription> describeCluster();
+  
+  /**
+   * Like {@link #describeCluster(Handler)} but allows customized options.
+   */
+  void describeCluster(DescribeClusterOptions options, Handler<AsyncResult<ClusterDescription>> completionHandler);
+  
+  /**
+   * Like {@link #describeCluster(DescribeClusterOptions, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<ClusterDescription> describeCluster(DescribeClusterOptions options);
 
   /**
    * Delete consumer groups from the cluster.
