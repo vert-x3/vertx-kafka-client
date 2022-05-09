@@ -41,6 +41,9 @@ import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.admin.TopicDescription;
+import io.vertx.kafka.admin.DescribeClusterOptions;
+import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
+import io.vertx.kafka.admin.DescribeTopicsOptions;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
@@ -53,12 +56,9 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
-import org.apache.kafka.clients.admin.DescribeClusterOptions;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
-import org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
-import org.apache.kafka.clients.admin.DescribeTopicsOptions;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
@@ -142,7 +142,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Map<String, TopicDescription>> promise = ctx.promise();
 
-    DescribeTopicsResult describeTopicsResult = this.adminClient.describeTopics(topicNames, options);
+    DescribeTopicsResult describeTopicsResult = this.adminClient.describeTopics(topicNames, Helper.to(options));
     describeTopicsResult.all().whenComplete((t, ex) -> {
       if (ex == null) {
 
@@ -403,7 +403,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Map<String, ConsumerGroupDescription>> promise = ctx.promise();
 
-    DescribeConsumerGroupsResult describeConsumerGroupsResult = this.adminClient.describeConsumerGroups(groupIds, options);
+    DescribeConsumerGroupsResult describeConsumerGroupsResult = this.adminClient.describeConsumerGroups(groupIds, Helper.to(options));
     describeConsumerGroupsResult.all().whenComplete((cg, ex) -> {
       if (ex == null) {
         Map<String, ConsumerGroupDescription> consumerGroups = new HashMap<>();
@@ -574,7 +574,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<ClusterDescription> promise = ctx.promise();
 
-    DescribeClusterResult describeClusterResult = this.adminClient.describeCluster(options);
+    DescribeClusterResult describeClusterResult = this.adminClient.describeCluster(Helper.to(options));
     KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
       if (ex == null) {
         try {
