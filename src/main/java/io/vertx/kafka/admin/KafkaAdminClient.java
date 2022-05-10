@@ -20,6 +20,9 @@ import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.Future;
 import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DescribeLogDirsResult;
+import org.apache.kafka.clients.admin.LogDirDescription;
+import org.apache.kafka.common.requests.DescribeLogDirsResponse.LogDirInfo;
 
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
@@ -238,6 +241,21 @@ public interface KafkaAdminClient {
    * Like {@link #describeCluster(DescribeClusterOptions, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<ClusterDescription> describeCluster(DescribeClusterOptions options);
+
+  /**
+   * Query the information of all log directories on the given set of brokers 
+   *
+   * @param brokers list of broker ids
+   * @param completionHandler a {@code Handler} completed with the operation result
+   */
+  @GenIgnore
+  void describeLogDirs(List<Integer> brokers, Handler<AsyncResult<Map<Integer, Map<String, LogDirDescription>>>> completionHandler);
+  
+  /**
+   * Like {@link #describeLogDirs(List, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<Map<Integer, Map<String, LogDirDescription>>> describeLogDirs(final List<Integer> brokers);
 
   /**
    * Delete consumer groups from the cluster.

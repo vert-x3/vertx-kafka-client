@@ -54,6 +54,7 @@ import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.LogDirDescription;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
@@ -65,6 +66,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -872,5 +874,45 @@ public class AdminClientTest extends KafkaClusterTestBase {
     adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
       adminClient.close(ctx.asyncAssertSuccess());
     }));
+  }
+
+  @Test
+  public void testDescribeLogDirs(TestContext ctx) {
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+    
+    Async async = ctx.async();
+
+    List<Integer> ids = new ArrayList<Integer>();
+    // timer because, Kafka cluster takes time to start consumer
+    vertx.setTimer(1000, t -> {
+
+      adminClient.describeCluster(ctx.asyncAssertSuccess(cluster -> {
+        Collection<Node> nodes = cluster.getNodes();
+        for (Node node : nodes){
+          ids.add(node.getId());
+        }
+      }));
+    });
+
+    // timer because, Kafka cluster takes time to start consumer
+    vertx.setTimer(10000, t -> {
+      adminClient.describeLogDirs(ids, ctx.asyncAssertSuccess(map -> {
+        String info = map.toString();
+        String[] infoSplit = info.split(",");
+        ctx.assertNotNull(info);
+        Map<String, LogDirDescription> infoFirstEntry = map.get(1);
+        Set<Map.Entry<String, LogDirDescription>> values = infoFirstEntry.entrySet();
+        List<String> keys = new ArrayList<String>();
+        for (Map.Entry<String, LogDirDescription> entry : values){
+          keys.add(entry.getKey());
+        }
+        LogDirDescription logDirDescription = infoFirstEntry.get(keys.get(0));
+        ctx.assertNotNull(logDirDescription);
+        ctx.assertNotNull(logDirDescription.replicaInfos());
+        ctx.assertNull(logDirDescription.error());
+        adminClient.close();
+        async.complete();
+      }));
+   });
   }
 }

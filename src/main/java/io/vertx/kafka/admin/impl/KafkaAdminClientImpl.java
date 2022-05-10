@@ -59,12 +59,15 @@ import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
+import org.apache.kafka.clients.admin.DescribeLogDirsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.LogDirDescription;
 
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -181,6 +184,44 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     });
     return promise.future();
   }
+
+  @Override
+  @GenIgnore
+  public void describeLogDirs(List<Integer> brokers, Handler<AsyncResult<Map<Integer, Map<String, LogDirDescription>>>> completionHandler) {
+    describeLogDirs(brokers).onComplete(completionHandler);
+  }
+
+  @Override
+  @GenIgnore
+  public Future<Map<Integer, Map<String, LogDirDescription>>> describeLogDirs(List<Integer> brokers) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<Integer, Map<String, LogDirDescription>>> promise = ctx.promise();
+
+    DescribeLogDirsResult describeLogDirsResult = this.adminClient.describeLogDirs(brokers);
+    describeLogDirsResult.allDescriptions().whenComplete((t, ex) -> {
+      if (ex == null) {
+
+        Map<Integer, Map<String, LogDirDescription>> logDirsDescriptions = new HashMap<>();
+
+        for (Map.Entry<Integer, Map<String, org.apache.kafka.clients.admin.LogDirDescription>> logDirsDescriptionsEntry : t.entrySet()) {
+          
+          Integer broker = logDirsDescriptionsEntry.getKey();
+
+          Map<String, LogDirDescription> logDirsDescription = new HashMap<>();
+
+          for (Map.Entry<String, org.apache.kafka.clients.admin.LogDirDescription> logDirsDescriptionEntry : logDirsDescriptionsEntry.getValue().entrySet()) {
+            logDirsDescription.put(logDirsDescriptionEntry.getKey(),logDirsDescriptionEntry.getValue());
+          }
+          logDirsDescriptions.put(broker, logDirsDescription);
+        }  
+        promise.complete(logDirsDescriptions);
+     } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
 
   @Override
   public void listTopics(Handler<AsyncResult<Set<String>>> completionHandler) {
