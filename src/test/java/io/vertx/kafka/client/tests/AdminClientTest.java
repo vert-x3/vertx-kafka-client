@@ -374,7 +374,6 @@ public class AdminClientTest extends KafkaClusterTestBase {
         adminClient.close();
         async.complete();
       }));
-
     });
   }
 
@@ -962,40 +961,20 @@ public class AdminClientTest extends KafkaClusterTestBase {
         final String clientIdLowerBound = "client-id-2";
         final AtomicInteger counterLowerBound = new AtomicInteger();
         final Async consumerAsyncLowerBound = ctx.async();
+        List<Integer> records = new ArrayList<Integer>();
         kafkaCluster.useTo().consume(groupIdLowerBound, clientIdLowerBound, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
-            () -> counterLowerBound.get() < 2, offsetCommitCallback, consumerAsyncLowerBound::complete, Collections.singletonList(topicName),
-            record -> { counterLowerBound.incrementAndGet(); });
-        try{
+            () -> counterLowerBound.get() < 3, offsetCommitCallback, consumerAsyncLowerBound::complete, Collections.singletonList(topicName),
+            record -> { counterLowerBound.incrementAndGet(); records.add(record.value()); });
           consumerAsyncLowerBound.awaitSuccess(10000);
-        } catch(Exception e) {
-          if(e.getClass().equals(TimeoutException.class)){
-            ctx.assertTrue(false);
-          } else {
-            Helper.uncheckedThrow(e);
-          }
-        }
-
-        // consume messages 1-4 from "first topic"
-        final String groupIdUpperBound = "group-id-3";
-        final String clientIdUpperBound = "client-id-3";
-        final AtomicInteger counterUpperBound = new AtomicInteger();
-        final Async consumerAsyncUpperBound = ctx.async();
-        try{
-          kafkaCluster.useTo().consume(groupIdUpperBound, clientIdUpperBound, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
-          () -> counterUpperBound.get() < 4, offsetCommitCallback, consumerAsyncUpperBound::complete, Collections.singletonList(topicName),
-          record -> { counterUpperBound.incrementAndGet(); });
-          consumerAsyncUpperBound.awaitSuccess(10000);
-        } catch(Exception e) {
-          if(e.getClass().equals(TimeoutException.class)){
-            ctx.assertTrue(true);
-          } else {
-            Helper.uncheckedThrow(e);
-          }
-        }
+        ctx.assertEquals(5, records.get(0));
+        ctx.assertEquals(6, records.get(1));
+        ctx.assertEquals(7, records.get(2));
+        ctx.assertEquals(3, records.size());
+        }));
         adminClient.close();
         async.complete();
-        }));
-      });  
-    });
-  }
+      });
+    });  
+  };
 }
+
