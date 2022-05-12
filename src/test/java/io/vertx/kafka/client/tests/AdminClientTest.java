@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -54,7 +55,9 @@ import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.DeletedRecords;
 import org.apache.kafka.clients.admin.LogDirDescription;
+import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
@@ -70,6 +73,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.impl.Helper;
 import io.vertx.kafka.admin.KafkaAdminClient;
 
 import static junit.framework.TestCase.assertEquals;
@@ -834,7 +838,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     kafkaCluster.createTopic("testCreatePartitionInTopicWithAssignment", 1, 1);
 
-   Async async = ctx.async();
+    Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
@@ -897,9 +901,6 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(10000, t -> {
       adminClient.describeLogDirs(ids, ctx.asyncAssertSuccess(map -> {
-        String info = map.toString();
-        String[] infoSplit = info.split(",");
-        ctx.assertNotNull(info);
         Map<String, LogDirDescription> infoFirstEntry = map.get(1);
         Set<Map.Entry<String, LogDirDescription>> values = infoFirstEntry.entrySet();
         List<String> keys = new ArrayList<String>();
@@ -914,5 +915,87 @@ public class AdminClientTest extends KafkaClusterTestBase {
         async.complete();
       }));
    });
+  }
+
+  @Test
+  public void testDeleteRecords(TestContext ctx){
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+    // produce 6 integer messages to "first-topic"
+    Async producerAsync = ctx.async();
+    kafkaCluster.useTo().produceIntegers("first-topic", 6, 1, producerAsync::complete);
+    producerAsync.awaitSuccess(10000);
+
+    // consume messages from "first topic"
+    final String groupId = "group-id-1";
+    final String clientId = "client-id-1";
+    final String topicName = "first-topic";
+    final AtomicInteger counter = new AtomicInteger();
+    final OffsetCommitCallback offsetCommitCallback = new OffsetCommitCallback() {
+      @Override
+      public void onComplete(Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> map, Exception e) {
+      }
+    };
+    final Async consumerAsync = ctx.async();
+
+    kafkaCluster.useTo().consume(groupId, clientId, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
+      () -> counter.get() < 6, offsetCommitCallback, consumerAsync::complete, Collections.singletonList(topicName),
+      record -> { counter.incrementAndGet(); });
+    consumerAsync.awaitSuccess(10000);
+
+    // delete records with offset < 3 
+    Map<TopicPartition, RecordsToDelete> recordsToDelete = new HashMap<>();
+    vertx.setTimer(10000, t -> {
+      adminClient.describeTopics(Collections.singletonList(topicName), ctx.asyncAssertSuccess(map -> {
+        TopicDescription topicDescription = map.get(topicName);
+        List<TopicPartitionInfo> topicPartitionInfo = new ArrayList<TopicPartitionInfo>();
+        topicPartitionInfo = topicDescription.getPartitions();
+        TopicPartition topicPartition = new TopicPartition(topicName, topicPartitionInfo.get(0).getPartition());
+        recordsToDelete.put(topicPartition, RecordsToDelete.beforeOffset(3));
+    }));
+    vertx.setTimer(10000, s -> {
+      adminClient.deleteRecords(recordsToDelete, ctx.asyncAssertSuccess( map -> {
+
+        // consume messages 1-3 from "first topic"
+        final String groupIdLowerBound = "group-id-2";
+        final String clientIdLowerBound = "client-id-2";
+        final AtomicInteger counterLowerBound = new AtomicInteger();
+        final Async consumerAsyncLowerBound = ctx.async();
+        kafkaCluster.useTo().consume(groupIdLowerBound, clientIdLowerBound, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
+            () -> counterLowerBound.get() < 2, offsetCommitCallback, consumerAsyncLowerBound::complete, Collections.singletonList(topicName),
+            record -> { counterLowerBound.incrementAndGet(); });
+        try{
+          consumerAsyncLowerBound.awaitSuccess(10000);
+        } catch(Exception e) {
+          if(e.getClass().equals(TimeoutException.class)){
+            ctx.assertTrue(false);
+          } else {
+            Helper.uncheckedThrow(e);
+          }
+        }
+
+        // consume messages 1-4 from "first topic"
+        final String groupIdUpperBound = "group-id-3";
+        final String clientIdUpperBound = "client-id-3";
+        final AtomicInteger counterUpperBound = new AtomicInteger();
+        final Async consumerAsyncUpperBound = ctx.async();
+        try{
+          kafkaCluster.useTo().consume(groupIdUpperBound, clientIdUpperBound, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
+          () -> counterUpperBound.get() < 4, offsetCommitCallback, consumerAsyncUpperBound::complete, Collections.singletonList(topicName),
+          record -> { counterUpperBound.incrementAndGet(); });
+          consumerAsyncUpperBound.awaitSuccess(10000);
+        } catch(Exception e) {
+          if(e.getClass().equals(TimeoutException.class)){
+            ctx.assertTrue(true);
+          } else {
+            Helper.uncheckedThrow(e);
+          }
+        }
+        adminClient.close();
+        async.complete();
+        }));
+      });  
+    });
   }
 }

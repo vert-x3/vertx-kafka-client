@@ -18,7 +18,6 @@ package io.vertx.kafka.admin.impl;
 
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.NewPartitions;
-import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -28,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Promise;
@@ -46,6 +46,7 @@ import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
 import io.vertx.kafka.admin.DescribeTopicsOptions;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
+import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -55,7 +56,9 @@ import org.apache.kafka.clients.admin.CreatePartitionsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
+import org.apache.kafka.clients.admin.DeleteRecordsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
+import org.apache.kafka.clients.admin.DeletedRecords;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
@@ -66,9 +69,11 @@ import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.LogDirDescription;
+import org.apache.kafka.clients.admin.RecordsToDelete;
 
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -287,6 +292,54 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     });
     return promise.future();
   }
+
+  @Override
+  @GenIgnore
+  public void deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDelete,Handler<AsyncResult<Map<TopicPartition, DeletedRecords>>> completionHandler) {
+    deleteRecords(recordsToDelete).onComplete(completionHandler);
+  }
+
+  @Override
+  @GenIgnore
+  public Future<Map<TopicPartition, DeletedRecords>> deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDelete) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<TopicPartition, DeletedRecords>> promise = ctx.promise();
+    Map<org.apache.kafka.common.TopicPartition, RecordsToDelete> recordsToDeleteKafka = new HashMap<org.apache.kafka.common.TopicPartition, RecordsToDelete>();
+    for(Map.Entry<TopicPartition, RecordsToDelete> entry : recordsToDelete.entrySet()){
+      recordsToDeleteKafka.put(Helper.to(entry.getKey()),entry.getValue());
+    }
+    DeleteRecordsResult deleteRecordsResult = this.adminClient.deleteRecords(recordsToDeleteKafka);
+    Map<org.apache.kafka.common.TopicPartition, KafkaFuture<DeletedRecords>> deletedRecordsInfo = deleteRecordsResult.lowWatermarks();
+    Map<TopicPartition, DeletedRecords> deletedRecordsInfoMap = new HashMap<>();
+    List<Future> deletedRecords = new ArrayList<Future>();
+    List<org.apache.kafka.common.TopicPartition> topicPartitions = new ArrayList<org.apache.kafka.common.TopicPartition>();
+    for(Map.Entry<org.apache.kafka.common.TopicPartition, KafkaFuture<DeletedRecords>> entry : deletedRecordsInfo.entrySet()){
+      Promise<DeletedRecords> promise1 = ctx.promise();
+      topicPartitions.add(entry.getKey());
+      deletedRecords.add(promise1.future());
+      entry.getValue().whenComplete((dr, ex)-> {
+        if (ex == null){
+          promise1.complete();
+        } else {
+          promise1.fail(ex);
+        }
+      });
+    } 
+    CompositeFuture.join(deletedRecords).onComplete((drs) -> {
+      if(drs.failed()){
+        promise.fail("Error message");
+        return;
+      }
+      List<DeletedRecords> recordList  = drs.result().list();
+      for (int i=0 ; i < recordList.size() ; i++){
+        deletedRecordsInfoMap.put(Helper.from(topicPartitions.get(i)), recordList.get(i));
+      }
+      promise.complete(deletedRecordsInfoMap);
+    });
+    return promise.future();  
+  }
+
+
 
   @Override
   public void createPartitions(Map<String, NewPartitions> partitions, Handler<AsyncResult<Void>> completionHandler) {

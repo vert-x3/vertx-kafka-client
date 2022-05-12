@@ -19,17 +19,17 @@ package io.vertx.kafka.admin;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.Future;
 import io.vertx.kafka.client.common.ConfigResource;
+import io.vertx.kafka.client.common.TopicPartition;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DescribeLogDirsResult;
+import org.apache.kafka.clients.admin.DeletedRecords;
 import org.apache.kafka.clients.admin.LogDirDescription;
-import org.apache.kafka.common.requests.DescribeLogDirsResponse.LogDirInfo;
+import org.apache.kafka.clients.admin.RecordsToDelete;
 
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
-import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.util.HashMap;
 import java.util.List;
@@ -256,6 +256,21 @@ public interface KafkaAdminClient {
    */
   @GenIgnore
   Future<Map<Integer, Map<String, LogDirDescription>>> describeLogDirs(final List<Integer> brokers);
+
+  /**
+   * Delete records from a topic partition.
+   *
+   * @param recordsToDelete records to be delted on the given  topic partition
+   * @param completionHandler handler called on operation completed
+   */
+  @GenIgnore
+  void deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDelete,Handler<AsyncResult<Map<TopicPartition, DeletedRecords>>> completionHandler);
+
+  /**
+   * Like {@link #deleteRecords(Map, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore  
+  Future<Map<TopicPartition, DeletedRecords>> deleteRecords(final Map<TopicPartition, RecordsToDelete> recordsToDelete);
 
   /**
    * Delete consumer groups from the cluster.
