@@ -58,6 +58,8 @@ Likewise a producer can be created
 {@link examples.VertxKafkaClientExamples#createProducer}
 ----
 
+NOTE: The event loop that creates the {@link io.vertx.kafka.client.consumer.KafkaConsumer} will be the one to handle its messages. For example if you want messages to be handled on a Verticle's event loop, create the Kafka Consumer within the Verticle's start method.
+
 ifdef::java,groovy,kotlin[]
 Another way is to use a {@link java.util.Properties} instance instead of the map.
 
@@ -143,7 +145,7 @@ You can add an handler to be notified of the result
 == Receiving messages from a topic requesting specific partitions
 
 Besides being part of a consumer group for receiving messages from a topic, a consumer can ask for a specific
-topic partition. When the consumer is not part part of a consumer group the overall application cannot
+topic partition. When the consumer is not part of a consumer group the overall application cannot
 rely on the re-balancing feature.
 
 You can use {@link io.vertx.kafka.client.consumer.KafkaConsumer#assign(java.util.Set, io.vertx.core.Handler)}

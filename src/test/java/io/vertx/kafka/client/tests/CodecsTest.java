@@ -28,6 +28,7 @@ import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -142,17 +143,15 @@ public class CodecsTest extends KafkaClusterTestBase {
                                 Function<Integer, K> keyConv,
                                 Function<Integer, V> valueConv) throws Exception {
     Properties producerConfig = kafkaCluster.useTo().getProducerProperties(prefix+"the_producer");
+    // Use this setting because we are going to send many records
+    producerConfig.setProperty(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1");
     KafkaWriteStream<K, V> writeStream = producerFactory.apply(producerConfig);
     producer = writeStream;
     writeStream.exceptionHandler(ctx::fail);
     int numMessages = 100000;
-    ConcurrentLinkedDeque<K> keys = new ConcurrentLinkedDeque<K>();
-    ConcurrentLinkedDeque<V> values = new ConcurrentLinkedDeque<V>();
     for (int i = 0;i < numMessages;i++) {
       K key = keyConv.apply(i);
       V value = valueConv.apply(i);
-      keys.add(key);
-      values.add(value);
       writeStream.write(new ProducerRecord<>(prefix + topic, 0, key, value));
     }
     Async done = ctx.async();
@@ -161,9 +160,13 @@ public class CodecsTest extends KafkaClusterTestBase {
     consumer = readStream;
     AtomicInteger count = new AtomicInteger(numMessages);
     readStream.exceptionHandler(ctx::fail);
+    AtomicInteger seq = new AtomicInteger();
     readStream.handler(rec -> {
-      ctx.assertEquals(keys.pop(), rec.key());
-      ctx.assertEquals(values.pop(), rec.value());
+      int idx = seq.getAndIncrement();
+      K key = keyConv.apply(idx);
+      ctx.assertEquals(key, rec.key());
+      V value = valueConv.apply(idx);
+      ctx.assertEquals(value, rec.value());
       if (count.decrementAndGet() == 0) {
         done.complete();
       }

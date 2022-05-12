@@ -18,18 +18,12 @@ package io.vertx.kafka.client.tests;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.Repeat;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
-import io.vertx.kafka.client.producer.KafkaProducer;
-import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
-import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -40,9 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Producer tests
@@ -114,7 +106,8 @@ public class ProducerConsumerContextTest extends KafkaClusterTestBase {
           @Override
           public void start() {
             consumer.handler(record -> {
-              ctx.assertEquals(thisConsumerCtx, Vertx.currentContext());
+              ctx.assertNotEquals(thisConsumerCtx, Vertx.currentContext());
+              ctx.assertEquals(thisConsumerCtx, ((ContextInternal) Vertx.currentContext()).unwrap());
               ctx.assertNotEquals(context, Vertx.currentContext());
               async.countDown();
             });

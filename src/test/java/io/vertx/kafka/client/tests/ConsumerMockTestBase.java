@@ -16,6 +16,7 @@
 
 package io.vertx.kafka.client.tests;
 
+import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -35,7 +36,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -132,6 +135,32 @@ public abstract class ConsumerMockTestBase {
         }
       });
     });
+  }
+
+  @Test
+  public void testConsumedMessagesHandledOnUniqueContexts(TestContext ctx) {
+    MockConsumer<String, String> mock = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+    KafkaReadStream<String, String> consumer = createConsumer(vertx, mock);
+    int messageCount = 2;
+    Async doneLatch = ctx.async(messageCount);
+    List<Context> contexts = new ArrayList<>();
+    consumer.handler(record -> {
+      contexts.add(Vertx.currentContext());
+      doneLatch.countDown();
+    });
+    consumer.subscribe(Collections.singleton("the_topic"), v -> {
+      mock.schedulePollTask(() -> {
+        mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
+        mock.seek(new TopicPartition("the_topic", 0), 0L);
+        for (int i = 0; i < messageCount; i++) {
+          mock.addRecord(new ConsumerRecord<>("the_topic", 0, i, "key-" + i, "value-" + i));
+        }
+      });
+    });
+    doneLatch.handler(r -> consumer.close(v -> {
+      ctx.assertEquals(messageCount, contexts.size());
+      ctx.assertNotEquals(contexts.get(0), contexts.get(1));
+    }));
   }
 
   abstract <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Consumer<K, V> consumer);
