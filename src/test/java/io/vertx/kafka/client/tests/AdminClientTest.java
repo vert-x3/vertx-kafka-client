@@ -362,8 +362,8 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
       adminClient.listConsumerGroups(ctx.asyncAssertSuccess(groups -> {
 
-        ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).noneMatch(g -> g.equals("groupId-1")));
-        ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).anyMatch(g -> g.equals("groupId-2")));
+        ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).noneMatch(g -> g.equals("groupId-1")), "Expect " + groups + " to not contain groupId-1");
+        ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).anyMatch(g -> g.equals("groupId-2")), "Expect " + groups + " to contain groupId-2");
 
         adminClient.close();
         async.complete();
@@ -678,7 +678,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
         adminClient.createPartitions(Collections.singletonMap("testCreateNewPartitionInTopic", new NewPartitions(3, null)), ctx.asyncAssertSuccess(v -> {
           adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic"), ctx.asyncAssertSuccess(s -> {
-            ctx.assertTrue(s.get("testCreateNewPartitionInTopic").getPartitions().size() == 3);
+            ctx.assertEquals(3, s.get("testCreateNewPartitionInTopic").getPartitions().size());
             adminClient.close();
             async.complete();
           }));
@@ -739,9 +739,11 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
         adminClient.createPartitions(Collections.singletonMap("testCreatePartitionInTopicWithAssignment", new NewPartitions(3, assigmnments)), ctx.asyncAssertSuccess(v -> {
           adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment"), ctx.asyncAssertSuccess(s -> {
-            ctx.assertTrue(s.get("testCreatePartitionInTopicWithAssignment").getPartitions().size() == 3);
-            ctx.assertTrue(s.get("testCreatePartitionInTopicWithAssignment").getPartitions().get(1).getReplicas().get(0).getId() == 2);
-            ctx.assertTrue(s.get("testCreatePartitionInTopicWithAssignment").getPartitions().get(2).getReplicas().get(0).getId() == 1);
+
+            List<TopicPartitionInfo> partitions = s.get("testCreatePartitionInTopicWithAssignment").getPartitions();
+            ctx.assertTrue(partitions.size() == 3, "Expect "+ partitions + " size == 3");
+            ctx.assertTrue(partitions.get(1).getReplicas().get(0).getId() == 2, "Expect replica 0 of partition 1 to be 2, partitions = " + partitions);
+            ctx.assertTrue(partitions.get(2).getReplicas().get(0).getId() == 1, "Expect replica 0 of partition 2 to be 1, partitions = " + partitions);
             adminClient.close();
             async.complete();
           }));

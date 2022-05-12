@@ -21,6 +21,7 @@ import io.debezium.util.Testing;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
@@ -68,5 +69,10 @@ public abstract class KafkaClusterTestBase extends KafkaTestBase {
         dataDir.deleteOnExit();
       }
     }
+  }
+
+  @Test
+  public void dummy() {
+    // 'No runnable methods' is thrown without this
   }
 }
