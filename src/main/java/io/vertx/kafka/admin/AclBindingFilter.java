@@ -17,10 +17,22 @@
 package io.vertx.kafka.admin;
 
 import java.util.Objects;
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.json.JsonObject;
 
+@DataObject(generateConverter = true)
 public class AclBindingFilter {
-    private final ResourcePatternFilter patternFilter;
-    private final AccessControlEntryFilter entryFilter;
+    private ResourcePatternFilter patternFilter;
+    private AccessControlEntryFilter entryFilter;
+
+    /**
+     * Constructor (from JSON representation)
+     *
+     * @param json  JSON representation
+     */
+    public AclBindingFilter(JsonObject json) {
+        AclBindingFilterConverter.fromJson(json, this);
+    }
 
     /**
      * A filter which matches any ACL binding.
@@ -50,5 +62,24 @@ public class AclBindingFilter {
      */
     public final AccessControlEntryFilter entryFilter() {
         return entryFilter;
+    }
+
+    /**
+     * Convert object to JSON representation
+     *
+     * @return  JSON representation
+     */
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        AclBindingFilterConverter.toJson(this, json);
+        return json;
+    }
+
+    @Override
+    public String toString() {
+        return "AclBindingFilter{" +
+        "patternFilter=" + patternFilter +
+        "entryFilter=" + entryFilter +        
+        '}';
     }
 }

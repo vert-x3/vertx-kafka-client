@@ -16,6 +16,9 @@
 
 package io.vertx.kafka.admin;
 
+import io.vertx.codegen.annotations.DataObject;
+
+@DataObject(generateConverter = true)
 class AccessControlEntryData {
     private final String principal;
     private final String host;

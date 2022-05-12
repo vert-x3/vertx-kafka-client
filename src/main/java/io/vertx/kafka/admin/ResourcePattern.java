@@ -17,7 +17,9 @@
 package io.vertx.kafka.admin;
 
 import java.util.Objects;
+import io.vertx.codegen.annotations.DataObject;
 
+@DataObject(generateConverter = true)
 public class ResourcePattern {
     /**
      * A special literal resource name that corresponds to 'all resources of a certain type'.

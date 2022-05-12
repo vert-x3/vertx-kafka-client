@@ -17,7 +17,9 @@
 package io.vertx.kafka.admin;
 
 import java.util.Objects;
+import io.vertx.codegen.annotations.DataObject;
 
+@DataObject(generateConverter = true)
 public class ResourcePatternFilter {
     /**
      * Matches any resource pattern.
