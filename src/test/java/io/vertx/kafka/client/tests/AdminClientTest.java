@@ -349,18 +349,18 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     //kafkaCluster.useTo().consumeStrings(() -> true, null, Collections.singletonList("first-topic"), c -> { });
 
-    kafkaCluster.useTo().consume("groupId", "clientId", OffsetResetStrategy.EARLIEST,
+    kafkaCluster.useTo().consume("groupId-desc-no-options", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
 
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeConsumerGroups(Collections.singletonList("groupId"), ctx.asyncAssertSuccess(groups -> {
+      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-no-options"), ctx.asyncAssertSuccess(groups -> {
 
-        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId");
+        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId-desc-no-options");
         ctx.assertNotNull(consumerGroupDescription);
-        ctx.assertEquals("groupId", consumerGroupDescription.getGroupId());
+        ctx.assertEquals("groupId-desc-no-options", consumerGroupDescription.getGroupId());
         ctx.assertEquals(1, consumerGroupDescription.getMembers().size());
 
         MemberDescription memberDescription = consumerGroupDescription.getMembers().get(0);
@@ -386,7 +386,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     //kafkaCluster.useTo().consumeStrings(() -> true, null, Collections.singletonList("first-topic"), c -> { });
 
-    kafkaCluster.useTo().consume("groupId", "clientId", OffsetResetStrategy.EARLIEST,
+    kafkaCluster.useTo().consume("groupId-desc-with-options", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
 
@@ -395,11 +395,11 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeConsumerGroups(Collections.singletonList("groupId"), options, ctx.asyncAssertSuccess(groups -> {
+      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-with-options"), options, ctx.asyncAssertSuccess(groups -> {
 
-        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId");
+        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId-desc-with-options");
         ctx.assertNotNull(consumerGroupDescription);
-        ctx.assertEquals("groupId", consumerGroupDescription.getGroupId());
+        ctx.assertEquals("groupId-desc-with-options", consumerGroupDescription.getGroupId());
         ctx.assertEquals(1, consumerGroupDescription.getMembers().size());
 
         MemberDescription memberDescription = consumerGroupDescription.getMembers().get(0);
@@ -882,7 +882,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
   @Test
   public void testDescribeLogDirs(TestContext ctx) {
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
-    
+
     Async async = ctx.async();
 
     List<Integer> ids = new ArrayList<Integer>();
@@ -943,7 +943,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
       record -> { counter.incrementAndGet(); });
     consumerAsync.awaitSuccess(10000);
 
-    // delete records with offset < 3 
+    // delete records with offset < 3
     Map<TopicPartition, RecordsToDelete> recordsToDelete = new HashMap<>();
     vertx.setTimer(10000, t -> {
       adminClient.describeTopics(Collections.singletonList(topicName), ctx.asyncAssertSuccess(map -> {
@@ -974,7 +974,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
         adminClient.close();
         async.complete();
       });
-    });  
+    });
   };
 }
 
