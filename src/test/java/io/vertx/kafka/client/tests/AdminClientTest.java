@@ -948,11 +948,12 @@ public class AdminClientTest extends KafkaClusterTestBase {
     vertx.setTimer(10000, t -> {
       adminClient.describeTopics(Collections.singletonList(topicName), ctx.asyncAssertSuccess(map -> {
         TopicDescription topicDescription = map.get(topicName);
-        List<TopicPartitionInfo> topicPartitionInfo = new ArrayList<TopicPartitionInfo>();
-        topicPartitionInfo = topicDescription.getPartitions();
+        List<TopicPartitionInfo> topicPartitionInfo = topicDescription.getPartitions();
         TopicPartition topicPartition = new TopicPartition(topicName, topicPartitionInfo.get(0).getPartition());
         recordsToDelete.put(topicPartition, RecordsToDelete.beforeOffset(3));
     }));
+    });
+
     vertx.setTimer(10000, s -> {
       adminClient.deleteRecords(recordsToDelete, ctx.asyncAssertSuccess( map -> {
 
@@ -961,20 +962,19 @@ public class AdminClientTest extends KafkaClusterTestBase {
         final String clientIdLowerBound = "client-id-2";
         final AtomicInteger counterLowerBound = new AtomicInteger();
         final Async consumerAsyncLowerBound = ctx.async();
-        List<Integer> records = new ArrayList<Integer>();
+        List<Integer> records = new ArrayList<>();
         kafkaCluster.useTo().consume(groupIdLowerBound, clientIdLowerBound, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
             () -> counterLowerBound.get() < 3, offsetCommitCallback, consumerAsyncLowerBound::complete, Collections.singletonList(topicName),
             record -> { counterLowerBound.incrementAndGet(); records.add(record.value()); });
-          consumerAsyncLowerBound.awaitSuccess(10000);
+        consumerAsyncLowerBound.awaitSuccess(10000);
         ctx.assertEquals(5, records.get(0));
         ctx.assertEquals(6, records.get(1));
         ctx.assertEquals(7, records.get(2));
         ctx.assertEquals(3, records.size());
         }));
-        adminClient.close();
-        async.complete();
       });
-    });
+    adminClient.close();
+    async.complete();
   };
 }
 

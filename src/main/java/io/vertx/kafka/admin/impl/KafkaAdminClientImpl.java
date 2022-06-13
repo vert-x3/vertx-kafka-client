@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Promise;
@@ -209,7 +208,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
         Map<Integer, Map<String, LogDirDescription>> logDirsDescriptions = new HashMap<>();
 
         for (Map.Entry<Integer, Map<String, org.apache.kafka.clients.admin.LogDirDescription>> logDirsDescriptionsEntry : t.entrySet()) {
-          
+
           Integer broker = logDirsDescriptionsEntry.getKey();
 
           Map<String, LogDirDescription> logDirsDescription = new HashMap<>();
@@ -218,7 +217,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
             logDirsDescription.put(logDirsDescriptionEntry.getKey(),logDirsDescriptionEntry.getValue());
           }
           logDirsDescriptions.put(broker, logDirsDescription);
-        }  
+        }
         promise.complete(logDirsDescriptions);
      } else {
         promise.fail(ex);
@@ -304,15 +303,15 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   public Future<Map<TopicPartition, DeletedRecords>> deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDelete) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Map<TopicPartition, DeletedRecords>> promise = ctx.promise();
-    Map<org.apache.kafka.common.TopicPartition, RecordsToDelete> recordsToDeleteKafka = new HashMap<org.apache.kafka.common.TopicPartition, RecordsToDelete>();
+    Map<org.apache.kafka.common.TopicPartition, RecordsToDelete> recordsToDeleteKafka = new HashMap<>();
     for(Map.Entry<TopicPartition, RecordsToDelete> entry : recordsToDelete.entrySet()){
       recordsToDeleteKafka.put(Helper.to(entry.getKey()),entry.getValue());
     }
     DeleteRecordsResult deleteRecordsResult = this.adminClient.deleteRecords(recordsToDeleteKafka);
     Map<org.apache.kafka.common.TopicPartition, KafkaFuture<DeletedRecords>> deletedRecordsInfo = deleteRecordsResult.lowWatermarks();
     Map<TopicPartition, DeletedRecords> deletedRecordsInfoMap = new HashMap<>();
-    List<Future> deletedRecords = new ArrayList<Future>();
-    List<org.apache.kafka.common.TopicPartition> topicPartitions = new ArrayList<org.apache.kafka.common.TopicPartition>();
+    List<Future> deletedRecords = new ArrayList<>();
+    List<org.apache.kafka.common.TopicPartition> topicPartitions = new ArrayList<>();
     for(Map.Entry<org.apache.kafka.common.TopicPartition, KafkaFuture<DeletedRecords>> entry : deletedRecordsInfo.entrySet()){
       Promise<DeletedRecords> promise1 = ctx.promise();
       topicPartitions.add(entry.getKey());
@@ -324,10 +323,10 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
           promise1.fail(ex);
         }
       });
-    } 
+    }
     CompositeFuture.join(deletedRecords).onComplete((drs) -> {
       if(drs.failed()){
-        promise.fail("Error message");
+        promise.fail("Error message drs: " + drs);
         return;
       }
       List<DeletedRecords> recordList  = drs.result().list();
@@ -336,7 +335,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
       promise.complete(deletedRecordsInfoMap);
     });
-    return promise.future();  
+    return promise.future();
   }
 
 
