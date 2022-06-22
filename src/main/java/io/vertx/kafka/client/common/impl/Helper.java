@@ -25,6 +25,9 @@ import io.vertx.kafka.admin.AclPermissionType;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
 import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.DescribeClusterOptions;
+import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
+import io.vertx.kafka.admin.DescribeTopicsOptions;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.ListOffsetsResultInfo;
 import io.vertx.kafka.admin.MemberAssignment;
@@ -262,6 +265,7 @@ public class Helper {
     return new ListOffsetsResultInfo(lori.offset(), lori.timestamp(), lori.leaderEpoch().orElse(null));
   }
 
+
   public static org.apache.kafka.common.acl.AclBindingFilter to(io.vertx.kafka.admin.AclBindingFilter aclBindingFilter) {
     return new org.apache.kafka.common.acl.AclBindingFilter(Helper.to(aclBindingFilter.patternFilter()),
             Helper.to(aclBindingFilter.entryFilter()));
@@ -342,5 +346,26 @@ public class Helper {
 
   private static AclBinding from(org.apache.kafka.common.acl.AclBinding entry) {
     return new AclBinding(Helper.from(entry.pattern()), Helper.from(entry.entry()));
+    
+  public static org.apache.kafka.clients.admin.DescribeTopicsOptions to(DescribeTopicsOptions describeTopicsOptions) {
+
+    org.apache.kafka.clients.admin.DescribeTopicsOptions newDescribeTopicsOptions = new org.apache.kafka.clients.admin.DescribeTopicsOptions();
+
+    return newDescribeTopicsOptions.includeAuthorizedOperations(describeTopicsOptions.includeAuthorizedOperations());
+  }
+
+  public static org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions to(DescribeConsumerGroupsOptions describeConsumerGroupsOptions) {
+
+    org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions newDescribeConsumerGroupsOptions = new org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions();
+
+    return newDescribeConsumerGroupsOptions.includeAuthorizedOperations(describeConsumerGroupsOptions.includeAuthorizedOperations());
+  }
+
+  public static org.apache.kafka.clients.admin.DescribeClusterOptions to(DescribeClusterOptions describeClusterOptions) {
+
+    org.apache.kafka.clients.admin.DescribeClusterOptions newDescribeClusterOptions = new org.apache.kafka.clients.admin.DescribeClusterOptions();
+
+    return newDescribeClusterOptions.includeAuthorizedOperations(describeClusterOptions.includeAuthorizedOperations());
+
   }
 }

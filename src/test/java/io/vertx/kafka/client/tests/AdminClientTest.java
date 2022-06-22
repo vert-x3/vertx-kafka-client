@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -46,11 +47,17 @@ import io.vertx.kafka.admin.NewPartitions;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.admin.TopicDescription;
+import io.vertx.kafka.admin.DescribeClusterOptions;
+import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
+import io.vertx.kafka.admin.DescribeTopicsOptions;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.DeletedRecords;
+import org.apache.kafka.clients.admin.LogDirDescription;
+import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
@@ -62,9 +69,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.impl.Helper;
 import io.vertx.kafka.admin.KafkaAdminClient;
 
 import static junit.framework.TestCase.assertEquals;
@@ -128,6 +137,39 @@ public class AdminClientTest extends KafkaClusterTestBase {
     vertx.setTimer(1000, t -> {
 
       adminClient.describeTopics(Collections.singletonList("first-topic"), ctx.asyncAssertSuccess(map -> {
+        TopicDescription topicDescription = map.get("first-topic");
+        ctx.assertNotNull(topicDescription);
+        ctx.assertEquals("first-topic", topicDescription.getName());
+        ctx.assertEquals(false, topicDescription.isInternal());
+        ctx.assertEquals(1, topicDescription.getPartitions().size());
+
+        TopicPartitionInfo topicPartitionInfo = topicDescription.getPartitions().get(0);
+        ctx.assertEquals(0, topicPartitionInfo.getPartition());
+        ctx.assertTrue(topicPartitionInfo.getLeader().getId() == 1 || topicPartitionInfo.getLeader().getId() == 2);
+        ctx.assertEquals(1, topicPartitionInfo.getReplicas().size());
+        ctx.assertTrue(topicPartitionInfo.getReplicas().get(0).getId() == 1 || topicPartitionInfo.getReplicas().get(0).getId() == 2);
+        ctx.assertEquals(1, topicPartitionInfo.getIsr().size());
+        ctx.assertTrue(topicPartitionInfo.getIsr().get(0).getId() == 1 || topicPartitionInfo.getIsr().get(0).getId() == 2);
+
+        adminClient.close();
+        async.complete();
+      }));
+    });
+  }
+
+  @Test
+  public void testDescribeTopicsWithOptions(TestContext ctx) {
+
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+
+    DescribeTopicsOptions options = new DescribeTopicsOptions();
+
+    // timer because, Kafka cluster takes time to create topics
+    vertx.setTimer(1000, t -> {
+
+      adminClient.describeTopics(Collections.singletonList("first-topic"), options, ctx.asyncAssertSuccess(map -> {
         TopicDescription topicDescription = map.get("first-topic");
         ctx.assertNotNull(topicDescription);
         ctx.assertEquals("first-topic", topicDescription.getName());
@@ -307,18 +349,57 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     //kafkaCluster.useTo().consumeStrings(() -> true, null, Collections.singletonList("first-topic"), c -> { });
 
-    kafkaCluster.useTo().consume("groupId", "clientId", OffsetResetStrategy.EARLIEST,
+    kafkaCluster.useTo().consume("groupId-desc-no-options", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
 
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeConsumerGroups(Collections.singletonList("groupId"), ctx.asyncAssertSuccess(groups -> {
+      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-no-options"), ctx.asyncAssertSuccess(groups -> {
 
-        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId");
+        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId-desc-no-options");
         ctx.assertNotNull(consumerGroupDescription);
-        ctx.assertEquals("groupId", consumerGroupDescription.getGroupId());
+        ctx.assertEquals("groupId-desc-no-options", consumerGroupDescription.getGroupId());
+        ctx.assertEquals(1, consumerGroupDescription.getMembers().size());
+
+        MemberDescription memberDescription = consumerGroupDescription.getMembers().get(0);
+        ctx.assertEquals("clientId", memberDescription.getClientId());
+        ctx.assertEquals(1, memberDescription.getAssignment().getTopicPartitions().size());
+
+        Iterator<TopicPartition> iterator = memberDescription.getAssignment().getTopicPartitions().iterator();
+        ctx.assertTrue(iterator.hasNext());
+        ctx.assertEquals("first-topic", iterator.next().getTopic());
+
+        adminClient.close();
+        async.complete();
+      }));
+    });
+  }
+
+  @Test
+  public void testDescribeConsumerGroupsWithOptions(TestContext ctx) {
+
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+
+    //kafkaCluster.useTo().consumeStrings(() -> true, null, Collections.singletonList("first-topic"), c -> { });
+
+    kafkaCluster.useTo().consume("groupId-desc-with-options", "clientId", OffsetResetStrategy.EARLIEST,
+      new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
+      Collections.singleton("first-topic"), c -> { });
+
+    DescribeConsumerGroupsOptions options = new DescribeConsumerGroupsOptions();
+
+    // timer because, Kafka cluster takes time to start consumer
+    vertx.setTimer(1000, t -> {
+
+      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-with-options"), options, ctx.asyncAssertSuccess(groups -> {
+
+        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId-desc-with-options");
+        ctx.assertNotNull(consumerGroupDescription);
+        ctx.assertEquals("groupId-desc-with-options", consumerGroupDescription.getGroupId());
         ctx.assertEquals(1, consumerGroupDescription.getMembers().size());
 
         MemberDescription memberDescription = consumerGroupDescription.getMembers().get(0);
@@ -443,6 +524,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     assertEquals(2, (int)consumers.get("your-topic"));
     assertEquals(2, (int)consumers.get("his-topic"));
   }
+
   @Test
   public void testDescribeCluster(TestContext ctx) {
 
@@ -474,6 +556,41 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     });
   }
+
+  @Test
+  public void testDescribeClusterWithOptions(TestContext ctx) {
+
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+
+    DescribeClusterOptions options = new DescribeClusterOptions();
+
+    // timer because, Kafka cluster takes time to start consumer
+    vertx.setTimer(1000, t -> {
+
+      adminClient.describeCluster(options, ctx.asyncAssertSuccess(cluster -> {
+        ctx.assertNotNull(cluster.getClusterId());
+        Node controller = cluster.getController();
+        ctx.assertNotNull(controller);
+        ctx.assertEquals(1, controller.getId());
+        ctx.assertEquals("localhost", controller.getHost());
+        ctx.assertEquals(false, controller.hasRack());
+        ctx.assertEquals("1", controller.getIdString());
+        ctx.assertEquals(false, controller.isEmpty());
+        ctx.assertEquals(9092, controller.getPort());
+        ctx.assertEquals(null, controller.rack());
+        Collection<Node> nodes = cluster.getNodes();
+        ctx.assertNotNull(nodes);
+        ctx.assertEquals(2, nodes.size());
+        ctx.assertEquals(1, nodes.iterator().next().getId());
+        adminClient.close();
+        async.complete();
+      }));
+
+    });
+  }
+
 
   private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
     Set<Object> seen = ConcurrentHashMap.newKeySet();
@@ -718,7 +835,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     kafkaCluster.createTopic("testCreatePartitionInTopicWithAssignment", 1, 1);
 
-   Async async = ctx.async();
+    Async async = ctx.async();
 
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
@@ -759,4 +876,103 @@ public class AdminClientTest extends KafkaClusterTestBase {
       adminClient.close(ctx.asyncAssertSuccess());
     }));
   }
+
+  @Test
+  public void testDescribeLogDirs(TestContext ctx) {
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+
+    List<Integer> ids = new ArrayList<Integer>();
+    // timer because, Kafka cluster takes time to start consumer
+    vertx.setTimer(1000, t -> {
+
+      adminClient.describeCluster(ctx.asyncAssertSuccess(cluster -> {
+        Collection<Node> nodes = cluster.getNodes();
+        for (Node node : nodes){
+          ids.add(node.getId());
+        }
+      }));
+    });
+
+    // timer because, Kafka cluster takes time to start consumer
+    vertx.setTimer(10000, t -> {
+      adminClient.describeLogDirs(ids, ctx.asyncAssertSuccess(map -> {
+        Map<String, LogDirDescription> infoFirstEntry = map.get(1);
+        Set<Map.Entry<String, LogDirDescription>> values = infoFirstEntry.entrySet();
+        List<String> keys = new ArrayList<String>();
+        for (Map.Entry<String, LogDirDescription> entry : values){
+          keys.add(entry.getKey());
+        }
+        LogDirDescription logDirDescription = infoFirstEntry.get(keys.get(0));
+        ctx.assertNotNull(logDirDescription);
+        ctx.assertNotNull(logDirDescription.replicaInfos());
+        ctx.assertNull(logDirDescription.error());
+        adminClient.close();
+        async.complete();
+      }));
+   });
+  }
+
+  @Test
+  public void testDeleteRecords(TestContext ctx){
+    KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    Async async = ctx.async();
+    // produce 6 integer messages to "first-topic"
+    Async producerAsync = ctx.async();
+    kafkaCluster.useTo().produceIntegers("first-topic", 6, 1, producerAsync::complete);
+    producerAsync.awaitSuccess(10000);
+
+    // consume messages from "first topic"
+    final String groupId = "group-id-1";
+    final String clientId = "client-id-1";
+    final String topicName = "first-topic";
+    final AtomicInteger counter = new AtomicInteger();
+    final OffsetCommitCallback offsetCommitCallback = new OffsetCommitCallback() {
+      @Override
+      public void onComplete(Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> map, Exception e) {
+      }
+    };
+    final Async consumerAsync = ctx.async();
+
+    kafkaCluster.useTo().consume(groupId, clientId, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
+      () -> counter.get() < 6, offsetCommitCallback, consumerAsync::complete, Collections.singletonList(topicName),
+      record -> { counter.incrementAndGet(); });
+    consumerAsync.awaitSuccess(10000);
+
+    // delete records with offset < 3
+    Map<TopicPartition, RecordsToDelete> recordsToDelete = new HashMap<>();
+    vertx.setTimer(10000, t -> {
+      adminClient.describeTopics(Collections.singletonList(topicName), ctx.asyncAssertSuccess(map -> {
+        TopicDescription topicDescription = map.get(topicName);
+        List<TopicPartitionInfo> topicPartitionInfo = topicDescription.getPartitions();
+        TopicPartition topicPartition = new TopicPartition(topicName, topicPartitionInfo.get(0).getPartition());
+        recordsToDelete.put(topicPartition, RecordsToDelete.beforeOffset(3));
+    }));
+    });
+
+    vertx.setTimer(10000, s -> {
+      adminClient.deleteRecords(recordsToDelete, ctx.asyncAssertSuccess( map -> {
+
+        // consume messages 1-3 from "first topic"
+        final String groupIdLowerBound = "group-id-2";
+        final String clientIdLowerBound = "client-id-2";
+        final AtomicInteger counterLowerBound = new AtomicInteger();
+        final Async consumerAsyncLowerBound = ctx.async();
+        List<Integer> records = new ArrayList<>();
+        kafkaCluster.useTo().consume(groupIdLowerBound, clientIdLowerBound, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
+            () -> counterLowerBound.get() < 3, offsetCommitCallback, consumerAsyncLowerBound::complete, Collections.singletonList(topicName),
+            record -> { counterLowerBound.incrementAndGet(); records.add(record.value()); });
+        consumerAsyncLowerBound.awaitSuccess(10000);
+        ctx.assertEquals(5, records.get(0));
+        ctx.assertEquals(6, records.get(1));
+        ctx.assertEquals(7, records.get(2));
+        ctx.assertEquals(3, records.size());
+        }));
+      });
+    adminClient.close();
+    async.complete();
+  };
 }
+

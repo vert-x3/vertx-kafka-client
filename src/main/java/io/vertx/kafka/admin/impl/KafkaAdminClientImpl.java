@@ -20,7 +20,6 @@ import io.vertx.kafka.admin.AclBinding;
 import io.vertx.kafka.admin.AclBindingFilter;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.NewPartitions;
-import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -43,8 +42,12 @@ import io.vertx.kafka.admin.MemberDescription;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.admin.TopicDescription;
+import io.vertx.kafka.admin.DescribeClusterOptions;
+import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
+import io.vertx.kafka.admin.DescribeTopicsOptions;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
+import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -56,18 +59,25 @@ import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.DeleteAclsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
+import org.apache.kafka.clients.admin.DeleteRecordsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeAclsResult;
+import org.apache.kafka.clients.admin.DeletedRecords;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
+import org.apache.kafka.clients.admin.DescribeLogDirsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.LogDirDescription;
+import org.apache.kafka.clients.admin.RecordsToDelete;
 
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -135,6 +145,94 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
+  public void describeTopics(List<String> topicNames, DescribeTopicsOptions options, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler) {
+    describeTopics(topicNames, options).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Map<String, TopicDescription>> describeTopics(List<String> topicNames, DescribeTopicsOptions options) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<String, TopicDescription>> promise = ctx.promise();
+
+    DescribeTopicsResult describeTopicsResult = this.adminClient.describeTopics(topicNames, Helper.to(options));
+    describeTopicsResult.all().whenComplete((t, ex) -> {
+      if (ex == null) {
+
+        Map<String, TopicDescription> topics = new HashMap<>();
+
+        for (Map.Entry<String, org.apache.kafka.clients.admin.TopicDescription> topicDescriptionEntry : t.entrySet()) {
+
+          List<TopicPartitionInfo> partitions = new ArrayList<>();
+
+          for (org.apache.kafka.common.TopicPartitionInfo kafkaPartitionInfo : topicDescriptionEntry.getValue().partitions()) {
+
+            TopicPartitionInfo topicPartitionInfo = new TopicPartitionInfo();
+            topicPartitionInfo.setIsr(
+              kafkaPartitionInfo.isr().stream().map(Helper::from).collect(Collectors.toList()))
+              .setLeader(Helper.from(kafkaPartitionInfo.leader()))
+              .setPartition(kafkaPartitionInfo.partition())
+              .setReplicas(
+                kafkaPartitionInfo.replicas().stream().map(Helper::from).collect(Collectors.toList()));
+
+            partitions.add(topicPartitionInfo);
+          }
+
+          TopicDescription topicDescription = new TopicDescription();
+
+          topicDescription.setInternal(topicDescriptionEntry.getValue().isInternal())
+            .setName(topicDescriptionEntry.getKey())
+            .setPartitions(partitions);
+
+          topics.put(topicDescriptionEntry.getKey(), topicDescription);
+        }
+
+        promise.complete(topics);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  @Override
+  @GenIgnore
+  public void describeLogDirs(List<Integer> brokers, Handler<AsyncResult<Map<Integer, Map<String, LogDirDescription>>>> completionHandler) {
+    describeLogDirs(brokers).onComplete(completionHandler);
+  }
+
+  @Override
+  @GenIgnore
+  public Future<Map<Integer, Map<String, LogDirDescription>>> describeLogDirs(List<Integer> brokers) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<Integer, Map<String, LogDirDescription>>> promise = ctx.promise();
+
+    DescribeLogDirsResult describeLogDirsResult = this.adminClient.describeLogDirs(brokers);
+    describeLogDirsResult.allDescriptions().whenComplete((t, ex) -> {
+      if (ex == null) {
+
+        Map<Integer, Map<String, LogDirDescription>> logDirsDescriptions = new HashMap<>();
+
+        for (Map.Entry<Integer, Map<String, org.apache.kafka.clients.admin.LogDirDescription>> logDirsDescriptionsEntry : t.entrySet()) {
+
+          Integer broker = logDirsDescriptionsEntry.getKey();
+
+          Map<String, LogDirDescription> logDirsDescription = new HashMap<>();
+
+          for (Map.Entry<String, org.apache.kafka.clients.admin.LogDirDescription> logDirsDescriptionEntry : logDirsDescriptionsEntry.getValue().entrySet()) {
+            logDirsDescription.put(logDirsDescriptionEntry.getKey(),logDirsDescriptionEntry.getValue());
+          }
+          logDirsDescriptions.put(broker, logDirsDescription);
+        }
+        promise.complete(logDirsDescriptions);
+     } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+
+  @Override
   public void listTopics(Handler<AsyncResult<Set<String>>> completionHandler) {
     listTopics().onComplete(completionHandler);
   }
@@ -198,6 +296,54 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     });
     return promise.future();
   }
+
+  @Override
+  @GenIgnore
+  public void deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDelete,Handler<AsyncResult<Map<TopicPartition, DeletedRecords>>> completionHandler) {
+    deleteRecords(recordsToDelete).onComplete(completionHandler);
+  }
+
+  @Override
+  @GenIgnore
+  public Future<Map<TopicPartition, DeletedRecords>> deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDelete) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<TopicPartition, DeletedRecords>> promise = ctx.promise();
+    Map<org.apache.kafka.common.TopicPartition, RecordsToDelete> recordsToDeleteKafka = new HashMap<>();
+    for(Map.Entry<TopicPartition, RecordsToDelete> entry : recordsToDelete.entrySet()){
+      recordsToDeleteKafka.put(Helper.to(entry.getKey()),entry.getValue());
+    }
+    DeleteRecordsResult deleteRecordsResult = this.adminClient.deleteRecords(recordsToDeleteKafka);
+    Map<org.apache.kafka.common.TopicPartition, KafkaFuture<DeletedRecords>> deletedRecordsInfo = deleteRecordsResult.lowWatermarks();
+    Map<TopicPartition, DeletedRecords> deletedRecordsInfoMap = new HashMap<>();
+    List<Future> deletedRecords = new ArrayList<>();
+    List<org.apache.kafka.common.TopicPartition> topicPartitions = new ArrayList<>();
+    for(Map.Entry<org.apache.kafka.common.TopicPartition, KafkaFuture<DeletedRecords>> entry : deletedRecordsInfo.entrySet()){
+      Promise<DeletedRecords> promise1 = ctx.promise();
+      topicPartitions.add(entry.getKey());
+      deletedRecords.add(promise1.future());
+      entry.getValue().whenComplete((dr, ex)-> {
+        if (ex == null){
+          promise1.complete();
+        } else {
+          promise1.fail(ex);
+        }
+      });
+    }
+    CompositeFuture.join(deletedRecords).onComplete((drs) -> {
+      if(drs.failed()){
+        promise.fail("Error message drs: " + drs);
+        return;
+      }
+      List<DeletedRecords> recordList  = drs.result().list();
+      for (int i=0 ; i < recordList.size() ; i++){
+        deletedRecordsInfoMap.put(Helper.from(topicPartitions.get(i)), recordList.get(i));
+      }
+      promise.complete(deletedRecordsInfoMap);
+    });
+    return promise.future();
+  }
+
+
 
   @Override
   public void createPartitions(Map<String, NewPartitions> partitions, Handler<AsyncResult<Void>> completionHandler) {
@@ -345,6 +491,53 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
+  @Override
+  public void describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler) {
+    describeConsumerGroups(groupIds, options).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<Map<String, ConsumerGroupDescription>> promise = ctx.promise();
+
+    DescribeConsumerGroupsResult describeConsumerGroupsResult = this.adminClient.describeConsumerGroups(groupIds, Helper.to(options));
+    describeConsumerGroupsResult.all().whenComplete((cg, ex) -> {
+      if (ex == null) {
+        Map<String, ConsumerGroupDescription> consumerGroups = new HashMap<>();
+
+        for (Map.Entry<String, org.apache.kafka.clients.admin.ConsumerGroupDescription> cgDescriptionEntry: cg.entrySet()) {
+          List<MemberDescription> members = new ArrayList<>();
+
+          for (org.apache.kafka.clients.admin.MemberDescription memberDescription : cgDescriptionEntry.getValue().members()) {
+            MemberDescription m = new MemberDescription();
+            m.setConsumerId(memberDescription.consumerId())
+              .setClientId(memberDescription.clientId())
+              .setAssignment(Helper.from(memberDescription.assignment()))
+              .setHost(memberDescription.host());
+
+            members.add(m);
+          }
+
+          ConsumerGroupDescription consumerGroupDescription = new ConsumerGroupDescription();
+
+          consumerGroupDescription.setGroupId(cgDescriptionEntry.getValue().groupId())
+            .setCoordinator(Helper.from(cgDescriptionEntry.getValue().coordinator()))
+            .setMembers(members)
+            .setPartitionAssignor(cgDescriptionEntry.getValue().partitionAssignor())
+            .setSimpleConsumerGroup(cgDescriptionEntry.getValue().isSimpleConsumerGroup())
+            .setState(cgDescriptionEntry.getValue().state());
+
+          consumerGroups.put(cgDescriptionEntry.getKey(), consumerGroupDescription);
+        }
+        promise.complete(consumerGroups);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
   public void listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
     listConsumerGroupOffsets(groupId, options).onComplete(completionHandler);
   }
@@ -445,6 +638,41 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     Promise<ClusterDescription> promise = ctx.promise();
 
     DescribeClusterResult describeClusterResult = this.adminClient.describeCluster();
+    KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
+      if (ex == null) {
+        try {
+          String clusterId = describeClusterResult.clusterId().get();
+          org.apache.kafka.common.Node rcontroller = describeClusterResult.controller().get();
+          Collection<org.apache.kafka.common.Node> rnodes = describeClusterResult.nodes().get();
+
+          Node controller = Helper.from(rcontroller);
+          List<Node> nodes = new ArrayList<>();
+          rnodes.forEach(rnode -> {
+            nodes.add(Helper.from(rnode));
+          });
+          ClusterDescription clusterDescription = new ClusterDescription(clusterId, controller, nodes);
+          promise.complete(clusterDescription);
+        } catch (InterruptedException|ExecutionException e) {
+          promise.fail(e);
+        }
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  @Override
+  public void describeCluster(DescribeClusterOptions options, Handler<AsyncResult<ClusterDescription>> completionHandler) {
+    describeCluster(options).onComplete(completionHandler);
+  }
+
+  @Override
+  public Future<ClusterDescription> describeCluster(DescribeClusterOptions options) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<ClusterDescription> promise = ctx.promise();
+
+    DescribeClusterResult describeClusterResult = this.adminClient.describeCluster(Helper.to(options));
     KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
       if (ex == null) {
         try {
