@@ -346,6 +346,7 @@ public class Helper {
 
   private static AclBinding from(org.apache.kafka.common.acl.AclBinding entry) {
     return new AclBinding(Helper.from(entry.pattern()), Helper.from(entry.entry()));
+  }
     
   public static org.apache.kafka.clients.admin.DescribeTopicsOptions to(DescribeTopicsOptions describeTopicsOptions) {
 
