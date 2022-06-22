@@ -20,6 +20,9 @@ import io.vertx.core.Handler;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
 import io.vertx.kafka.admin.ConsumerGroupListing;
+import io.vertx.kafka.admin.DescribeClusterOptions;
+import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
+import io.vertx.kafka.admin.DescribeTopicsOptions;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.ListOffsetsResultInfo;
 import io.vertx.kafka.admin.MemberAssignment;
@@ -251,5 +254,26 @@ public class Helper {
 
   public static ListOffsetsResultInfo from(org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo lori) {
     return new ListOffsetsResultInfo(lori.offset(), lori.timestamp(), lori.leaderEpoch().orElse(null));
+  }
+
+  public static org.apache.kafka.clients.admin.DescribeTopicsOptions to(DescribeTopicsOptions describeTopicsOptions) {
+
+    org.apache.kafka.clients.admin.DescribeTopicsOptions newDescribeTopicsOptions = new org.apache.kafka.clients.admin.DescribeTopicsOptions();
+
+    return newDescribeTopicsOptions.includeAuthorizedOperations(describeTopicsOptions.includeAuthorizedOperations());
+  }
+
+  public static org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions to(DescribeConsumerGroupsOptions describeConsumerGroupsOptions) {
+
+    org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions newDescribeConsumerGroupsOptions = new org.apache.kafka.clients.admin.DescribeConsumerGroupsOptions();
+
+    return newDescribeConsumerGroupsOptions.includeAuthorizedOperations(describeConsumerGroupsOptions.includeAuthorizedOperations());
+  }
+
+  public static org.apache.kafka.clients.admin.DescribeClusterOptions to(DescribeClusterOptions describeClusterOptions) {
+
+    org.apache.kafka.clients.admin.DescribeClusterOptions newDescribeClusterOptions = new org.apache.kafka.clients.admin.DescribeClusterOptions();
+
+    return newDescribeClusterOptions.includeAuthorizedOperations(describeClusterOptions.includeAuthorizedOperations());
   }
 }

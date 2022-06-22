@@ -19,14 +19,17 @@ package io.vertx.kafka.admin;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.Future;
 import io.vertx.kafka.client.common.ConfigResource;
+import io.vertx.kafka.client.common.TopicPartition;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DeletedRecords;
+import org.apache.kafka.clients.admin.LogDirDescription;
+import org.apache.kafka.clients.admin.RecordsToDelete;
 
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
-import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.util.HashMap;
 import java.util.List;
@@ -95,10 +98,20 @@ public interface KafkaAdminClient {
    */
   void describeTopics(List<String> topicNames, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
 
+    /**
+   * Like {@link #describeTopics(List, Handler)} but allows for customised otions
+   */
+  void describeTopics(List<String> topicNames, DescribeTopicsOptions options, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
+
   /**
    * Like {@link #describeTopics(List, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Map<String, TopicDescription>> describeTopics(List<String> topicNames);
+
+  /**
+   * Like {@link #describeTopics(List, DescribeTopicsOptions, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Map<String, TopicDescription>> describeTopics(List<String> topicNames, DescribeTopicsOptions options);
 
   /**
    * Creates a batch of new Kafka topics
@@ -197,6 +210,17 @@ public interface KafkaAdminClient {
   Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds);
 
   /**
+   * Like {@link #describeConsumerGroups(List, Handler)} but allows customized options
+   */
+  void describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
+  
+  /**
+   * Like {@link #describeConsumerGroups(List, DescribeConsumerGroupsOptions, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options);
+  
+
+  /**
    * Describe the nodes in the cluster with the default options
    *
    * @param completionHandler handler called on operation completed with the cluster description
@@ -207,6 +231,46 @@ public interface KafkaAdminClient {
    * Like {@link #describeCluster(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<ClusterDescription> describeCluster();
+  
+  /**
+   * Like {@link #describeCluster(Handler)} but allows customized options.
+   */
+  void describeCluster(DescribeClusterOptions options, Handler<AsyncResult<ClusterDescription>> completionHandler);
+  
+  /**
+   * Like {@link #describeCluster(DescribeClusterOptions, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<ClusterDescription> describeCluster(DescribeClusterOptions options);
+
+  /**
+   * Query the information of all log directories on the given set of brokers 
+   *
+   * @param brokers list of broker ids
+   * @param completionHandler a {@code Handler} completed with the operation result
+   */
+  @GenIgnore
+  void describeLogDirs(List<Integer> brokers, Handler<AsyncResult<Map<Integer, Map<String, LogDirDescription>>>> completionHandler);
+  
+  /**
+   * Like {@link #describeLogDirs(List, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore
+  Future<Map<Integer, Map<String, LogDirDescription>>> describeLogDirs(final List<Integer> brokers);
+
+  /**
+   * Delete records from a topic partition.
+   *
+   * @param recordsToDelete records to be delted on the given  topic partition
+   * @param completionHandler handler called on operation completed
+   */
+  @GenIgnore
+  void deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDelete,Handler<AsyncResult<Map<TopicPartition, DeletedRecords>>> completionHandler);
+
+  /**
+   * Like {@link #deleteRecords(Map, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore  
+  Future<Map<TopicPartition, DeletedRecords>> deleteRecords(final Map<TopicPartition, RecordsToDelete> recordsToDelete);
 
   /**
    * Delete consumer groups from the cluster.
