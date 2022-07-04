@@ -33,6 +33,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
@@ -696,29 +697,33 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public Future<Void> close() {
-    Promise<Void> promise = Promise.promise();
-    close(promise);
-    return promise.future();
+    final ContextInternal ctx = (ContextInternal) this.context;
+    if (this.closed.compareAndSet(false, true)) {
+      // Call wakeup before closing the consumer, so that existing tasks in the executor queue will
+      // wake up while we wait for processing the below added "close" task.
+      this.consumer.wakeup();
+
+      final Promise<Void> promise = ctx.promise();
+
+      this.worker.submit(() -> {
+        try {
+          this.consumer.close();
+          promise.complete();
+        } catch (final KafkaException ex) {
+          promise.fail(ex);
+        }
+      });
+
+      return promise.future().onComplete(v -> this.worker.shutdownNow());
+    }
+    return ctx.succeededFuture();
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
-    if (this.closed.compareAndSet(false, true)) {
-      this.worker.submit(() -> {
-        this.consumer.close();
-        this.context.runOnContext(v -> {
-          this.worker.shutdownNow();
-          if (completionHandler != null) {
-            completionHandler.handle(Future.succeededFuture());
-          }
-        });
-      });
-      this.consumer.wakeup();
-    }
-    else {
-      if (completionHandler != null) {
-        completionHandler.handle(Future.succeededFuture());
-      }
+    final Future<Void> f = close();
+    if (completionHandler != null) {
+      f.onComplete(completionHandler);
     }
   }
 
