@@ -490,4 +490,4 @@ span tags are:
 - `peer.service` is always `kafka`
 - `message_bus.destination`, which is set to the topic in use
 
-include::admin.adoc[]
+include::adminclient.adoc[]
