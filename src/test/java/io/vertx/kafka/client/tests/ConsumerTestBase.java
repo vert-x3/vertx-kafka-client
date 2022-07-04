@@ -80,7 +80,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testConsume(TestContext ctx) throws Exception {
-    final String topicName = "testConsume";
+    final String topicName = "testConsume-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -105,8 +105,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testConsumePattern(TestContext ctx) throws Exception {
-    final String topicName1 = "testConsumePattern1";
-    final String topicName2 = "testConsumePattern2";
+    final String topicName1 = "testConsumePattern1-" + this.getClass().getName();
+    final String topicName2 = "testConsumePattern2-" + this.getClass().getName();
     String consumerId = topicName1 + "-" + topicName2;
     Async batch = ctx.async(2);
     AtomicInteger index = new AtomicInteger();
@@ -128,14 +128,14 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         done.complete();
       }
     });
-    Pattern pattern = Pattern.compile("testConsumePattern\\d");
+    Pattern pattern = Pattern.compile("testConsumePattern\\d-.*");
     consumer.subscribe(pattern);
   }
 
   @Test
   public void testStreamWithHeader(TestContext ctx) {
     int numMessages = 1000;
-    String topicName = "testStreamWithHeader";
+    String topicName = "testStreamWithHeader-" + this.getClass().getName();
     Properties config = setupConsumeWithHeaders(ctx, numMessages, topicName);
     consumer = createConsumer(vertx, config);
     Async done = ctx.async();
@@ -158,7 +158,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testConsumerWithHeader(TestContext ctx) {
     int numMessages = 1000;
-    String topicName = "testConsumerWithHeader";
+    String topicName = "testConsumerWithHeader-" + this.getClass().getName();
     Properties config = setupConsumeWithHeaders(ctx, numMessages, topicName);
     consumer = createConsumer(vertx, config);
     KafkaConsumer<String, String> consumer = new KafkaConsumerImpl<>(this.consumer);
@@ -194,7 +194,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testPause(TestContext ctx) throws Exception {
-    final String topicName = "testPause";
+    final String topicName = "testPause-" + this.getClass().getName();
     final String consumerId = topicName;
 
     Async batch = ctx.async();
@@ -231,7 +231,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testFetch(TestContext ctx) throws Exception {
-    final String topicName = "testPause";
+    final String topicName = "testPause-" + this.getClass().getName();
     final String consumerId = topicName;
 
     Async batch = ctx.async();
@@ -273,7 +273,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testPauseSingleTopic(TestContext ctx) throws Exception {
-    final String topicName = "testPauseSingleTopic";
+    final String topicName = "testPauseSingleTopic-" + this.getClass().getName();
     final String consumerId = topicName;
 
     Async batch = ctx.async();
@@ -315,7 +315,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testCommit(TestContext ctx) throws Exception {
-    String topicName = "testCommit";
+    String topicName = "testCommit-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -368,7 +368,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testCommitWithOffsets(TestContext ctx) throws Exception {
-    String topicName = "testCommitWithOffsets";
+    String topicName = "testCommitWithOffsets-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -421,7 +421,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testCommitAfterPoll(TestContext ctx) throws Exception {
 
-    String topicName = "testCommitAfterPoll";
+    String topicName = "testCommitAfterPoll-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -460,7 +460,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testRebalance(TestContext ctx) throws Exception {
-    String topicName = "testRebalance";
+    String topicName = "testRebalance-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 2, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -529,24 +529,27 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testSeek(TestContext ctx) throws Exception {
     int numMessages = 500;
-    testSeek("the_topic_0", numMessages, ctx, () -> {
-      consumer.seek(new TopicPartition("the_topic_0", 0), 0);
+    final String topicName = "the_topic_0-" + this.getClass().getName();
+    testSeek(topicName, numMessages, ctx, () -> {
+      consumer.seek(new TopicPartition(topicName, 0), 0);
     }, -numMessages);
   }
 
   @Test
   public void testSeekToBeginning(TestContext ctx) throws Exception {
     int numMessages = 500;
-    testSeek("the_topic_1", numMessages, ctx, () -> {
-      consumer.seekToBeginning(Collections.singleton(new TopicPartition("the_topic_1", 0)));
+    final String topicName = "the_topic_1-" + this.getClass().getName();
+    testSeek(topicName, numMessages, ctx, () -> {
+      consumer.seekToBeginning(Collections.singleton(new TopicPartition(topicName, 0)));
     }, -numMessages);
   }
 
   @Test
   public void testSeekToEnd(TestContext ctx) throws Exception {
     int numMessages = 500;
-    testSeek("the_topic_2", numMessages, ctx, () -> {
-      consumer.seekToEnd(Collections.singleton(new TopicPartition("the_topic_2", 0)));
+    final String topicName = "the_topic_2-" + this.getClass().getName();
+    testSeek(topicName, numMessages, ctx, () -> {
+      consumer.seekToEnd(Collections.singleton(new TopicPartition(topicName, 0)));
     }, 0);
   }
 
@@ -584,7 +587,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testSeekAfterConsume(TestContext ctx) throws Exception {
-    String topic = "testSeekAfterConsume";
+    String topic = "testSeekAfterConsume-" + this.getClass().getName();
     kafkaCluster.createTopic(topic, 1, 1);
 
     Properties config = kafkaCluster.useTo().getConsumerProperties(topic, topic, OffsetResetStrategy.EARLIEST);
@@ -631,7 +634,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testSubscription(TestContext ctx) throws Exception {
-    String topicName = "testSubscription";
+    String topicName = "testSubscription-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -671,7 +674,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testAssign(TestContext ctx) throws Exception {
-    String topicName = "testAssign";
+    String topicName = "testAssign-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -713,7 +716,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testSetHandlerThenAssign(TestContext ctx) throws Exception {
-    String topicName = "testSetHandlerThenAssign";
+    String topicName = "testSetHandlerThenAssign-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -757,7 +760,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testAssignThenSetHandler(TestContext ctx) throws Exception {
-    String topicName = "testAssignThenSetHandler";
+    String topicName = "testAssignThenSetHandler-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId,
@@ -803,7 +806,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testAssignAndSeek(TestContext ctx) throws Exception {
-    String topicName = "testAssignAndSeek";
+    String topicName = "testAssignAndSeek-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -867,9 +870,9 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testReassign(TestContext ctx) throws Exception {
-    String topicName1 = "testReassign1";
-    String topicName2 = "testReassign2";
-    String consumerId = "testReassign";
+    String topicName1 = "testReassign1-" + this.getClass().getName();
+    String topicName2 = "testReassign2-" + this.getClass().getName();
+    String consumerId = "testReassign-" + this.getClass().getName();
     kafkaCluster.createTopic(topicName1, 1, 1);
     kafkaCluster.createTopic(topicName2, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -938,7 +941,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testListTopics(TestContext ctx) throws Exception {
-    String topicName = "testListTopics";
+    String topicName = "testListTopics-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -978,7 +981,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testPartitionsFor(TestContext ctx) throws Exception {
-    String topicName = "testPartitionsFor";
+    String topicName = "testPartitionsFor-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 2, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -1002,7 +1005,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testPositionEmptyTopic(TestContext ctx) throws Exception {
-    String topicName = "testPositionEmptyTopic";
+    String topicName = "testPositionEmptyTopic-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -1047,7 +1050,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testPositionNonEmptyTopic(TestContext ctx) throws Exception {
-    String topicName = "testPositionNonEmptyTopic";
+    String topicName = "testPositionNonEmptyTopic-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Async batch = ctx.async();
@@ -1112,7 +1115,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
    Tests test beginningOffset or endOffset, depending on beginningOffset = true or false
   */
   public void testBeginningEndOffset(TestContext ctx, boolean beginningOffset) throws Exception {
-    String topicName = "testBeginningEndOffset_" + (beginningOffset ? "beginning" : "end");
+    String topicName = "testBeginningEndOffset_" + (beginningOffset ? "beginning" : "end") + "-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -1181,7 +1184,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testOffsetsForTimes(TestContext ctx) throws Exception {
-    String topicName = "testOffsetsForTimes";
+    String topicName = "testOffsetsForTimes-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -1237,7 +1240,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   // Test uses KafkaConsumer instead of KafkaReadStream to test the full API
   public void testOffsetsForTimesWithTimestampInFuture(TestContext ctx) throws Exception {
-    String topicName = "testOffsetsForTimesWithTimestampInFuture";
+    String topicName = "testOffsetsForTimesWithTimestampInFuture-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -1279,7 +1282,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testBatchHandler(TestContext ctx) throws Exception {
-    String topicName = "testBatchHandler";
+    String topicName = "testBatchHandler-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -1304,7 +1307,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testConsumerBatchHandler(TestContext ctx) throws Exception {
-    String topicName = "testConsumerBatchHandler";
+    String topicName = "testConsumerBatchHandler-" + this.getClass().getName();
     String consumerId = topicName;
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
@@ -1356,7 +1359,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testPollTimeout(TestContext ctx) throws Exception {
     Async async = ctx.async();
-    String topicName = "testPollTimeout";
+    String topicName = "testPollTimeout-" + this.getClass().getName();
     Properties config = kafkaCluster.useTo().getConsumerProperties(topicName, topicName, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -1383,7 +1386,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   @Test
   public void testNotCommitted(TestContext ctx) throws Exception {
 
-    String topicName = "testNotCommitted";
+    String topicName = "testNotCommitted-" + this.getClass().getName();
     String consumerId = topicName;
     kafkaCluster.createTopic(topicName, 1, 1);
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
@@ -1412,7 +1415,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testConsumeWithPoll(TestContext ctx) {
-    final String topicName = "testConsumeWithPoll";
+    final String topicName = "testConsumeWithPoll-" + this.getClass().getName();
     final String consumerId = topicName;
     Async batch = ctx.async();
     int numMessages = 1000;
@@ -1452,7 +1455,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
   @Test
   public void testConsumeWithPollNoMessages(TestContext ctx) {
-    final String topicName = "testConsumeWithPollNoMessages";
+    final String topicName = "testConsumeWithPollNoMessages-" + this.getClass().getName();
     final String consumerId = topicName;
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
