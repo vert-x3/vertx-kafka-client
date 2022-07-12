@@ -16,8 +16,6 @@
 
 package io.vertx.kafka.admin.impl;
 
-import io.vertx.kafka.admin.AclBinding;
-import io.vertx.kafka.admin.AclBindingFilter;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
 import io.vertx.kafka.admin.NewPartitions;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
@@ -83,6 +81,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.acl.AclBinding;
+import org.apache.kafka.common.acl.AclBindingFilter;
 
 public class KafkaAdminClientImpl implements KafkaAdminClient {
 
@@ -730,10 +730,10 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<AclBinding>> promise = ctx.promise();
 
-    DescribeAclsResult describeAclsResult = this.adminClient.describeAcls(Helper.to(aclBindingFilter));
+    DescribeAclsResult describeAclsResult = this.adminClient.describeAcls(aclBindingFilter);
     describeAclsResult.values().whenComplete((o, ex) -> {
       if (ex == null) {
-        List list = o.stream().map(entry -> new AclBinding(Helper.from(entry.pattern()), Helper.from(entry.entry()))).collect(Collectors.toList());
+        List list = o.stream().map(entry -> new AclBinding(entry.pattern(), entry.entry())).collect(Collectors.toList());
         promise.complete(list);
       } else {
         promise.fail(ex);
@@ -750,7 +750,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<AclBinding>> promise = ctx.promise();
 
-    CreateAclsResult createAclsResult = this.adminClient.createAcls(Helper.to2(aclBindings));
+    CreateAclsResult createAclsResult = this.adminClient.createAcls(aclBindings);
     createAclsResult.all().whenComplete((o, ex) -> {
       if (ex == null) {
         promise.complete();
@@ -769,10 +769,10 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<AclBinding>> promise = ctx.promise();
 
-    DeleteAclsResult deleteAclsResult = this.adminClient.deleteAcls(Helper.to(aclBindingsFilters));
+    DeleteAclsResult deleteAclsResult = this.adminClient.deleteAcls(aclBindingsFilters);
     deleteAclsResult.all().whenComplete((o, ex) -> {
       if (ex == null) {
-        promise.complete(Helper.from2(o));
+        promise.complete((List<AclBinding>) o);
       } else {
         promise.fail(ex);
       }
