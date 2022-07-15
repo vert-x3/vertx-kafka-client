@@ -51,7 +51,7 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
   @BeforeClass
   public static void setUp() throws IOException {
     // Override to use 3 broker setup
-    kafkaCluster = kafkaCluster().deleteDataPriorToStartup(true).addBrokers(3).startup();
+    kafkaCluster = kafkaCluster(false).deleteDataPriorToStartup(true).addBrokers(3).startup();
   }
 
   @Before

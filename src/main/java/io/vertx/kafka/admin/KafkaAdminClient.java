@@ -31,6 +31,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.impl.KafkaAdminClientImpl;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.acl.AclBinding;
+import org.apache.kafka.common.acl.AclBindingFilter;
+
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -213,12 +217,12 @@ public interface KafkaAdminClient {
    * Like {@link #describeConsumerGroups(List, Handler)} but allows customized options
    */
   void describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
-  
+
   /**
    * Like {@link #describeConsumerGroups(List, DescribeConsumerGroupsOptions, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options);
-  
+
 
   /**
    * Describe the nodes in the cluster with the default options
@@ -231,26 +235,26 @@ public interface KafkaAdminClient {
    * Like {@link #describeCluster(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<ClusterDescription> describeCluster();
-  
+
   /**
    * Like {@link #describeCluster(Handler)} but allows customized options.
    */
   void describeCluster(DescribeClusterOptions options, Handler<AsyncResult<ClusterDescription>> completionHandler);
-  
+
   /**
    * Like {@link #describeCluster(DescribeClusterOptions, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<ClusterDescription> describeCluster(DescribeClusterOptions options);
 
   /**
-   * Query the information of all log directories on the given set of brokers 
+   * Query the information of all log directories on the given set of brokers
    *
    * @param brokers list of broker ids
    * @param completionHandler a {@code Handler} completed with the operation result
    */
   @GenIgnore
   void describeLogDirs(List<Integer> brokers, Handler<AsyncResult<Map<Integer, Map<String, LogDirDescription>>>> completionHandler);
-  
+
   /**
    * Like {@link #describeLogDirs(List, Handler)} but returns a {@code Future} of the asynchronous result
    */
@@ -269,7 +273,7 @@ public interface KafkaAdminClient {
   /**
    * Like {@link #deleteRecords(Map, Handler)} but returns a {@code Future} of the asynchronous result
    */
-  @GenIgnore  
+  @GenIgnore
   Future<Map<TopicPartition, DeletedRecords>> deleteRecords(final Map<TopicPartition, RecordsToDelete> recordsToDelete);
 
   /**
@@ -364,6 +368,51 @@ public interface KafkaAdminClient {
    */
   @GenIgnore
   Future<Map<TopicPartition, ListOffsetsResultInfo>> listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets);
+
+  /**
+   * Describe the ACL rules.
+   *
+   * @param aclBindingFilter The filter to use.
+   * @param completionHandler handler called on operation completed with the ACL description result.
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+
+  /**
+   * Like {@link #describeAcls(AclBindingFilter, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Future<List<AclBinding>> describeAcls(AclBindingFilter aclBindingFilter);
+
+  /**
+   * Create the ACL rules.
+   *
+   * @param aclBindings The ACL to create.
+   * @param completionHandler handler called on operation completed with the ACL creation result.
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+
+  /**
+   * Like {@link #createAcls(Collection)} (Collection<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Future<List<AclBinding>> createAcls(Collection<AclBinding> aclBindings);
+
+  /**
+   * Delete the ACL rules.
+   *
+   * @param aclBindings The filter to delete matching ACLs.
+   * @param completionHandler handler called on operation completed with the ACL deletion result.
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void deleteAcls(Collection<AclBindingFilter> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+
+  /**
+   * Like {@link #deleteAcls(Collection)} (Collection<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Future<List<AclBinding>> deleteAcls(Collection<AclBindingFilter> aclBindings);
 
   /**
    * Close the admin client

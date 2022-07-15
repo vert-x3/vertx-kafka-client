@@ -51,12 +51,15 @@ import io.vertx.kafka.client.common.impl.Helper;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AlterConfigsResult;
 import org.apache.kafka.clients.admin.AlterConsumerGroupOffsetsResult;
+import org.apache.kafka.clients.admin.CreateAclsResult;
 import org.apache.kafka.clients.admin.CreatePartitionsResult;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteAclsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteRecordsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
+import org.apache.kafka.clients.admin.DescribeAclsResult;
 import org.apache.kafka.clients.admin.DeletedRecords;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.DescribeConfigsResult;
@@ -78,6 +81,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.acl.AclBinding;
+import org.apache.kafka.common.acl.AclBindingFilter;
 
 public class KafkaAdminClientImpl implements KafkaAdminClient {
 
@@ -710,6 +715,64 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
           listOffsets.put(Helper.from(oOffset.getKey()), Helper.from(oOffset.getValue()));
         }
         promise.complete(listOffsets);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  public void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    describeAcls(aclBindingFilter).onComplete(completionHandler);
+  }
+
+  public Future<List<AclBinding>> describeAcls(AclBindingFilter aclBindingFilter) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<List<AclBinding>> promise = ctx.promise();
+
+    DescribeAclsResult describeAclsResult = this.adminClient.describeAcls(aclBindingFilter);
+    describeAclsResult.values().whenComplete((o, ex) -> {
+      if (ex == null) {
+        List list = o.stream().map(entry -> new AclBinding(entry.pattern(), entry.entry())).collect(Collectors.toList());
+        promise.complete(list);
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  public void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    createAcls(aclBindings).onComplete(completionHandler);
+  }
+
+  public Future<List<AclBinding>> createAcls(Collection<AclBinding> aclBindings) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<List<AclBinding>> promise = ctx.promise();
+
+    CreateAclsResult createAclsResult = this.adminClient.createAcls(aclBindings);
+    createAclsResult.all().whenComplete((o, ex) -> {
+      if (ex == null) {
+        promise.complete();
+      } else {
+        promise.fail(ex);
+      }
+    });
+    return promise.future();
+  }
+
+  public void deleteAcls(Collection<AclBindingFilter> aclBindingsFilters, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+    deleteAcls(aclBindingsFilters).onComplete(completionHandler);
+  }
+
+  public Future<List<AclBinding>> deleteAcls(Collection<AclBindingFilter> aclBindingsFilters) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    Promise<List<AclBinding>> promise = ctx.promise();
+
+    DeleteAclsResult deleteAclsResult = this.adminClient.deleteAcls(aclBindingsFilters);
+    deleteAclsResult.all().whenComplete((o, ex) -> {
+      if (ex == null) {
+        promise.complete((List<AclBinding>) o);
       } else {
         promise.fail(ex);
       }

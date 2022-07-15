@@ -275,5 +275,6 @@ public class Helper {
     org.apache.kafka.clients.admin.DescribeClusterOptions newDescribeClusterOptions = new org.apache.kafka.clients.admin.DescribeClusterOptions();
 
     return newDescribeClusterOptions.includeAuthorizedOperations(describeClusterOptions.includeAuthorizedOperations());
+
   }
 }
