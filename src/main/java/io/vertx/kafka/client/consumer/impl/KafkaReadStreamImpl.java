@@ -105,8 +105,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   };
 
   public KafkaReadStreamImpl(Vertx vertx, Consumer<K, V> consumer, KafkaClientOptions options) {
+    ContextInternal ctxInt = ((ContextInternal) vertx.getOrCreateContext()).unwrap();
     this.consumer = consumer;
-    ContextInternal ctxInt = (ContextInternal) vertx.getOrCreateContext();
     this.context = ctxInt;
     this.tracer = ConsumerTracer.create(ctxInt.tracer(), options);
   }

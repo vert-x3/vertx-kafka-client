@@ -48,8 +48,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   private final ProducerTracer tracer;
 
   public KafkaWriteStreamImpl(Vertx vertx, Producer<K, V> producer, KafkaClientOptions options) {
+    ContextInternal ctxInt = ((ContextInternal) vertx.getOrCreateContext()).unwrap();
     this.producer = producer;
-    ContextInternal ctxInt = (ContextInternal) vertx.getOrCreateContext();
     this.context = ctxInt;
     this.tracer = ProducerTracer.create(ctxInt.tracer(), options);
   }
