@@ -16,6 +16,7 @@
 
 package io.vertx.kafka.client.tests;
 
+import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.ext.unit.Async;
@@ -25,14 +26,19 @@ import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerInterceptor;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -162,4 +168,46 @@ public class ProducerTest extends KafkaClusterTestBase {
       send(KafkaProducerRecord.create("topic", null, "value", 1000), r -> async.countDown());
   }
 
+  public static class TestInterceptor implements ProducerInterceptor<String, String> {
+
+    static final List<Context> list = Collections.synchronizedList(new ArrayList<>());
+
+    @Override
+    public ProducerRecord<String, String> onSend(ProducerRecord<String, String> producerRecord) {
+      list.add(Vertx.currentContext());
+      return producerRecord;
+    }
+    @Override
+    public void onAcknowledgement(RecordMetadata recordMetadata, Exception e) {
+    }
+    @Override
+    public void close() {
+    }
+    @Override
+    public void configure(Map<String, ?> map) {
+    }
+  }
+
+  @Test
+  public void testInterceptor(TestContext testCtx) throws Exception {
+    String topicName = "testInterceptor";
+    Properties config = kafkaCluster.useTo().getProducerProperties("testStreamProduce_producer");
+    config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    config.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, Collections.singletonList(TestInterceptor.class));
+    producer = producer(vertx, config);
+    producer.exceptionHandler(testCtx::fail);
+    ProducerRecord<String, String> record = new ProducerRecord<>(topicName, 0, "key-0", "value-0");
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    ContextInternal dup = ctx.duplicate();
+    Async async = testCtx.async();
+    dup.runOnContext(v1 -> {
+      TestInterceptor.list.clear();
+      producer.write(record).onComplete(testCtx.asyncAssertSuccess(v2 -> {
+        testCtx.assertEquals(1, TestInterceptor.list.size());
+        testCtx.assertEquals(dup, TestInterceptor.list.get(0));
+        async.complete();
+      }));
+    });
+  }
 }
