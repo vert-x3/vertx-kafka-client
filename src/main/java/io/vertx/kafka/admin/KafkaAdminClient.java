@@ -34,7 +34,6 @@ import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.acl.AclBinding;
 import org.apache.kafka.common.acl.AclBindingFilter;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -391,13 +390,13 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the ACL creation result.
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+  void createAcls(List<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
-   * Like {@link #createAcls(Collection)} (Collection<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
+   * Like {@link #createAcls(List)} (List<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  Future<List<AclBinding>> createAcls(Collection<AclBinding> aclBindings);
+  Future<List<AclBinding>> createAcls(List<AclBinding> aclBindings);
 
   /**
    * Delete the ACL rules.
@@ -406,13 +405,13 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the ACL deletion result.
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void deleteAcls(Collection<AclBindingFilter> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
+  void deleteAcls(List<AclBindingFilter> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
-   * Like {@link #deleteAcls(Collection)} (Collection<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
+   * Like {@link #deleteAcls(List)} (List<AclBinding>, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  Future<List<AclBinding>> deleteAcls(Collection<AclBindingFilter> aclBindings);
+  Future<List<AclBinding>> deleteAcls(List<AclBindingFilter> aclBindings);
 
   /**
    * Close the admin client

@@ -742,11 +742,11 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-  public void createAcls(Collection<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+  public void createAcls(List<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
     createAcls(aclBindings).onComplete(completionHandler);
   }
 
-  public Future<List<AclBinding>> createAcls(Collection<AclBinding> aclBindings) {
+  public Future<List<AclBinding>> createAcls(List<AclBinding> aclBindings) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<AclBinding>> promise = ctx.promise();
 
@@ -761,11 +761,11 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-  public void deleteAcls(Collection<AclBindingFilter> aclBindingsFilters, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
+  public void deleteAcls(List<AclBindingFilter> aclBindingsFilters, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
     deleteAcls(aclBindingsFilters).onComplete(completionHandler);
   }
 
-  public Future<List<AclBinding>> deleteAcls(Collection<AclBindingFilter> aclBindingsFilters) {
+  public Future<List<AclBinding>> deleteAcls(List<AclBindingFilter> aclBindingsFilters) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<AclBinding>> promise = ctx.promise();
 

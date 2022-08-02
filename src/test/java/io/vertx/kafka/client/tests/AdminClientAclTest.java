@@ -80,7 +80,7 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
         AccessControlEntryFilter acef = new AccessControlEntryFilter(principal, host, AclOperation.ALL, AclPermissionType.ALLOW);
 
         AclBindingFilter abf = new AclBindingFilter(rpf, acef);
-        adminClient.createAcls(Collections.singleton(aclBinding)).onComplete(ctx.asyncAssertSuccess(i ->
+        adminClient.createAcls(Collections.singletonList(aclBinding)).onComplete(ctx.asyncAssertSuccess(i ->
             adminClient.describeAcls(abf, ctx.asyncAssertSuccess(list -> {
                 ctx.assertFalse(list.isEmpty());
                 ctx.assertTrue(list.get(0).entry().host().equals(host));
