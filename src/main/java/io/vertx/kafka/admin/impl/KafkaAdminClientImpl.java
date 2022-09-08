@@ -83,6 +83,7 @@ import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.acl.AclBinding;
 import org.apache.kafka.common.acl.AclBindingFilter;
+import org.apache.kafka.common.acl.AclOperation;
 
 public class KafkaAdminClientImpl implements KafkaAdminClient {
 
@@ -638,19 +639,19 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     Promise<ClusterDescription> promise = ctx.promise();
 
     DescribeClusterResult describeClusterResult = this.adminClient.describeCluster();
-    KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
+    KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes(), describeClusterResult.authorizedOperations()).whenComplete((r, ex) -> {
       if (ex == null) {
         try {
           String clusterId = describeClusterResult.clusterId().get();
           org.apache.kafka.common.Node rcontroller = describeClusterResult.controller().get();
           Collection<org.apache.kafka.common.Node> rnodes = describeClusterResult.nodes().get();
-
+          Set<AclOperation> authorizedOperations = describeClusterResult.authorizedOperations().get();
           Node controller = Helper.from(rcontroller);
           List<Node> nodes = new ArrayList<>();
           rnodes.forEach(rnode -> {
             nodes.add(Helper.from(rnode));
           });
-          ClusterDescription clusterDescription = new ClusterDescription(clusterId, controller, nodes);
+          ClusterDescription clusterDescription = new ClusterDescription(clusterId, controller, nodes, authorizedOperations);
           promise.complete(clusterDescription);
         } catch (InterruptedException|ExecutionException e) {
           promise.fail(e);
@@ -673,19 +674,19 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     Promise<ClusterDescription> promise = ctx.promise();
 
     DescribeClusterResult describeClusterResult = this.adminClient.describeCluster(Helper.to(options));
-    KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes()).whenComplete((r, ex) -> {
+    KafkaFuture.allOf(describeClusterResult.clusterId(), describeClusterResult.controller(), describeClusterResult.nodes(), describeClusterResult.authorizedOperations()).whenComplete((r, ex) -> {
       if (ex == null) {
         try {
           String clusterId = describeClusterResult.clusterId().get();
           org.apache.kafka.common.Node rcontroller = describeClusterResult.controller().get();
           Collection<org.apache.kafka.common.Node> rnodes = describeClusterResult.nodes().get();
-
+          Set<AclOperation> authorizedOperations = describeClusterResult.authorizedOperations().get();
           Node controller = Helper.from(rcontroller);
           List<Node> nodes = new ArrayList<>();
           rnodes.forEach(rnode -> {
             nodes.add(Helper.from(rnode));
           });
-          ClusterDescription clusterDescription = new ClusterDescription(clusterId, controller, nodes);
+          ClusterDescription clusterDescription = new ClusterDescription(clusterId, controller, nodes, authorizedOperations);
           promise.complete(clusterDescription);
         } catch (InterruptedException|ExecutionException e) {
           promise.fail(e);

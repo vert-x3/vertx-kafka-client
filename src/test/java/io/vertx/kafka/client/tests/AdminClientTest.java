@@ -61,6 +61,7 @@ import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -564,7 +565,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     Async async = ctx.async();
 
-    DescribeClusterOptions options = new DescribeClusterOptions();
+    DescribeClusterOptions options = new DescribeClusterOptions().includeAuthorizedOperations(true);
 
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
@@ -584,6 +585,8 @@ public class AdminClientTest extends KafkaClusterTestBase {
         ctx.assertNotNull(nodes);
         ctx.assertEquals(2, nodes.size());
         ctx.assertEquals(1, nodes.iterator().next().getId());
+        Set<AclOperation> authorizedOperations = cluster.getAuthorizedOperations();
+        ctx.assertNotNull(authorizedOperations);
         adminClient.close();
         async.complete();
       }));
