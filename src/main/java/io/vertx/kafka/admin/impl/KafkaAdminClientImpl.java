@@ -480,7 +480,8 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
             .setMembers(members)
             .setPartitionAssignor(cgDescriptionEntry.getValue().partitionAssignor())
             .setSimpleConsumerGroup(cgDescriptionEntry.getValue().isSimpleConsumerGroup())
-            .setState(cgDescriptionEntry.getValue().state());
+            .setState(cgDescriptionEntry.getValue().state())
+            .setAuthorizedOperations(cgDescriptionEntry.getValue().authorizedOperations());
 
           consumerGroups.put(cgDescriptionEntry.getKey(), consumerGroupDescription);
         }
@@ -527,7 +528,8 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
             .setMembers(members)
             .setPartitionAssignor(cgDescriptionEntry.getValue().partitionAssignor())
             .setSimpleConsumerGroup(cgDescriptionEntry.getValue().isSimpleConsumerGroup())
-            .setState(cgDescriptionEntry.getValue().state());
+            .setState(cgDescriptionEntry.getValue().state())
+            .setAuthorizedOperations(cgDescriptionEntry.getValue().authorizedOperations());
 
           consumerGroups.put(cgDescriptionEntry.getKey(), consumerGroupDescription);
         }

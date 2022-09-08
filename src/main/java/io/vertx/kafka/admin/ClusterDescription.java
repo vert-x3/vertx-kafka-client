@@ -50,6 +50,7 @@ public class ClusterDescription {
    * @param clusterId The cluster ID.
    * @param controller The controller node.
    * @param nodes A collection of nodes belonging to this cluster.
+   * @param authorizedOperations A collection of authorized operations on this cluster.
    */
   public ClusterDescription(String clusterId, Node controller, List<Node> nodes, Set<AclOperation> authorizedOperations) {
     this.clusterId = clusterId;

@@ -391,7 +391,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
 
-    DescribeConsumerGroupsOptions options = new DescribeConsumerGroupsOptions();
+    DescribeConsumerGroupsOptions options = new DescribeConsumerGroupsOptions().includeAuthorizedOperations(true);
 
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
@@ -410,7 +410,8 @@ public class AdminClientTest extends KafkaClusterTestBase {
         Iterator<TopicPartition> iterator = memberDescription.getAssignment().getTopicPartitions().iterator();
         ctx.assertTrue(iterator.hasNext());
         ctx.assertEquals("first-topic", iterator.next().getTopic());
-
+        Set<AclOperation> authorizedOperations = consumerGroupDescription.getAuthorizedOperations();
+        ctx.assertNotNull(authorizedOperations);
         adminClient.close();
         async.complete();
       }));
