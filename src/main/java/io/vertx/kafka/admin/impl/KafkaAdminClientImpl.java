@@ -132,7 +132,9 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
           topicDescription.setInternal(topicDescriptionEntry.getValue().isInternal())
             .setName(topicDescriptionEntry.getKey())
-            .setPartitions(partitions);
+            .setPartitions(partitions)
+            .setTopicId(topicDescriptionEntry.getValue().topicId())
+            .setAuthorizedOperations(topicDescriptionEntry.getValue().authorizedOperations());
 
           topics.put(topicDescriptionEntry.getKey(), topicDescription);
         }
@@ -182,7 +184,9 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
           topicDescription.setInternal(topicDescriptionEntry.getValue().isInternal())
             .setName(topicDescriptionEntry.getKey())
-            .setPartitions(partitions);
+            .setPartitions(partitions)
+            .setTopicId(topicDescriptionEntry.getValue().topicId())
+            .setAuthorizedOperations(topicDescriptionEntry.getValue().authorizedOperations());
 
           topics.put(topicDescriptionEntry.getKey(), topicDescription);
         }

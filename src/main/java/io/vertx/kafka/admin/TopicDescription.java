@@ -19,8 +19,11 @@ package io.vertx.kafka.admin;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
+import org.apache.kafka.common.Uuid;
+import org.apache.kafka.common.acl.AclOperation;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * A detailed description of a single topic in the cluster
@@ -31,6 +34,8 @@ public class TopicDescription {
   private boolean isInternal;
   private String name;
   private List<TopicPartitionInfo> partitions;
+  private Uuid topicId;
+  private Set<AclOperation> authorizedOperations;
 
   /**
    * Constructor
@@ -46,11 +51,15 @@ public class TopicDescription {
    * @param name The name of the topic.
    * @param partitions A list of partitions where the index represents the partition id and the element
    *                   contains leadership and replica information for that partition.
+   * @param topicId Uuid for the topic.
+   * @param authorizedOperations Authorized operations for this topic, or null if this is not known.
    */
-  public TopicDescription(boolean isInternal, String name, List<TopicPartitionInfo> partitions) {
+  public TopicDescription(boolean isInternal, String name, List<TopicPartitionInfo> partitions, Uuid topicId, Set<AclOperation> authorizedOperations) {
     this.isInternal = isInternal;
     this.name = name;
     this.partitions = partitions;
+    this.topicId = topicId;
+    this.authorizedOperations = authorizedOperations;
   }
 
   /**
@@ -100,6 +109,42 @@ public class TopicDescription {
   }
 
   /**
+   * Set the id of the topic.
+   *
+   * @param topicId The id of the topic.
+   * @return current instance of the class to be fluent
+   */
+  public TopicDescription setTopicId(Uuid topicId) {
+    this.topicId = topicId;
+    return this;
+  }
+
+  /**
+   * @return The id of the topic.
+   */
+  public Uuid getTopicId() {
+    return topicId;
+  }
+
+  /**
+   * @return authorizedOperations authorizedOperations for this group, or null if that information is not known.
+   */
+  public Set<AclOperation> getAuthorizedOperations() {
+    return this.authorizedOperations;
+  }
+
+  /**
+   * Set the id of the consumer group
+   *
+   * @param authorizedOperations authorizedOperations for this group, or null if that information is not known.
+   * @return current instance of the class to be fluent
+   */
+  public TopicDescription setAuthorizedOperations(Set<AclOperation> authorizedOperations) {
+    this.authorizedOperations = authorizedOperations;
+    return this;
+  }
+
+  /**
    * @return A list of partitions where the index represents the partition id and the element
    * contains leadership and replica information for that partition.
    */
@@ -139,6 +184,8 @@ public class TopicDescription {
       "isInternal=" + this.isInternal +
       ",name=" + this.name +
       ",partitions=" + this.partitions +
+      ",topicId=" + this.topicId +
+      ",authorizedOperations" + this.authorizedOperations +
       "}";
   }
 }
