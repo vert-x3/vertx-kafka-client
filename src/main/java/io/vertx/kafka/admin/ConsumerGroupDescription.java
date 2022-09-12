@@ -20,8 +20,10 @@ import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.common.Node;
 import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.acl.AclOperation;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * A detailed description of a single consumer group in the cluster
@@ -35,6 +37,7 @@ public class ConsumerGroupDescription  {
   private List<MemberDescription> members;
   private String partitionAssignor;
   private ConsumerGroupState state;
+  private Set<AclOperation> authorizedOperations;
 
   /**
    * Constructor
@@ -52,15 +55,18 @@ public class ConsumerGroupDescription  {
    * @param partitionAssignor the consumer group partition assignor
    * @param state the consumer group state, or UNKNOWN if the state is too new for us to parse
    * @param coordinator the consumer group coordinator, or null if the coordinator is not known
+   * @param authorizedOperations authorizedOperations for this group, or null if that information is not known.
    */
   public ConsumerGroupDescription(String groupId, boolean isSimpleConsumerGroup, List<MemberDescription> members,
-                                  String partitionAssignor, ConsumerGroupState state, Node coordinator) {
+                                  String partitionAssignor, ConsumerGroupState state, Node coordinator,
+                                  Set<AclOperation> authorizedOperations) {
     this.groupId = groupId;
     this.isSimpleConsumerGroup = isSimpleConsumerGroup;
     this.members = members;
     this.partitionAssignor = partitionAssignor;
     this.state = state;
     this.coordinator = coordinator;
+    this.authorizedOperations = authorizedOperations;
   }
 
   /**
@@ -182,6 +188,24 @@ public class ConsumerGroupDescription  {
   }
 
   /**
+   * @return authorizedOperations authorizedOperations for this group, or null if that information is not known.
+   */
+  public Set<AclOperation> getAuthorizedOperations() {
+    return this.authorizedOperations;
+  }
+
+  /**
+   * Set the id of the consumer group
+   *
+   * @param authorizedOperations authorizedOperations for this group, or null if that information is not known.
+   * @return current instance of the class to be fluent
+   */
+  public ConsumerGroupDescription setAuthorizedOperations(Set<AclOperation> authorizedOperations) {
+    this.authorizedOperations = authorizedOperations;
+    return this;
+  }
+
+  /**
    * Convert object to JSON representation
    *
    * @return  JSON representation
@@ -203,6 +227,7 @@ public class ConsumerGroupDescription  {
       ",members=" + this.members +
       ",partitionAssignor=" + this.partitionAssignor +
       ",state=" + this.state +
+      ",authorizedOperations=" + this.authorizedOperations +
       "}";
   }
 }

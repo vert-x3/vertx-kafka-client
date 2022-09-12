@@ -20,6 +20,16 @@ public class ClusterDescriptionConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ClusterDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
+        case "authorizedOperations":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.LinkedHashSet<org.apache.kafka.common.acl.AclOperation> list =  new java.util.LinkedHashSet<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                list.add(org.apache.kafka.common.acl.AclOperation.valueOf((String)item));
+            });
+            obj.setAuthorizedOperations(list);
+          }
+          break;
         case "clusterId":
           if (member.getValue() instanceof String) {
             obj.setClusterId((String)member.getValue());
@@ -49,6 +59,11 @@ public class ClusterDescriptionConverter {
   }
 
   public static void toJson(ClusterDescription obj, java.util.Map<String, Object> json) {
+    if (obj.getAuthorizedOperations() != null) {
+      JsonArray array = new JsonArray();
+      obj.getAuthorizedOperations().forEach(item -> array.add(item.name()));
+      json.put("authorizedOperations", array);
+    }
     if (obj.getClusterId() != null) {
       json.put("clusterId", obj.getClusterId());
     }

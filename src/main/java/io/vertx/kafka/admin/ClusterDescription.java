@@ -23,6 +23,9 @@ import io.vertx.kafka.client.common.Node;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+
+import org.apache.kafka.common.acl.AclOperation;
 
 /**
  * A detailed description of the cluster
@@ -32,6 +35,7 @@ public class ClusterDescription {
   private String clusterId;
   private Node controller;
   private List<Node> nodes;
+  private Set<AclOperation> authorizedOperations;
 
   /**
    * Constructor
@@ -46,11 +50,13 @@ public class ClusterDescription {
    * @param clusterId The cluster ID.
    * @param controller The controller node.
    * @param nodes A collection of nodes belonging to this cluster.
+   * @param authorizedOperations A collection of authorized operations on this cluster.
    */
-  public ClusterDescription(String clusterId, Node controller, List<Node> nodes) {
+  public ClusterDescription(String clusterId, Node controller, List<Node> nodes, Set<AclOperation> authorizedOperations) {
     this.clusterId = clusterId;
     this.controller = controller;
     this.nodes = nodes;
+    this.authorizedOperations = authorizedOperations;
   }
 
   /**
@@ -136,6 +142,26 @@ public class ClusterDescription {
   }
 
   /**
+   *
+   * @return the authorizedOperations
+   */
+  public Set<AclOperation> getAuthorizedOperations() {
+    return authorizedOperations;
+  }
+
+  /**
+   * Set the authorizedOperations
+   *
+   * @param authorizedOperations
+   * @return current instance of the class to be fluent
+   */
+  public ClusterDescription setAuthorizedOperations(Set<AclOperation> authorizedOperations) {
+    this.authorizedOperations = authorizedOperations;
+    return this;
+  }
+
+
+  /**
    * Convert object to JSON representation
    *
    * @return  JSON representation
@@ -154,6 +180,7 @@ public class ClusterDescription {
       "clusterId=" + this.clusterId +
       ",controller=" + this.controller +
       ",nodes=" + this.nodes +
+      ",authorizedOperatioins=" + this.authorizedOperations +
       "}";
   }
 }
