@@ -20,6 +20,16 @@ public class ConsumerGroupDescriptionConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ConsumerGroupDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
+        case "authorizedOperations":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.LinkedHashSet<org.apache.kafka.common.acl.AclOperation> list =  new java.util.LinkedHashSet<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                list.add(org.apache.kafka.common.acl.AclOperation.valueOf((String)item));
+            });
+            obj.setAuthorizedOperations(list);
+          }
+          break;
         case "coordinator":
           if (member.getValue() instanceof JsonObject) {
             obj.setCoordinator(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)member.getValue()));
@@ -64,6 +74,11 @@ public class ConsumerGroupDescriptionConverter {
   }
 
   public static void toJson(ConsumerGroupDescription obj, java.util.Map<String, Object> json) {
+    if (obj.getAuthorizedOperations() != null) {
+      JsonArray array = new JsonArray();
+      obj.getAuthorizedOperations().forEach(item -> array.add(item.name()));
+      json.put("authorizedOperations", array);
+    }
     if (obj.getCoordinator() != null) {
       json.put("coordinator", obj.getCoordinator().toJson());
     }
