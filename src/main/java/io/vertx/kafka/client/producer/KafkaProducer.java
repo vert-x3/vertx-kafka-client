@@ -45,6 +45,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
@@ -58,6 +61,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
@@ -70,6 +76,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
@@ -82,6 +91,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
@@ -97,6 +109,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
@@ -111,6 +126,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
@@ -126,6 +144,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
@@ -141,6 +162,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
@@ -156,6 +180,9 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
 
   /**
    * Get or create a KafkaProducer instance which shares its stream with any other KafkaProducer created with the same {@code name}
+   * <p>
+   * When {@code close} has been called for each shared producer the resources will be released.
+   * Calling {@code end} closes all shared producers.
    *
    * @param vertx Vert.x instance to use
    * @param name the producer name to identify it
