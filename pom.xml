@@ -68,10 +68,6 @@
       <artifactId>kafka-clients</artifactId>
       <version>${kafka.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-    </dependency>
 
     <!-- Kafka requires these dependencies: declare this dependency to force vertx-kafka-client to use this one. These are the versions used by vert.x -->
     <dependency>
