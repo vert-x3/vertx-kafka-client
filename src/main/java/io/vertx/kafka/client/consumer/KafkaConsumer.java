@@ -264,6 +264,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> subscribe(String topic, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -282,6 +283,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -344,6 +346,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> assign(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -362,6 +365,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> assign(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -371,6 +375,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> assignment(Handler<AsyncResult<Set<TopicPartition>>> handler);
 
   /**
@@ -408,6 +413,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> unsubscribe(Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -417,6 +423,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> subscription(Handler<AsyncResult<Set<String>>> handler);
 
   /**
@@ -456,6 +463,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> pause(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -474,6 +482,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -481,6 +490,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    *
    * @param handler handler called on operation completed
    */
+  @Deprecated
   void paused(Handler<AsyncResult<Set<TopicPartition>>> handler);
 
   /**
@@ -512,6 +522,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> resume(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -522,6 +533,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> resume(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -568,6 +580,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -602,6 +615,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> seekToBeginning(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -620,6 +634,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> seekToBeginning(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -654,6 +669,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> seekToEnd(TopicPartition topicPartition, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -672,6 +688,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> seekToEnd(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -684,6 +701,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    *
    * @param completionHandler handler called on operation completed
    */
+  @Deprecated
   void commit(Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -701,6 +719,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param completionHandler handler called on operation completed
    */
   @GenIgnore
+  @Deprecated
   void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
 
   /**
@@ -709,6 +728,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param topicPartition  topic partition for getting last committed offset
    * @param handler handler called on operation completed
    */
+  @Deprecated
   void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
 
   /**
@@ -724,6 +744,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return  current KafkaConsumer instance
    */
   @Fluent
+  @Deprecated
   KafkaConsumer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
   /**
@@ -752,6 +773,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    *
    * @param completionHandler handler called on operation completed
    */
+  @Deprecated
   void close(Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -760,6 +782,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param partition The partition to get the position for
    * @param handler handler called on operation completed
    */
+  @Deprecated
   void position(TopicPartition partition, Handler<AsyncResult<Long>> handler);
 
   /**
@@ -774,6 +797,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param handler handler called on operation completed
    */
   @GenIgnore
+  @Deprecated
   void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler);
 
   /**
@@ -789,6 +813,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param timestamp Timestamp to be used in the query.
    * @param handler handler called on operation completed
    */
+  @Deprecated
   void offsetsForTimes(TopicPartition topicPartition, Long timestamp, Handler<AsyncResult<OffsetAndTimestamp>> handler);
 
   /**
@@ -802,6 +827,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param handler handler called on operation completed. Returns the earliest available offsets for the given partitions
    */
   @GenIgnore
+  @Deprecated
   void beginningOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler);
 
   /**
@@ -815,6 +841,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param topicPartition the partition to get the earliest offset.
    * @param handler handler called on operation completed. Returns the earliest available offset for the given partition
    */
+  @Deprecated
   void beginningOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler);
 
   /**
@@ -829,6 +856,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param handler handler called on operation completed. The end offsets for the given partitions.
    */
   @GenIgnore
+  @Deprecated
   void endOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler);
 
   /**
@@ -843,6 +871,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param topicPartition the partition to get the end offset.
    * @param handler handler called on operation completed. The end offset for the given partition.
    */
+  @Deprecated
   void endOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler);
 
   /**
@@ -883,6 +912,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param handler handler called after the poll with batch of records (can be empty).
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  @Deprecated
   void poll(Duration timeout, Handler<AsyncResult<KafkaConsumerRecords<K, V>>> handler);
 
   /**

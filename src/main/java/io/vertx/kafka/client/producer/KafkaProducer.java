@@ -299,6 +299,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return current KafkaWriteStream instance
    */
   @Fluent
+  @Deprecated
   KafkaProducer<K, V> initTransactions(Handler<AsyncResult<Void>> handler);
 
   /**
@@ -313,6 +314,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return current KafkaWriteStream instance
    */
   @Fluent
+  @Deprecated
   KafkaProducer<K, V> beginTransaction(Handler<AsyncResult<Void>> handler);
 
   /**
@@ -327,6 +329,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return current KafkaWriteStream instance
    */
   @Fluent
+  @Deprecated
   KafkaProducer<K, V> commitTransaction(Handler<AsyncResult<Void>> handler);
 
   /**
@@ -341,6 +344,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return current KafkaWriteStream instance
    */
   @Fluent
+  @Deprecated
   KafkaProducer<K, V> abortTransaction(Handler<AsyncResult<Void>> handler);
 
   /**
@@ -376,6 +380,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return  current KafkaWriteStream instance
    */
   @Fluent
+  @Deprecated
   KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler);
 
   /**
@@ -386,6 +391,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return  current KafkaProducer instance
    */
   @Fluent
+  @Deprecated
   KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
 
   /**
@@ -400,6 +406,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @return  current KafkaProducer instance
    */
   @Fluent
+  @Deprecated
   KafkaProducer<K, V> flush(Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -419,6 +426,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    *
    * @param completionHandler handler called on operation completed
    */
+  @Deprecated
   void close(Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -432,6 +440,7 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @param timeout timeout to wait for closing
    * @param completionHandler handler called on operation completed
    */
+  @Deprecated
   void close(long timeout, Handler<AsyncResult<Void>> completionHandler);
 
   /**
