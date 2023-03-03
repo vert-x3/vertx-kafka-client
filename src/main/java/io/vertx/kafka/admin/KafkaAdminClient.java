@@ -86,6 +86,7 @@ public interface KafkaAdminClient {
    *
    * @param completionHandler handler called on operation completed with the topics set
    */
+  @Deprecated
   void listTopics(Handler<AsyncResult<Set<String>>> completionHandler);
 
   /**
@@ -99,11 +100,13 @@ public interface KafkaAdminClient {
    * @param topicNames the names of the topics to describe
    * @param completionHandler handler called on operation completed with the topics descriptions
    */
+  @Deprecated
   void describeTopics(List<String> topicNames, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
 
     /**
    * Like {@link #describeTopics(List, Handler)} but allows for customised otions
    */
+    @Deprecated
   void describeTopics(List<String> topicNames, DescribeTopicsOptions options, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler);
 
   /**
@@ -122,6 +125,7 @@ public interface KafkaAdminClient {
    * @param topics topics to create
    * @param completionHandler handler called on operation completed
    */
+  @Deprecated
   void createTopics(List<NewTopic> topics, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -135,6 +139,7 @@ public interface KafkaAdminClient {
    * @param topicNames the names of the topics to delete
    * @param completionHandler handler called on operation completed
    */
+  @Deprecated
   void deleteTopics(List<String> topicNames, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -148,6 +153,7 @@ public interface KafkaAdminClient {
    * @param partitions partitions to create
    * @param completionHandler handler called on operation completed
    */
+  @Deprecated
   void createPartitions(Map<String, io.vertx.kafka.admin.NewPartitions> partitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -192,6 +198,7 @@ public interface KafkaAdminClient {
    *
    * @param completionHandler handler called on operation completed with the consumer groups ids
    */
+  @Deprecated
   void listConsumerGroups(Handler<AsyncResult<List<ConsumerGroupListing>>> completionHandler);
 
   /**
@@ -205,6 +212,7 @@ public interface KafkaAdminClient {
    * @param groupIds the ids of the groups to describe
    * @param completionHandler handler called on operation completed with the consumer groups descriptions
    */
+  @Deprecated
   void describeConsumerGroups(List<String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
 
   /**
@@ -215,6 +223,7 @@ public interface KafkaAdminClient {
   /**
    * Like {@link #describeConsumerGroups(List, Handler)} but allows customized options
    */
+  @Deprecated
   void describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler);
 
   /**
@@ -228,6 +237,7 @@ public interface KafkaAdminClient {
    *
    * @param completionHandler handler called on operation completed with the cluster description
    */
+  @Deprecated
   void describeCluster(Handler<AsyncResult<ClusterDescription>> completionHandler);
 
   /**
@@ -238,6 +248,7 @@ public interface KafkaAdminClient {
   /**
    * Like {@link #describeCluster(Handler)} but allows customized options.
    */
+  @Deprecated
   void describeCluster(DescribeClusterOptions options, Handler<AsyncResult<ClusterDescription>> completionHandler);
 
   /**
@@ -281,6 +292,7 @@ public interface KafkaAdminClient {
    * @param groupIds the ids of the groups to delete
    * @param completionHandler handler called on operation completed
    */
+  @Deprecated
   void deleteConsumerGroups(List<String> groupIds, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -296,6 +308,7 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the consumer groups offsets
    */
   @GenIgnore
+  @Deprecated
   void listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
 
   /**
@@ -311,6 +324,7 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the consumer groups offsets
    */
   @GenIgnore
+  @Deprecated
   default void listConsumerGroupOffsets(String groupId, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
     listConsumerGroupOffsets(groupId, new ListConsumerGroupOffsetsOptions(), completionHandler);
   }
@@ -331,6 +345,7 @@ public interface KafkaAdminClient {
    * @param groupId The group id of the group whose offsets will be deleted
    * @param partitions The set of partitions in the consumer group whose offsets will be deleted
    */
+  @Deprecated
   void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -345,6 +360,7 @@ public interface KafkaAdminClient {
    * @param offsets The map of offsets in the consumer group which will be altered
    */
   @GenIgnore
+  @Deprecated
   void alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Void>> completionHandler);
 
   /**
@@ -360,6 +376,7 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the partition offsets
    */
   @GenIgnore
+  @Deprecated
   void listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets, Handler<AsyncResult<Map<TopicPartition, ListOffsetsResultInfo>>> completionHandler);
 
   /**
@@ -375,6 +392,7 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the ACL description result.
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  @Deprecated
   void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
@@ -390,6 +408,7 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the ACL creation result.
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  @Deprecated
   void createAcls(List<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
@@ -405,6 +424,7 @@ public interface KafkaAdminClient {
    * @param completionHandler handler called on operation completed with the ACL deletion result.
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  @Deprecated
   void deleteAcls(List<AclBindingFilter> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler);
 
   /**
@@ -418,6 +438,7 @@ public interface KafkaAdminClient {
    *
    * @param handler a {@code Handler} completed with the operation result
    */
+  @Deprecated
   void close(Handler<AsyncResult<Void>> handler);
 
   /**
@@ -431,6 +452,7 @@ public interface KafkaAdminClient {
    * @param timeout timeout to wait for closing
    * @param handler a {@code Handler} completed with the operation result
    */
+  @Deprecated
   void close(long timeout, Handler<AsyncResult<Void>> handler);
 
   /**
