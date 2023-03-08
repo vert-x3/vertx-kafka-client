@@ -1,6 +1,7 @@
 # Vert.x Kafka Client
 
-[![Build Status](https://github.com/vert-x3/vertx-kafka-client/workflows/CI/badge.svg?branch=master)](https://github.com/vert-x3/vertx-kafka-client/actions?query=workflow%3ACI)
+[![Build Status (5.x)](https://github.com/vert-x3/vertx-kafka-client/actions/workflows/ci-5.x.yml/badge.svg)](https://github.com/vert-x3/vertx-kafka-client/actions/workflows/ci-5.x.yml)
+[![Build Status (4.x)](https://github.com/vert-x3/vertx-kafka-client/actions/workflows/ci-4.x.yml/badge.svg)](https://github.com/vert-x3/vertx-kafka-client/actions/workflows/ci-4.x.yml)
 
 This component provides a Kafka client for reading and sending messages from/to an [Apache Kafka](https://kafka.apache.org/) cluster.
 From the consumer point of view, its API provides a bunch of methods for subscribing to a topic partition receiving
