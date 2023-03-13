@@ -53,7 +53,7 @@ public class ProducerConsumerContextTest extends KafkaClusterTestBase {
   @After
   public void afterTest(TestContext ctx) {
     close(ctx, producer);
-    vertx.close(ctx.asyncAssertSuccess());
+    vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
   @Test
@@ -84,7 +84,7 @@ public class ProducerConsumerContextTest extends KafkaClusterTestBase {
             for (int i = 0; i < numMessages; i++) {
               ProducerRecord<String, String> record = new ProducerRecord<>(topicName, 0, "key-" + i, "value-" + i);
               record.headers().add("header_key", ("header_value-" + i).getBytes());
-              producer.write(record, h -> {
+              producer.write(record).onComplete(h -> {
                 ctx.assertEquals(context, Vertx.currentContext());
                 ctx.assertNotEquals(thisProducerCtx, Vertx.currentContext());
                 async.countDown();

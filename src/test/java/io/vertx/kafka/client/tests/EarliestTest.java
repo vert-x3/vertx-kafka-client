@@ -18,7 +18,7 @@ public class EarliestTest extends AbstractVerticle {
 
     EarliestTest earliestTest = new EarliestTest();
 
-    vertx.deployVerticle(earliestTest, res -> {
+    vertx.deployVerticle(earliestTest).onComplete(res -> {
       if (res.succeeded()) {
         System.out.println("ok");
       } else {

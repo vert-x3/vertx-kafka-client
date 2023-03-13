@@ -58,7 +58,7 @@ public class ProducerTest extends KafkaClusterTestBase {
   @After
   public void afterTest(TestContext ctx) {
     close(ctx, producer);
-    vertx.close(ctx.asyncAssertSuccess());
+    vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
   @Test
@@ -112,7 +112,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     int port = 9091;
     Async serverAsync = ctx.async();
     vertx.createNetServer().connectHandler(so -> {
-    }).listen(port, ctx.asyncAssertSuccess(v -> serverAsync.complete()));
+    }).listen(port).onComplete(ctx.asyncAssertSuccess(v -> serverAsync.complete()));
     serverAsync.awaitSuccess(10000);
     Properties props = new Properties();
     props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:" + port);
@@ -122,7 +122,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
 
     producer = producer(Vertx.vertx(), props);
-    producer.write(new ProducerRecord<>("testBlockingBroker", 0, "key", "value"), ctx.asyncAssertFailure());
+    producer.write(new ProducerRecord<>("testBlockingBroker", 0, "key", "value")).onComplete(ctx.asyncAssertFailure());
   }
 
   @Test
@@ -137,7 +137,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 2000);
 
     producer = producer(Vertx.vertx(), props);
-    producer.write(new ProducerRecord<>("testBrokerConnectionError", 0, "key", "value"), ctx.asyncAssertFailure());
+    producer.write(new ProducerRecord<>("testBrokerConnectionError", 0, "key", "value")).onComplete(ctx.asyncAssertFailure());
   }
 
   @Test
@@ -165,7 +165,7 @@ public class ProducerTest extends KafkaClusterTestBase {
     // both exception handler and the handler on send (with failure) have to be called
     KafkaProducer.create(Vertx.vertx(), props).
       exceptionHandler(exception -> async.countDown()).
-      send(KafkaProducerRecord.create("topic", null, "value", 1000), r -> async.countDown());
+      send(KafkaProducerRecord.create("topic", null, "value", 1000)).onComplete(r -> async.countDown());
   }
 
   public static class TestInterceptor implements ProducerInterceptor<String, String> {

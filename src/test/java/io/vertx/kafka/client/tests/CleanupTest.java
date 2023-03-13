@@ -68,7 +68,7 @@ public class CleanupTest extends KafkaClusterTestBase {
 
   @After
   public void afterTest(TestContext ctx) {
-    vertx.close(ctx.asyncAssertSuccess());
+    vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
   private int countThreads(String match) {
@@ -103,7 +103,7 @@ public class CleanupTest extends KafkaClusterTestBase {
     LinkedList<KafkaProducer<String, String>> producers = new LinkedList<>();
     for (int i = 0;i < num;i++) {
       KafkaProducer<String, String> producer = KafkaProducer.createShared(vertx, "the-name", config);
-      producer.write(KafkaProducerRecord.create("the_topic", "the_value"), ctx.asyncAssertSuccess(v -> {
+      producer.write(KafkaProducerRecord.create("the_topic", "the_value")).onComplete(ctx.asyncAssertSuccess(v -> {
         sentLatch.countDown();
       }));
       producers.add(producer);
@@ -125,7 +125,7 @@ public class CleanupTest extends KafkaClusterTestBase {
     if (producers.size() > 0) {
       ctx.assertEquals(numNetworkProducerThread + 1, countThreads("kafka-producer-network-thread"));
       KafkaProducer<String, String> producer = producers.removeFirst();
-      producer.close(ctx.asyncAssertSuccess(v -> {
+      producer.close().onComplete(ctx.asyncAssertSuccess(v -> {
         close(ctx, producers, doneHandler);
       }));
     } else {
@@ -139,7 +139,7 @@ public class CleanupTest extends KafkaClusterTestBase {
       Properties config = new Properties();
       config.putAll(context.config().getMap());
       KafkaProducer<String, String> producer = KafkaProducer.createShared(vertx, "the-name", config);
-      producer.write(KafkaProducerRecord.create("the_topic", "the_value"), ar -> startFuture.handle(ar.map((Void) null)));
+      producer.write(KafkaProducerRecord.create("the_topic", "the_value")).onComplete(ar -> startFuture.handle(ar.map((Void) null)));
     }
   }
 
@@ -151,15 +151,14 @@ public class CleanupTest extends KafkaClusterTestBase {
     int num = 3;
     Async sentLatch = ctx.async(num);
     AtomicReference<String> deploymentID = new AtomicReference<>();
-    vertx.deployVerticle(TheVerticle.class.getName(), new DeploymentOptions().setInstances(3).setConfig(new JsonObject((Map)config)),
-      ctx.asyncAssertSuccess(id -> {
+    vertx.deployVerticle(TheVerticle.class.getName(), new DeploymentOptions().setInstances(3).setConfig(new JsonObject((Map)config))).onComplete(ctx.asyncAssertSuccess(id -> {
         deploymentID.set(id);
         sentLatch.complete();
       }));
     sentLatch.awaitSuccess(10000);
     Async async = ctx.async();
     kafkaCluster.useTo().consumeStrings("the_topic", num, 10, TimeUnit.SECONDS, () -> {
-      vertx.undeploy(deploymentID.get(), ctx.asyncAssertSuccess(v -> async.complete()));
+      vertx.undeploy(deploymentID.get()).onComplete(ctx.asyncAssertSuccess(v -> async.complete()));
     });
     async.awaitSuccess(10000);
     waitUntil(() -> countThreads("kafka-producer-network-thread") == numKafkaProducerNetworkThread);
@@ -179,9 +178,9 @@ public class CleanupTest extends KafkaClusterTestBase {
       public void start() throws Exception {
         KafkaProducer<String, String> producer = KafkaProducer.create(vertx, config);
         producerRef.set(producer);
-        producer.write(KafkaProducerRecord.create("the_topic", "the_value"), ctx.asyncAssertSuccess());
+        producer.write(KafkaProducerRecord.create("the_topic", "the_value")).onComplete(ctx.asyncAssertSuccess());
       }
-    }, ctx.asyncAssertSuccess(id -> {
+    }).onComplete(ctx.asyncAssertSuccess(id -> {
       deploymentRef.set(id);
       deployLatch.complete();
     }));
@@ -190,7 +189,7 @@ public class CleanupTest extends KafkaClusterTestBase {
     Async undeployLatch = ctx.async();
 
     kafkaCluster.useTo().consumeStrings("the_topic", 1, 10, TimeUnit.SECONDS, () -> {
-      vertx.undeploy(deploymentRef.get(), ctx.asyncAssertSuccess(v -> {
+      vertx.undeploy(deploymentRef.get()).onComplete(ctx.asyncAssertSuccess(v -> {
         undeployLatch.complete();
       }));
     });
@@ -218,12 +217,12 @@ public class CleanupTest extends KafkaClusterTestBase {
         consumer.handler(record -> {
           if (deployed) {
             deployed = false;
-            vertx.undeploy(context.deploymentID(), ctx.asyncAssertSuccess(v2 -> async.countDown()));
+            vertx.undeploy(context.deploymentID()).onComplete(ctx.asyncAssertSuccess(v2 -> async.countDown()));
           }
         });
-        consumer.assign(new TopicPartition(topicName, 0), fut);
+        consumer.assign(new TopicPartition(topicName, 0)).onComplete(fut);
       }
-    }, ctx.asyncAssertSuccess(v ->  produceLatch.complete()));
+    }).onComplete(ctx.asyncAssertSuccess(v ->  produceLatch.complete()));
     produceLatch.awaitSuccess(10000);
     kafkaCluster.useTo().produce("testCleanupInConsumer_producer", 100,
       new StringSerializer(), new StringSerializer(), async::countDown,
@@ -247,8 +246,8 @@ public class CleanupTest extends KafkaClusterTestBase {
       public void start() {
         KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
       }
-    }, ctx.asyncAssertSuccess(id -> {
-      vertx.undeploy(id, ctx.asyncAssertSuccess(v2 -> async.complete()));
+    }).onComplete(ctx.asyncAssertSuccess(id -> {
+      vertx.undeploy(id).onComplete(ctx.asyncAssertSuccess(v2 -> async.complete()));
     }));
 
     async.awaitSuccess(10000);

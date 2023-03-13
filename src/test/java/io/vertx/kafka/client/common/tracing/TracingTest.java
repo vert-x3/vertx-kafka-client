@@ -71,7 +71,7 @@ public class TracingTest extends KafkaClusterTestBase {
   public void afterTest(TestContext ctx) {
     close(ctx, producer);
     close(ctx, consumer);
-    vertx.close(ctx.asyncAssertSuccess());
+    vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
   private KafkaWriteStream<String, String> configureProducer(TestContext ctx, Consumer<KafkaClientOptions> addOpts) {
