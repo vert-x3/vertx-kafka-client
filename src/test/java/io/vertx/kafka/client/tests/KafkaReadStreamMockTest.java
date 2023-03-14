@@ -109,7 +109,7 @@ public class KafkaReadStreamMockTest extends KafkaTestBase {
         Set<TopicPartition> partitions = new LinkedHashSet<>();
         partitions.add(new TopicPartition(TOPIC, 0));
 
-        consumerVertx.assign(partitions, (h)->{
+        consumerVertx.assign(partitions).onComplete((h)->{
             sendNextBatch(consumer);
         });
 

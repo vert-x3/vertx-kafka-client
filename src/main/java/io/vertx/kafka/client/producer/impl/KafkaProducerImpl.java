@@ -204,7 +204,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public void write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<Void>> handler) {
-    this.stream.write(record.record(), handler);
+    this.stream.write(record.record()).onComplete(handler);
   }
 
   @Override
@@ -243,7 +243,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public void end(Handler<AsyncResult<Void>> handler) {
-    this.stream.end(handler);
+    this.stream.end().onComplete(handler);
   }
 
   @Override

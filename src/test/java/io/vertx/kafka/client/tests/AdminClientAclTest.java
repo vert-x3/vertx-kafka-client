@@ -47,7 +47,7 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
 
     @After
     public void afterTest(TestContext ctx) {
-        this.vertx.close(ctx.asyncAssertSuccess());
+        this.vertx.close().onComplete(ctx.asyncAssertSuccess());
     }
 
     @BeforeClass
@@ -60,7 +60,7 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
         KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
         ResourcePatternFilter rpf = new ResourcePatternFilter(ResourceType.TOPIC, "test-acl-topic", PatternType.LITERAL);
         AccessControlEntryFilter acef = new AccessControlEntryFilter("User:*", "localhost:9092", AclOperation.DESCRIBE, AclPermissionType.ALLOW);
-        adminClient.describeAcls(new AclBindingFilter(rpf, acef), ctx.asyncAssertSuccess(list -> {
+        adminClient.describeAcls(new AclBindingFilter(rpf, acef)).onComplete(ctx.asyncAssertSuccess(list -> {
             ctx.assertTrue(list.isEmpty());
             adminClient.close();
         }));
@@ -81,7 +81,7 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
 
         AclBindingFilter abf = new AclBindingFilter(rpf, acef);
         adminClient.createAcls(Collections.singletonList(aclBinding)).onComplete(ctx.asyncAssertSuccess(i ->
-            adminClient.describeAcls(abf, ctx.asyncAssertSuccess(list -> {
+            adminClient.describeAcls(abf).onComplete(ctx.asyncAssertSuccess(list -> {
                 ctx.assertFalse(list.isEmpty());
                 ctx.assertTrue(list.get(0).entry().host().equals(host));
                 ctx.assertTrue(list.get(0).entry().principal().equals(principal));

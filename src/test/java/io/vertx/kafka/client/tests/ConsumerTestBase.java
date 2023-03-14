@@ -75,7 +75,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     close(ctx, consumer2);
     consumer = null;
     consumer2 = null;
-    vertx.close(ctx.asyncAssertSuccess());
+    vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
   @Test
@@ -1267,12 +1267,12 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     // search by timestamp
     // take a timestamp in the future, such that no offset exists
     long searchTimestamp = System.currentTimeMillis();
-    wrappedConsumer.offsetsForTimes(topicPartition, searchTimestamp, ctx.asyncAssertSuccess(offsetAndTimestamp -> {
+    wrappedConsumer.offsetsForTimes(topicPartition, searchTimestamp).onComplete(ctx.asyncAssertSuccess(offsetAndTimestamp -> {
       ctx.assertEquals(null, offsetAndTimestamp, "Must return null because no offset for a timestamp in the future can exist");
       done.countDown();
     }));
 
-    wrappedConsumer.offsetsForTimes(Collections.singletonMap(topicPartition, searchTimestamp), ctx.asyncAssertSuccess(offsetAndTimestamps -> {
+    wrappedConsumer.offsetsForTimes(Collections.singletonMap(topicPartition, searchTimestamp)).onComplete(ctx.asyncAssertSuccess(offsetAndTimestamps -> {
       io.vertx.kafka.client.consumer.OffsetAndTimestamp offsetAndTimestamp = offsetAndTimestamps.get(topicPartition);
       ctx.assertEquals(0, offsetAndTimestamps.size(), "Must not return a result, because no Offset is found");
       ctx.assertEquals(null, offsetAndTimestamp, "Must return null because no offset for a timestamp in the future can exist");
@@ -1371,10 +1371,10 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     // Set the polling timeout to 1500 ms (default is 1000)
     consumerWithCustomTimeout.pollTimeout(Duration.ofMillis(pollingTimeout));
     // Subscribe to the empty topic (we want the poll() call to timeout!)
-    consumerWithCustomTimeout.subscribe(topicName, subscribeRes -> {
+    consumerWithCustomTimeout.subscribe(topicName).onComplete(subscribeRes -> {
       consumerWithCustomTimeout.handler(rec -> {}); // Consumer will now immediately poll once
       long beforeSeek = System.currentTimeMillis();
-      consumerWithCustomTimeout.seekToBeginning(topicPartition, seekRes -> {
+      consumerWithCustomTimeout.seekToBeginning(topicPartition).onComplete(seekRes -> {
         long durationWShortTimeout = System.currentTimeMillis() - beforeSeek;
         ctx.assertTrue(durationWShortTimeout >= pollingTimeout, "Operation must take at least as long as the polling timeout");
         consumerWithCustomTimeout.close();
@@ -1399,7 +1399,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.handler(rec -> {});
     consumer.partitionsAssignedHandler(partitions -> {
       for (io.vertx.kafka.client.common.TopicPartition partition : partitions) {
-        consumer.committed(partition, ar -> {
+        consumer.committed(partition).onComplete(ar -> {
           if (ar.succeeded()) {
             ctx.assertNull(ar.result());
           } else {
@@ -1430,12 +1430,12 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
 
-    consumer.subscribe(Collections.singleton(topicName), subscribeResult -> {
+    consumer.subscribe(Collections.singleton(topicName)).onComplete(subscribeResult -> {
 
       if (subscribeResult.succeeded()) {
 
         vertx.setPeriodic(1000, t -> {
-          consumer.poll(Duration.ofMillis(100), pollResult -> {
+          consumer.poll(Duration.ofMillis(100)).onComplete(pollResult -> {
             if (pollResult.succeeded()) {
               if (count.updateAndGet(o -> count.get() - pollResult.result().size()) == 0) {
                 vertx.cancelTimer(t);
@@ -1464,12 +1464,12 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(5);
 
-    consumer.subscribe(Collections.singleton(topicName), subscribeResult -> {
+    consumer.subscribe(Collections.singleton(topicName)).onComplete(subscribeResult -> {
 
       if (subscribeResult.succeeded()) {
 
         vertx.setPeriodic(1000, t -> {
-          consumer.poll(Duration.ofMillis(100), pollResult -> {
+          consumer.poll(Duration.ofMillis(100)).onComplete(pollResult -> {
             if (pollResult.succeeded()) {
               if (pollResult.result().size() > 0) {
                 ctx.fail();

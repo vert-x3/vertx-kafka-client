@@ -99,7 +99,7 @@ public class ProducerMockTest {
 
   @After
   public void afterTest(TestContext ctx) {
-    vertx.close(ctx.asyncAssertSuccess());
+    vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
   @Test

@@ -101,7 +101,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
   @After
   public void afterTest(TestContext ctx) {
-    this.vertx.close(ctx.asyncAssertSuccess());
+    this.vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
   @BeforeClass
@@ -119,7 +119,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
-      adminClient.listTopics(ctx.asyncAssertSuccess(res ->{
+      adminClient.listTopics().onComplete(ctx.asyncAssertSuccess(res ->{
         ctx.assertTrue(res.containsAll(topics), "Was expecting topics " + topics + " to be in " + res);
 
         adminClient.close();
@@ -138,7 +138,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeTopics(Collections.singletonList("first-topic"), ctx.asyncAssertSuccess(map -> {
+      adminClient.describeTopics(Collections.singletonList("first-topic")).onComplete(ctx.asyncAssertSuccess(map -> {
         TopicDescription topicDescription = map.get("first-topic");
         ctx.assertNotNull(topicDescription);
         ctx.assertEquals("first-topic", topicDescription.getName());
@@ -174,7 +174,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeTopics(Collections.singletonList("first-topic"), options, ctx.asyncAssertSuccess(map -> {
+      adminClient.describeTopics(Collections.singletonList("first-topic"), options).onComplete(ctx.asyncAssertSuccess(map -> {
         TopicDescription topicDescription = map.get("first-topic");
         ctx.assertNotNull(topicDescription);
         ctx.assertEquals("first-topic", topicDescription.getName());
@@ -206,15 +206,15 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    adminClient.createTopics(Collections.singletonList(new NewTopic("testCreateTopic", 1, (short)1)), ctx.asyncAssertSuccess(v -> {
-      adminClient.describeTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(topics -> {
+    adminClient.createTopics(Collections.singletonList(new NewTopic("testCreateTopic", 1, (short)1))).onComplete(ctx.asyncAssertSuccess(v -> {
+      adminClient.describeTopics(Collections.singletonList("testCreateTopic")).onComplete(ctx.asyncAssertSuccess(topics -> {
         TopicDescription topicDescription = topics.get("testCreateTopic");
 
         ctx.assertEquals("testCreateTopic", topicDescription.getName());
         ctx.assertEquals(1, topicDescription.getPartitions().size());
         ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
 
-        adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(v1 -> {
+        adminClient.deleteTopics(Collections.singletonList("testCreateTopic")).onComplete(ctx.asyncAssertSuccess(v1 -> {
           adminClient.close();
         }));
       }));
@@ -229,9 +229,9 @@ public class AdminClientTest extends KafkaClusterTestBase {
     NewTopic newTopic = new NewTopic("testCreateTopicWithConfigs", 1, (short)1);
     newTopic.setConfig(Collections.singletonMap("segment.bytes", "1000"));
 
-    adminClient.createTopics(Collections.singletonList(newTopic), ctx.asyncAssertSuccess(v -> {
+    adminClient.createTopics(Collections.singletonList(newTopic)).onComplete(ctx.asyncAssertSuccess(v -> {
 
-      adminClient.describeTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(topics -> {
+      adminClient.describeTopics(Collections.singletonList("testCreateTopicWithConfigs")).onComplete(ctx.asyncAssertSuccess(topics -> {
 
         TopicDescription topicDescription = topics.get("testCreateTopicWithConfigs");
 
@@ -250,7 +250,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
           ctx.assertTrue(configEntry.isPresent());
           ctx.assertEquals("1000", configEntry.get().getValue());
 
-          adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(v1 -> {
+          adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs")).onComplete(ctx.asyncAssertSuccess(v1 -> {
             adminClient.close();
           }));
         }));
@@ -271,11 +271,11 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
 
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
+      adminClient.listTopics().onComplete(ctx.asyncAssertSuccess(topics -> {
 
         ctx.assertTrue(topics.contains("topicToDelete"));
 
-        adminClient.deleteTopics(Collections.singletonList("topicToDelete"), ctx.asyncAssertSuccess(v -> {
+        adminClient.deleteTopics(Collections.singletonList("topicToDelete")).onComplete(ctx.asyncAssertSuccess(v -> {
           adminClient.close();
           async.complete();
         }));
@@ -340,7 +340,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.listConsumerGroups(ctx.asyncAssertSuccess(groups -> {
+      adminClient.listConsumerGroups().onComplete(ctx.asyncAssertSuccess(groups -> {
 
         ctx.assertTrue(groups.size() > 0);
         ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).anyMatch(g -> g.equals("groupId")));
@@ -367,7 +367,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-no-options"), ctx.asyncAssertSuccess(groups -> {
+      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-no-options")).onComplete(ctx.asyncAssertSuccess(groups -> {
 
         ConsumerGroupDescription consumerGroupDescription = groups.get("groupId-desc-no-options");
         ctx.assertNotNull(consumerGroupDescription);
@@ -406,7 +406,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-with-options"), options, ctx.asyncAssertSuccess(groups -> {
+      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-with-options"), options).onComplete(ctx.asyncAssertSuccess(groups -> {
 
         ConsumerGroupDescription consumerGroupDescription = groups.get("groupId-desc-with-options");
         ctx.assertNotNull(consumerGroupDescription);
@@ -451,9 +451,9 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     consumeAsync.awaitSuccess(10000);
 
-      adminClient.deleteConsumerGroups(Collections.singletonList("groupId-1"), ctx.asyncAssertSuccess(v -> {
+      adminClient.deleteConsumerGroups(Collections.singletonList("groupId-1")).onComplete(ctx.asyncAssertSuccess(v -> {
 
-      adminClient.listConsumerGroups(ctx.asyncAssertSuccess(groups -> {
+      adminClient.listConsumerGroups().onComplete(ctx.asyncAssertSuccess(groups -> {
 
         ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).noneMatch(g -> g.equals("groupId-1")), "Expect " + groups + " to not contain groupId-1");
         ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).anyMatch(g -> g.equals("groupId-2")), "Expect " + groups + " to contain groupId-2");
@@ -547,7 +547,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeCluster(ctx.asyncAssertSuccess(cluster -> {
+      adminClient.describeCluster().onComplete(ctx.asyncAssertSuccess(cluster -> {
         ctx.assertNotNull(cluster.getClusterId());
         Node controller = cluster.getController();
         ctx.assertNotNull(controller);
@@ -581,7 +581,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeCluster(options, ctx.asyncAssertSuccess(cluster -> {
+      adminClient.describeCluster(options).onComplete(ctx.asyncAssertSuccess(cluster -> {
         ctx.assertNotNull(cluster.getClusterId());
         Node controller = cluster.getController();
         ctx.assertNotNull(controller);
@@ -639,7 +639,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
     final Async async = ctx.async();
 
-    adminClient.listConsumerGroupOffsets(groupId, ctx.asyncAssertSuccess(consumerGroupOffsets -> {
+    adminClient.listConsumerGroupOffsets(groupId).onComplete(ctx.asyncAssertSuccess(consumerGroupOffsets -> {
 
       TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
       TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(0);
@@ -683,9 +683,9 @@ public class AdminClientTest extends KafkaClusterTestBase {
     final Async async = ctx.async();
 
     final TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
-    adminClient.deleteConsumerGroupOffsets(groupId, Collections.singleton(topicPartition0), ctx.asyncAssertSuccess(v -> {
+    adminClient.deleteConsumerGroupOffsets(groupId, Collections.singleton(topicPartition0)).onComplete(ctx.asyncAssertSuccess(v -> {
 
-      adminClient.listConsumerGroupOffsets(groupId, ctx.asyncAssertSuccess(consumerGroupOffsets -> {
+      adminClient.listConsumerGroupOffsets(groupId).onComplete(ctx.asyncAssertSuccess(consumerGroupOffsets -> {
 
         final TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(1);
         ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition1));
@@ -731,8 +731,8 @@ public class AdminClientTest extends KafkaClusterTestBase {
     String newMetadata = "vertx-rulezz";
 
     io.vertx.kafka.client.consumer.OffsetAndMetadata oam = new io.vertx.kafka.client.consumer.OffsetAndMetadata(newOffset, newMetadata);
-    adminClient.alterConsumerGroupOffsets(groupId, Collections.singletonMap(topicPartition0, oam), ctx.asyncAssertSuccess(v -> {
-      adminClient.listConsumerGroupOffsets(groupId, ctx.asyncAssertSuccess(consumerGroupOffsets -> {
+    adminClient.alterConsumerGroupOffsets(groupId, Collections.singletonMap(topicPartition0, oam)).onComplete(ctx.asyncAssertSuccess(v -> {
+      adminClient.listConsumerGroupOffsets(groupId).onComplete(ctx.asyncAssertSuccess(consumerGroupOffsets -> {
 
         final TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(0);
         ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition1));
@@ -760,7 +760,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // BeginOffsets
     Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.EARLIEST);
     final Async async1 = ctx.async();
-    adminClient.listOffsets(topicPartitionBeginOffsets, ctx.asyncAssertSuccess(listOffsets -> {
+    adminClient.listOffsets(topicPartitionBeginOffsets).onComplete(ctx.asyncAssertSuccess(listOffsets -> {
       ListOffsetsResultInfo offsets = listOffsets.get(topicPartition0);
       ctx.assertNotNull(offsets);
       ctx.assertEquals(0L, offsets.getOffset());
@@ -770,7 +770,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // EndOffsets
     Map<TopicPartition, OffsetSpec> topicPartitionEndOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.LATEST);
     final Async async2 = ctx.async();
-    adminClient.listOffsets(topicPartitionEndOffsets, ctx.asyncAssertSuccess(listOffsets -> {
+    adminClient.listOffsets(topicPartitionEndOffsets).onComplete(ctx.asyncAssertSuccess(listOffsets -> {
       ListOffsetsResultInfo offsets = listOffsets.get(topicPartition0);
       ctx.assertNotNull(offsets);
       ctx.assertEquals(6L, offsets.getOffset());
@@ -788,7 +788,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     // BeginOffsets of a non existent topic-partition
     Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.EARLIEST);
-    adminClient.listOffsets(topicPartitionBeginOffsets, ctx.asyncAssertFailure());
+    adminClient.listOffsets(topicPartitionBeginOffsets).onComplete(ctx.asyncAssertFailure());
   }
 
   @Test
@@ -803,12 +803,12 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
 
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
+      adminClient.listTopics().onComplete(ctx.asyncAssertSuccess(topics -> {
 
         ctx.assertTrue(topics.contains("testCreateNewPartitionInTopic"));
 
-        adminClient.createPartitions(Collections.singletonMap("testCreateNewPartitionInTopic", new NewPartitions(3, null)), ctx.asyncAssertSuccess(v -> {
-          adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic"), ctx.asyncAssertSuccess(s -> {
+        adminClient.createPartitions(Collections.singletonMap("testCreateNewPartitionInTopic", new NewPartitions(3, null))).onComplete(ctx.asyncAssertSuccess(v -> {
+          adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic")).onComplete(ctx.asyncAssertSuccess(s -> {
             ctx.assertEquals(3, s.get("testCreateNewPartitionInTopic").getPartitions().size());
             adminClient.close();
             async.complete();
@@ -830,11 +830,11 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
 
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
+      adminClient.listTopics().onComplete(ctx.asyncAssertSuccess(topics -> {
 
         ctx.assertTrue(topics.contains("testDecreasePartitionInTopic"));
 
-        adminClient.createPartitions(Collections.singletonMap("testDecreasePartitionInTopic", new NewPartitions(1, null)), ctx.asyncAssertFailure(v -> {
+        adminClient.createPartitions(Collections.singletonMap("testDecreasePartitionInTopic", new NewPartitions(1, null))).onComplete(ctx.asyncAssertFailure(v -> {
           ctx.assertTrue(v.getMessage().equals("Topic currently has 3 partitions, which is higher than the requested 1."));
           adminClient.close();
           async.complete();
@@ -854,7 +854,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to create topics
     vertx.setTimer(1000, t -> {
 
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
+      adminClient.listTopics().onComplete(ctx.asyncAssertSuccess(topics -> {
 
         ctx.assertTrue(topics.contains("testCreatePartitionInTopicWithAssignment"));
 
@@ -868,8 +868,8 @@ public class AdminClientTest extends KafkaClusterTestBase {
         assigmnments.add(sublist1);
         assigmnments.add(sublist2);
 
-        adminClient.createPartitions(Collections.singletonMap("testCreatePartitionInTopicWithAssignment", new NewPartitions(3, assigmnments)), ctx.asyncAssertSuccess(v -> {
-          adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment"), ctx.asyncAssertSuccess(s -> {
+        adminClient.createPartitions(Collections.singletonMap("testCreatePartitionInTopicWithAssignment", new NewPartitions(3, assigmnments))).onComplete(ctx.asyncAssertSuccess(v -> {
+          adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment")).onComplete(ctx.asyncAssertSuccess(s -> {
 
             List<TopicPartitionInfo> partitions = s.get("testCreatePartitionInTopicWithAssignment").getPartitions();
             ctx.assertTrue(partitions.size() == 3, "Expect "+ partitions + " size == 3");
@@ -886,8 +886,8 @@ public class AdminClientTest extends KafkaClusterTestBase {
   @Test
   public void testAsyncClose(TestContext ctx) {
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
-    adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
-      adminClient.close(ctx.asyncAssertSuccess());
+    adminClient.listTopics().onComplete(ctx.asyncAssertSuccess(topics -> {
+      adminClient.close().onComplete(ctx.asyncAssertSuccess());
     }));
   }
 
@@ -901,7 +901,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
 
-      adminClient.describeCluster(ctx.asyncAssertSuccess(cluster -> {
+      adminClient.describeCluster().onComplete(ctx.asyncAssertSuccess(cluster -> {
         Collection<Node> nodes = cluster.getNodes();
         for (Node node : nodes){
           ids.add(node.getId());
@@ -958,7 +958,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     // delete records with offset < 3
     Map<TopicPartition, RecordsToDelete> recordsToDelete = new HashMap<>();
     vertx.setTimer(10000, t -> {
-      adminClient.describeTopics(Collections.singletonList(topicName), ctx.asyncAssertSuccess(map -> {
+      adminClient.describeTopics(Collections.singletonList(topicName)).onComplete(ctx.asyncAssertSuccess(map -> {
         TopicDescription topicDescription = map.get(topicName);
         List<TopicPartitionInfo> topicPartitionInfo = topicDescription.getPartitions();
         TopicPartition topicPartition = new TopicPartition(topicName, topicPartitionInfo.get(0).getPartition());

@@ -62,7 +62,7 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
   @After
   public void afterTest(TestContext ctx) {
     close(ctx, producer);
-    vertx.close(ctx.asyncAssertSuccess());
+    vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
   @Before
@@ -102,7 +102,7 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
     producer.beginTransaction(ctx.asyncAssertSuccess());
     for (int i = 0; i <= numMessages; i++) {
       final ProducerRecord<String, String> record = createRecord(topicName, i);
-      producer.write(record, ctx.asyncAssertSuccess());
+      producer.write(record).onComplete(ctx.asyncAssertSuccess());
     }
     producer.commitTransaction(ctx.asyncAssertSuccess());
   }
@@ -115,7 +115,7 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
     producer.initTransactions(ctx.asyncAssertSuccess());
     producer.beginTransaction(ctx.asyncAssertSuccess());
     final ProducerRecord<String, String> record_0 = createRecord(topicName, 0);
-    producer.write(record_0, whenWritten -> {
+    producer.write(record_0).onComplete(whenWritten -> {
       producer.abortTransaction(ctx.asyncAssertSuccess());
       final KafkaReadStream<String, String> consumer = consumer(topicName);
       consumer.exceptionHandler(ctx::fail);
