@@ -808,11 +808,13 @@ public class AdminClientTest extends KafkaClusterTestBase {
         ctx.assertTrue(topics.contains("testCreateNewPartitionInTopic"));
 
         adminClient.createPartitions(Collections.singletonMap("testCreateNewPartitionInTopic", new NewPartitions(3, null))).onComplete(ctx.asyncAssertSuccess(v -> {
-          adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic")).onComplete(ctx.asyncAssertSuccess(s -> {
-            ctx.assertEquals(3, s.get("testCreateNewPartitionInTopic").getPartitions().size());
-            adminClient.close();
-            async.complete();
-          }));
+          vertx.setTimer(500, t2 -> { // although the Future is completed, it takes some time for the change to be reflected in DescribeTopics
+            adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic")).onComplete(ctx.asyncAssertSuccess(s -> {
+              ctx.assertEquals(3, s.get("testCreateNewPartitionInTopic").getPartitions().size());
+              adminClient.close();
+              async.complete();
+            }));
+          });
         }));
       }));
     });
