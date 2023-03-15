@@ -17,7 +17,6 @@
 package io.vertx.kafka.client.consumer;
 
 import io.vertx.codegen.annotations.Nullable;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -238,22 +237,9 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * Get the last committed offset for the given partition (whether the commit happened by this process or another).
    *
    * @param topicPartition  topic partition for getting last committed offset
-   * @param handler handler called on operation completed
-   */
-  void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler);
-
-  /**
-   * Like {@link #committed(TopicPartition, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<OffsetAndMetadata> committed(TopicPartition topicPartition);
-
-  /**
-   * Suspend fetching from the requested partitions.
-   *
-   * @param topicPartitions topic partition from which suspend fetching
-   * @return a {@code Future} completed with the operation result
-   */
-  Future<Void> pause(Set<TopicPartition> topicPartitions);
 
   /**
    * Suspend fetching from the requested partitions.
@@ -267,20 +253,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * from the given {@code topicPartitions}.
    *
    * @param topicPartitions topic partition from which suspend fetching
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
+   * @return a {@code Future} completed with the operation result
    */
-  KafkaReadStream<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
+  Future<Void> pause(Set<TopicPartition> topicPartitions);
 
   /**
    * Get the set of partitions that were previously paused by a call to {@link #pause(Set)}.
    *
-   * @param handler handler called on operation completed
-   */
-  void paused(Handler<AsyncResult<Set<TopicPartition>>> handler);
-
-  /**
-   * Like {@link #paused(Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a {@code Future} completed with the operation result
    */
   Future<Set<TopicPartition>> paused();
 
@@ -293,16 +273,15 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   Future<Void> resume(Set<TopicPartition> topicPartitions);
 
   /**
-   * Resume specified partitions which have been paused with pause.
-   *
-   * @param topicPartitions topic partition from which resume fetching
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> resume(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
-
-  /**
    * Seek to the last offset for each of the given partitions.
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will
+   * continue to observe messages fetched with respect to the old offset
+   * until some time <em>after</em> the given {@code completionHandler}
+   * is called. In contrast, the once the given {@code completionHandler}
+   * is called the {@link #batchHandler(Handler)} will only see messages
+   * consistent with the new offset.
    *
    * @param topicPartitions topic partition for which seek
    * @return a {@code Future} completed with the operation result
@@ -310,7 +289,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   Future<Void>  seekToEnd(Set<TopicPartition> topicPartitions);
 
   /**
-   * Seek to the last offset for each of the given partitions.
+   * Seek to the first offset for each of the given partitions.
    * <p>
    * Due to internal buffering of messages,
    * the {@linkplain #handler(Handler) record handler} will
@@ -319,15 +298,6 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * is called. In contrast, the once the given {@code completionHandler}
    * is called the {@link #batchHandler(Handler)} will only see messages
    * consistent with the new offset.
-   *
-   * @param topicPartitions topic partition for which seek
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> seekToEnd(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
-
-  /**
-   * Seek to the first offset for each of the given partitions.
    *
    * @param topicPartitions topic partition for which seek
    * @return a {@code Future} completed with the operation result
@@ -335,7 +305,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   Future<Void> seekToBeginning(Set<TopicPartition> topicPartitions);
 
   /**
-   * Seek to the first offset for each of the given partitions.
+   * Overrides the fetch offsets that the consumer will use on the next poll.
    * <p>
    * Due to internal buffering of messages,
    * the {@linkplain #handler(Handler) record handler} will
@@ -344,39 +314,12 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * is called. In contrast, the once the given {@code completionHandler}
    * is called the {@link #batchHandler(Handler)} will only see messages
    * consistent with the new offset.
-   *
-   * @param topicPartitions topic partition for which seek
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> seekToBeginning(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler);
-
-  /**
-   * Overrides the fetch offsets that the consumer will use on the next poll.
    *
    * @param topicPartition  topic partition for which seek
    * @param offset  offset to seek inside the topic partition
    * @return a {@code Future} completed with the operation result
    */
   Future<Void> seek(TopicPartition topicPartition, long offset);
-
-  /**
-   * Overrides the fetch offsets that the consumer will use on the next poll.
-   * <p>
-   * Due to internal buffering of messages,
-   * the {@linkplain #handler(Handler) record handler} will
-   * continue to observe messages fetched with respect to the old offset
-   * until some time <em>after</em> the given {@code completionHandler}
-   * is called. In contrast, the once the given {@code completionHandler}
-   * is called the {@link #batchHandler(Handler)} will only see messages
-   * consistent with the new offset.
-   *
-   * @param topicPartition  topic partition for which seek
-   * @param offset  offset to seek inside the topic partition
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler);
 
   /**
    * Set the handler called when topic partitions are revoked to the consumer
@@ -396,6 +339,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
 
   /**
    * Subscribe to the given list of topics to get dynamically assigned partitions.
+   * <p>
+   * Due to internal buffering of messages, when changing the subscribed topics
+   * the old set of topics may remain in effect
+   * (as observed by the {@linkplain #handler(Handler)} record handler})
+   * until some time <em>after</em> the given {@code completionHandler}
+   * is called. In contrast, the once the given {@code completionHandler}
+   * is called the {@link #batchHandler(Handler)} will only see messages
+   * consistent with the new set of topics.
    *
    * @param topics  topics to subscribe to
    * @return a {@code Future} completed with the operation result
@@ -403,23 +354,6 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   Future<Void> subscribe(Set<String> topics);
 
   /**
-   * Subscribe to the given list of topics to get dynamically assigned partitions.
-   * <p>
-   * Due to internal buffering of messages, when changing the subscribed topics
-   * the old set of topics may remain in effect
-   * (as observed by the {@linkplain #handler(Handler)} record handler})
-   * until some time <em>after</em> the given {@code completionHandler}
-   * is called. In contrast, the once the given {@code completionHandler}
-   * is called the {@link #batchHandler(Handler)} will only see messages
-   * consistent with the new set of topics.
-   *
-   * @param topics  topics to subscribe to
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler);
-
-  /**
    * Subscribe to all topics matching specified pattern to get dynamically assigned partitions.
    * <p>
    * Due to internal buffering of messages, when changing the subscribed topics
@@ -429,15 +363,6 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * is called. In contrast, the once the given {@code completionHandler}
    * is called the {@link #batchHandler(Handler)} will only see messages
    * consistent with the new set of topics.
-   *
-   * @param pattern  Pattern to subscribe to
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> subscribe(Pattern pattern, Handler<AsyncResult<Void>> completionHandler);
-
-  /**
-   * Subscribe to all topics matching specified pattern to get dynamically assigned partitions.
    *
    * @param pattern  Pattern to subscribe to
    * @return a {@code Future} completed with the operation result
@@ -452,33 +377,9 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   Future<Void> unsubscribe();
 
   /**
-   * Unsubscribe from topics currently subscribed with subscribe.
-   *
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> unsubscribe(Handler<AsyncResult<Void>> completionHandler);
-
-  /**
    * Get the current subscription.
-   *
-   * @param handler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> subscription(Handler<AsyncResult<Set<String>>> handler);
-
-  /**
-   * Like {@link #subscription(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Set<String>> subscription();
-
-  /**
-   * Manually assign a set of partitions to this consumer.
-   *
-   * @param partitions  partitions which want assigned
-   * @return  current KafkaReadStream instance
-   */
-  Future<Void> assign(Set<TopicPartition> partitions);
 
   /**
    * Manually assign a set of partitions to this consumer.
@@ -492,34 +393,17 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * consistent with the new set of partitions.
    *
    * @param partitions  partitions which want assigned
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaReadStream instance
+   * @return a future notified with the result
    */
-  KafkaReadStream<K, V> assign(Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler);
+  Future<Void> assign(Set<TopicPartition> partitions);
 
   /**
    * Get the set of partitions currently assigned to this consumer.
-   *
-   * @param handler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> assignment(Handler<AsyncResult<Set<TopicPartition>>> handler);
-
-  /**
-   * Like {@link #assignment(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Set<TopicPartition>> assignment();
 
   /**
    * Get metadata about partitions for all topics that the user is authorized to view.
-   *
-   * @param handler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> listTopics(Handler<AsyncResult<Map<String,List<PartitionInfo>>>> handler);
-
-  /**
-   * Like {@link #listTopics(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Map<String,List<PartitionInfo>>> listTopics();
 
@@ -527,13 +411,6 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * Commit current offsets for all the subscribed list of topics and partition.
    */
   Future<Map<TopicPartition, OffsetAndMetadata>> commit();
-
-  /**
-   * Commit current offsets for all the subscribed list of topics and partition.
-   *
-   * @param completionHandler handler called on operation completed
-   */
-  void commit(Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
 
   /**
    * Commit the specified offsets for the specified list of topics and partitions to Kafka.
@@ -544,24 +421,10 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   Future<Map<TopicPartition, OffsetAndMetadata>> commit(Map<TopicPartition, OffsetAndMetadata> offsets);
 
   /**
-   * Commit the specified offsets for the specified list of topics and partitions to Kafka.
-   *
-   * @param offsets offsets list to commit
-   * @param completionHandler handler called on operation completed
-   */
-  void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler);
-
-  /**
    * Get metadata about the partitions for a given topic.
    *
    * @param topic topic partition for which getting partitions info
-   * @param handler handler called on operation completed
-   * @return  current KafkaReadStream instance
-   */
-  KafkaReadStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
-
-  /**
-   * Like {@link #partitionsFor(String, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<List<PartitionInfo>> partitionsFor(String topic);
 
@@ -573,34 +436,17 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
   Future<Void> close();
 
   /**
-   * Close the stream
-   *
-   * @param completionHandler handler called on operation completed
-   */
-  void close(Handler<AsyncResult<Void>> completionHandler);
-
-  /**
    * Get the offset of the next record that will be fetched (if a record with that offset exists).
    *
    * @param partition The partition to get the position for
-   * @param handler handler called on operation completed
-   */
-  void position(TopicPartition partition, Handler<AsyncResult<Long>> handler);
-
-  /**
-   * Like {@link #position(TopicPartition, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<Long> position(TopicPartition partition);
 
   /**
    * Look up the offsets for the given partitions by timestamp.
    * @param topicPartitionTimestamps A map with pairs of (TopicPartition, Timestamp).
-   * @param handler handler called on operation completed
-   */
-  void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler);
-
-  /**
-   * Like {@link #offsetsForTimes(Map, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<Map<TopicPartition, OffsetAndTimestamp>> offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps);
 
@@ -608,36 +454,21 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * * Look up the offset for the given partition by timestamp.
    * @param topicPartition Partition to query.
    * @param timestamp Timestamp used to determine the offset.
-   * @param handler handler called on operation completed
-   */
-  void offsetsForTimes(TopicPartition topicPartition, long timestamp, Handler<AsyncResult<OffsetAndTimestamp>> handler);
-
-  /**
-   * Like {@link #offsetsForTimes(TopicPartition, long, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<OffsetAndTimestamp> offsetsForTimes(TopicPartition topicPartition, long timestamp);
 
   /**
    * Get the first offset for the given partitions.
    * @param topicPartitions the partitions to get the earliest offsets.
-   * @param handler handler called on operation completed. Returns the earliest available offsets for the given partitions
-   */
-  void beginningOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler);
-
-  /**
-   * Like {@link #beginningOffsets(Set, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<Map<TopicPartition, Long>> beginningOffsets(Set<TopicPartition> topicPartitions);
 
   /**
    * Get the first offset for the given partition.
    * @param topicPartition the partition to get the earliest offset.
-   * @param handler handler called on operation completed. Returns the earliest available offset for the given partition
-   */
-  void beginningOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler);
-
-  /**
-   * Like {@link #beginningOffsets(TopicPartition, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<Long> beginningOffsets(TopicPartition topicPartition);
 
@@ -645,12 +476,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * Get the last offset for the given partitions. The last offset of a partition is the offset
    * of the upcoming message, i.e. the offset of the last available message + 1.
    * @param topicPartitions the partitions to get the end offsets.
-   * @param handler handler called on operation completed. The end offsets for the given partitions.
-   */
-  void endOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler);
-
-  /**
-   * Like {@link #endOffsets(Set, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<Map<TopicPartition, Long>> endOffsets(Set<TopicPartition> topicPartitions);
 
@@ -658,12 +484,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * Get the last offset for the given partition. The last offset of a partition is the offset
    * of the upcoming message, i.e. the offset of the last available message + 1.
    * @param topicPartition the partition to get the end offset.
-   * @param handler handler called on operation completed. The end offset for the given partition.
-   */
-  void endOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler);
-
-  /**
-   * Like {@link #endOffsets(TopicPartition, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<Long> endOffsets(TopicPartition topicPartition);
 
@@ -699,12 +520,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * Executes a poll for getting messages from Kafka.
    *
    * @param timeout The maximum time to block (must not be greater than {@link Long#MAX_VALUE} milliseconds)
-   * @param handler handler called after the poll with batch of records (can be empty).
-   */
-  void poll(Duration timeout, Handler<AsyncResult<ConsumerRecords<K, V>>> handler);
-
-  /**
-   * Like {@link #poll(Duration, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified on operation completed
    */
   Future<ConsumerRecords<K, V>> poll(Duration timeout);
 }

@@ -129,12 +129,6 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public synchronized KafkaWriteStreamImpl<K, V> send(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
-    this.send(record).onComplete(handler);
-    return this;
-  }
-
-  @Override
   public Future<Void> write(ProducerRecord<K, V> record) {
     return this.send(record).mapEmpty();
   }
@@ -164,20 +158,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStream<K, V> initTransactions(Handler<AsyncResult<Void>> handler) {
-    initTransactions().onComplete(handler);
-    return this;
-  }
-
-  @Override
   public Future<Void> initTransactions() {
     return executeBlocking(this.producer::initTransactions);
-  }
-
-  @Override
-  public KafkaWriteStream<K, V> beginTransaction(Handler<AsyncResult<Void>> handler) {
-    beginTransaction().onComplete(handler);
-    return this;
   }
 
   @Override
@@ -186,20 +168,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStream<K, V> commitTransaction(Handler<AsyncResult<Void>> handler) {
-    commitTransaction().onComplete(handler);
-    return this;
-  }
-
-  @Override
   public Future<Void> commitTransaction() {
     return executeBlocking(this.producer::commitTransaction);
-  }
-
-  @Override
-  public KafkaWriteStream<K, V> abortTransaction(Handler<AsyncResult<Void>> handler) {
-    abortTransaction().onComplete(handler);
-    return this;
   }
 
   @Override
@@ -233,12 +203,6 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStreamImpl<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-    partitionsFor(topic).onComplete(handler);
-    return this;
-  }
-
-  @Override
   public Future<Void> flush() {
     ContextInternal ctx = vertx.getOrCreateContext();
     return ctx.<Void>executeBlocking(prom -> {
@@ -248,19 +212,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public KafkaWriteStreamImpl<K, V> flush(Handler<AsyncResult<Void>> completionHandler) {
-    flush().onComplete(completionHandler);
-    return this;
-  }
-
-  @Override
   public Future<Void> close() {
     return close(0);
-  }
-
-  @Override
-  public void close(Handler<AsyncResult<Void>> completionHandler) {
-    close(0, completionHandler);
   }
 
   @Override
@@ -275,11 +228,6 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
       }
       prom.complete();
     }, taskQueue);
-  }
-
-  @Override
-  public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
-    close(timeout).onComplete(completionHandler);
   }
 
   @Override

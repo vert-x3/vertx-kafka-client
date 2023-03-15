@@ -256,6 +256,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       };
   }
 
+  protected <T> Future<T> submitTask2(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task) {
+    Promise<T> promise = Promise.promise();
+    submitTask(task, promise);
+    return promise.future();
+  }
+
   protected <T> void submitTask(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task,
       Handler<AsyncResult<T>> handler) {
     if (this.closed.compareAndSet(true, false)) {
@@ -267,89 +273,47 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   @Override
   public Future<Void> pause(Set<TopicPartition> topicPartitions) {
-    Promise<Void> promise = Promise.promise();
-    pause(topicPartitions, promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> pause(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
-
-    this.submitTask((consumer, future) -> {
+    return this.submitTask2((consumer, future) -> {
       consumer.pause(topicPartitions);
       if (future != null) {
         future.complete();
       }
-    }, completionHandler);
-
-    return this;
-  }
-
-  @Override
-  public void paused(Handler<AsyncResult<Set<TopicPartition>>> handler) {
-
-    this.submitTask((consumer, future) -> {
-      Set<TopicPartition> result = consumer.paused();
-      if (future != null) {
-        future.complete(result);
-      }
-    }, handler);
+    });
   }
 
   @Override
   public Future<Set<TopicPartition>> paused() {
-    Promise<Set<TopicPartition>> promise = Promise.promise();
-    paused(promise);
-    return promise.future();
+    return this.submitTask2((consumer, future) -> {
+      Set<TopicPartition> result = consumer.paused();
+      if (future != null) {
+        future.complete(result);
+      }
+    });
   }
 
   @Override
   public Future<Void> resume(Set<TopicPartition> topicPartitions) {
-    Promise<Void> promise = Promise.promise();
-    this.resume(topicPartitions, promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> resume(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
-
-    this.submitTask((consumer, future) -> {
+    return this.submitTask2((consumer, future) -> {
       consumer.resume(topicPartitions);
       if (future != null) {
         future.complete();
       }
-    }, completionHandler);
-
-    return this;
-  }
-
-  @Override
-  public void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler) {
-
-    this.submitTask((consumer, future) -> {
-      OffsetAndMetadata result = consumer.committed(topicPartition);
-      if (future != null) {
-        future.complete(result);
-      }
-    }, handler);
+    });
   }
 
   @Override
   public Future<OffsetAndMetadata> committed(TopicPartition topicPartition) {
-    Promise<OffsetAndMetadata> promise = Promise.promise();
-    committed(topicPartition, promise);
-    return promise.future();
+    return this.submitTask2((consumer, future) -> {
+      OffsetAndMetadata result = consumer.committed(topicPartition);
+      if (future != null) {
+        future.complete(result);
+      }
+    });
   }
 
   @Override
   public Future<Void> seekToEnd(Set<TopicPartition> topicPartitions) {
     Promise<Void> promise = Promise.promise();
-    this.seekToEnd(topicPartitions, promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> seekToEnd(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
     this.context.runOnContext(r -> {
       current = null;
 
@@ -358,20 +322,14 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         if (future != null) {
           future.complete();
         }
-      }, completionHandler);
+      }, promise);
     });
-    return this;
+    return promise.future();
   }
 
   @Override
   public Future<Void> seekToBeginning(Set<TopicPartition> topicPartitions) {
     Promise<Void> promise = Promise.promise();
-    this.seekToBeginning(topicPartitions, promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> seekToBeginning(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Void>> completionHandler) {
     this.context.runOnContext(r -> {
       current = null;
 
@@ -380,20 +338,14 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         if (future != null) {
           future.complete();
         }
-      }, completionHandler);
+      }, promise);
     });
-    return this;
+    return promise.future();
   }
 
   @Override
   public Future<Void> seek(TopicPartition topicPartition, long offset) {
     Promise<Void> promise = Promise.promise();
-    this.seek(topicPartition, offset, promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> seek(TopicPartition topicPartition, long offset, Handler<AsyncResult<Void>> completionHandler) {
     this.context.runOnContext(r -> {
       current = null;
 
@@ -402,10 +354,9 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         if (future != null) {
           future.complete();
         }
-      }, completionHandler);
+      }, promise);
     });
-
-    return this;
+    return promise.future();
   }
 
   @Override
@@ -423,12 +374,6 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public Future<Void> subscribe(Set<String> topics) {
     Promise<Void> promise = Promise.promise();
-    subscribe(topics, promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> subscribe(Set<String> topics, Handler<AsyncResult<Void>> completionHandler) {
 
     BiConsumer<Consumer<K, V>, Promise<Void>> handler = (consumer, future) -> {
       consumer.subscribe(topics, this.rebalanceListener);
@@ -439,16 +384,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     };
 
     if (this.closed.compareAndSet(true, false)) {
-      this.start(handler, completionHandler);
+      this.start(handler, promise);
     } else {
-      this.submitTask(handler, completionHandler);
+      this.submitTask(handler, promise);
     }
 
-    return this;
+    return promise.future();
   }
 
   @Override
-  public KafkaReadStream<K, V> subscribe(Pattern pattern, Handler<AsyncResult<Void>> completionHandler) {
+  public Future<Void> subscribe(Pattern pattern) {
+    Promise<Void> promise = Promise.promise();
 
     BiConsumer<Consumer<K, V>, Promise<Void>> handler = (consumer, future) -> {
       consumer.subscribe(pattern, this.rebalanceListener);
@@ -459,70 +405,37 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     };
 
     if (this.closed.compareAndSet(true, false)) {
-      this.start(handler, completionHandler);
+      this.start(handler, promise);
     } else {
-      this.submitTask(handler, completionHandler);
+      this.submitTask(handler, promise);
     }
 
-    return this;
-  }
-
-  @Override
-  public Future<Void> subscribe(Pattern pattern) {
-    Promise<Void> promise = Promise.promise();
-    subscribe(pattern, promise);
     return promise.future();
   }
 
   @Override
   public Future<Void> unsubscribe() {
-    Promise<Void> promise = Promise.promise();
-    this.unsubscribe(promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> unsubscribe(Handler<AsyncResult<Void>> completionHandler) {
-
-    this.submitTask((consumer, future) -> {
+    return this.submitTask2((consumer, future) -> {
       consumer.unsubscribe();
       if (future != null) {
         future.complete();
       }
-    }, completionHandler);
-
-    return this;
-  }
-
-  @Override
-  public KafkaReadStream<K, V> subscription(Handler<AsyncResult<Set<String>>> handler) {
-
-    this.submitTask((consumer, future) -> {
-      Set<String> subscription = consumer.subscription();
-      if (future != null) {
-        future.complete(subscription);
-      }
-    }, handler);
-
-    return this;
+    });
   }
 
   @Override
   public Future<Set<String>> subscription() {
-    Promise<Set<String>> promise = Promise.promise();
-    subscription(promise);
-    return promise.future();
+    return this.submitTask2((consumer, future) -> {
+      Set<String> subscription = consumer.subscription();
+      if (future != null) {
+        future.complete(subscription);
+      }
+    });
   }
 
   @Override
   public Future<Void> assign(Set<TopicPartition> partitions) {
     Promise<Void> promise = Promise.promise();
-    this.assign(partitions, promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> assign(Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
 
     BiConsumer<Consumer<K, V>, Promise<Void>> handler = (consumer, future) -> {
       consumer.assign(partitions);
@@ -533,76 +446,44 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     };
 
     if (this.closed.compareAndSet(true, false)) {
-      this.start(handler, completionHandler);
+      this.start(handler, promise);
     } else {
-      this.submitTask(handler, completionHandler);
+      this.submitTask(handler, promise);
     }
 
-    return this;
-  }
-
-  @Override
-  public KafkaReadStream<K, V> assignment(Handler<AsyncResult<Set<TopicPartition>>> handler) {
-
-    this.submitTask((consumer, future) -> {
-      Set<TopicPartition> partitions = consumer.assignment();
-      if (future != null) {
-        future.complete(partitions);
-      }
-    }, handler);
-
-    return this;
+    return promise.future();
   }
 
   @Override
   public Future<Set<TopicPartition>> assignment() {
     Promise<Set<TopicPartition>> promise = Promise.promise();
-    assignment(promise);
-    return promise.future();
-  }
-
-  @Override
-  public KafkaReadStream<K, V> listTopics(Handler<AsyncResult<Map<String,List<PartitionInfo>>>> handler) {
-
     this.submitTask((consumer, future) -> {
-      Map<String, List<PartitionInfo>> topics = consumer.listTopics();
+      Set<TopicPartition> partitions = consumer.assignment();
       if (future != null) {
-        future.complete(topics);
+        future.complete(partitions);
       }
-    }, handler);
-
-    return this;
+    }, promise);
+    return promise.future();
   }
 
   @Override
   public Future<Map<String, List<PartitionInfo>>> listTopics() {
-    Promise<Map<String, List<PartitionInfo>>> promise = Promise.promise();
-    listTopics(promise);
-    return promise.future();
+    return this.submitTask2((consumer, future) -> {
+      Map<String, List<PartitionInfo>> topics = consumer.listTopics();
+      if (future != null) {
+        future.complete(topics);
+      }
+    });
   }
 
   @Override
   public Future<Map<TopicPartition, OffsetAndMetadata>> commit() {
-    Promise<Map<TopicPartition, OffsetAndMetadata>> promise = Promise.promise();
-    this.commit(promise);
-    return promise.future();
-  }
-
-  @Override
-  public void commit(Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
-    this.commit(null, completionHandler);
+    return commit(null);
   }
 
   @Override
   public Future<Map<TopicPartition, OffsetAndMetadata>> commit(Map<TopicPartition, OffsetAndMetadata> offsets) {
-    Promise<Map<TopicPartition, OffsetAndMetadata>> promise = Promise.promise();
-    this.commit(offsets, promise);
-    return promise.future();
-  }
-
-  @Override
-  public void commit(Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
-    this.submitTask((consumer, future) -> {
+    return this.submitTask2((consumer, future) -> {
 
       if (offsets == null) {
         consumer.commitSync();
@@ -613,27 +494,17 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         future.complete(offsets);
       }
 
-    }, completionHandler);
-  }
-
-  @Override
-  public KafkaReadStreamImpl<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-
-    this.submitTask((consumer, future) -> {
-      List<PartitionInfo> partitions = consumer.partitionsFor(topic);
-      if (future != null) {
-        future.complete(partitions);
-      }
-    }, handler);
-
-    return this;
+    });
   }
 
   @Override
   public Future<List<PartitionInfo>> partitionsFor(String topic) {
-    Promise<List<PartitionInfo>> promise = Promise.promise();
-    partitionsFor(topic, promise);
-    return promise.future();
+    return this.submitTask2((consumer, future) -> {
+      List<PartitionInfo> partitions = consumer.partitionsFor(topic);
+      if (future != null) {
+        future.complete(partitions);
+      }
+    });
   }
 
   @Override
@@ -720,50 +591,28 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public void close(Handler<AsyncResult<Void>> completionHandler) {
-    final Future<Void> f = close();
-    if (completionHandler != null) {
-      f.onComplete(completionHandler);
-    }
-  }
-
-  @Override
-  public void position(TopicPartition partition, Handler<AsyncResult<Long>> handler) {
-    this.submitTask((consumer, future) -> {
+  public Future<Long> position(TopicPartition partition) {
+    return this.submitTask2((consumer, future) -> {
       long pos = this.consumer.position(partition);
       if (future != null) {
         future.complete(pos);
       }
-    }, handler);
-  }
-
-  @Override
-  public Future<Long> position(TopicPartition partition) {
-    Promise<Long> promise = Promise.promise();
-    position(partition, promise);
-    return promise.future();
-  }
-
-  @Override
-  public void offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps, Handler<AsyncResult<Map<TopicPartition, OffsetAndTimestamp>>> handler) {
-    this.submitTask((consumer, future) -> {
-      Map<TopicPartition, OffsetAndTimestamp> offsetsForTimes = this.consumer.offsetsForTimes(topicPartitionTimestamps);
-      if (future != null) {
-        future.complete(offsetsForTimes);
-      }
-    }, handler);
+    });
   }
 
   @Override
   public Future<Map<TopicPartition, OffsetAndTimestamp>> offsetsForTimes(Map<TopicPartition, Long> topicPartitionTimestamps) {
-    Promise<Map<TopicPartition, OffsetAndTimestamp>> promise = Promise.promise();
-    offsetsForTimes(topicPartitionTimestamps, promise);
-    return promise.future();
+    return this.submitTask2((consumer, future) -> {
+      Map<TopicPartition, OffsetAndTimestamp> offsetsForTimes = this.consumer.offsetsForTimes(topicPartitionTimestamps);
+      if (future != null) {
+        future.complete(offsetsForTimes);
+      }
+    });
   }
 
   @Override
-  public void offsetsForTimes(TopicPartition topicPartition, long timestamp, Handler<AsyncResult<OffsetAndTimestamp>> handler) {
-    this.submitTask((consumer, future) -> {
+  public Future<OffsetAndTimestamp> offsetsForTimes(TopicPartition topicPartition, long timestamp) {
+    return this.submitTask2((consumer, future) -> {
       Map<TopicPartition, Long> input = new HashMap<>();
       input.put(topicPartition, timestamp);
 
@@ -771,86 +620,51 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       if (future != null) {
         future.complete(offsetsForTimes.get(topicPartition));
       }
-    }, handler);
-  }
-
-  @Override
-  public Future<OffsetAndTimestamp> offsetsForTimes(TopicPartition topicPartition, long timestamp) {
-    Promise<OffsetAndTimestamp> promise = Promise.promise();
-    offsetsForTimes(topicPartition, timestamp, promise);
-    return promise.future();
-  }
-
-  @Override
-  public void beginningOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
-    this.submitTask((consumer, future) -> {
-      Map<TopicPartition, Long> beginningOffsets = this.consumer.beginningOffsets(topicPartitions);
-      if (future != null) {
-        future.complete(beginningOffsets);
-      }
-    }, handler);
+    });
   }
 
   @Override
   public Future<Map<TopicPartition, Long>> beginningOffsets(Set<TopicPartition> topicPartitions) {
-    Promise<Map<TopicPartition, Long>> promise = Promise.promise();
-    beginningOffsets(topicPartitions, promise);
-    return promise.future();
+    return this.submitTask2((consumer, future) -> {
+      Map<TopicPartition, Long> beginningOffsets = this.consumer.beginningOffsets(topicPartitions);
+      if (future != null) {
+        future.complete(beginningOffsets);
+      }
+    });
   }
 
   @Override
-  public void beginningOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler) {
-    this.submitTask((consumer, future) -> {
+  public Future<Long> beginningOffsets(TopicPartition topicPartition) {
+    return this.submitTask2((consumer, future) -> {
       Set<TopicPartition> input = new HashSet<>();
       input.add(topicPartition);
       Map<TopicPartition, Long> beginningOffsets = this.consumer.beginningOffsets(input);
       if (future != null) {
         future.complete(beginningOffsets.get(topicPartition));
       }
-    }, handler);
-  }
-
-  @Override
-  public Future<Long> beginningOffsets(TopicPartition topicPartition) {
-    Promise<Long> promise = Promise.promise();
-    beginningOffsets(topicPartition, promise);
-    return promise.future();
-  }
-
-  @Override
-  public void endOffsets(Set<TopicPartition> topicPartitions, Handler<AsyncResult<Map<TopicPartition, Long>>> handler) {
-    this.submitTask((consumer, future) -> {
-      Map<TopicPartition, Long> endOffsets = this.consumer.endOffsets(topicPartitions);
-      if (future != null) {
-        future.complete(endOffsets);
-      }
-    }, handler);
+    });
   }
 
   @Override
   public Future<Map<TopicPartition, Long>> endOffsets(Set<TopicPartition> topicPartitions) {
-    Promise<Map<TopicPartition, Long>> promise = Promise.promise();
-    endOffsets(topicPartitions, promise);
-    return promise.future();
+    return this.submitTask2((consumer, future) -> {
+      Map<TopicPartition, Long> endOffsets = this.consumer.endOffsets(topicPartitions);
+      if (future != null) {
+        future.complete(endOffsets);
+      }
+    });
   }
 
   @Override
-  public void endOffsets(TopicPartition topicPartition, Handler<AsyncResult<Long>> handler) {
-    this.submitTask((consumer, future) -> {
+  public Future<Long> endOffsets(TopicPartition topicPartition) {
+    return this.submitTask2((consumer, future) -> {
       Set<TopicPartition> input = new HashSet<>();
       input.add(topicPartition);
       Map<TopicPartition, Long> endOffsets = this.consumer.endOffsets(input);
       if (future != null) {
         future.complete(endOffsets.get(topicPartition));
       }
-    }, handler);
-  }
-
-  @Override
-  public Future<Long> endOffsets(TopicPartition topicPartition) {
-    Promise<Long> promise = Promise.promise();
-    endOffsets(topicPartition, promise);
-    return promise.future();
+    });
   }
 
   @Override
@@ -870,25 +684,20 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public void poll(final Duration timeout, final Handler<AsyncResult<ConsumerRecords<K, V>>> handler) {
+  public Future<ConsumerRecords<K, V>> poll(final Duration timeout) {
+    final Promise<ConsumerRecords<K, V>> promise = Promise.promise();
     this.worker.submit(() -> {
       if (!this.closed.get()) {
         try {
           ConsumerRecords<K, V> records = this.consumer.poll(timeout);
-          this.context.runOnContext(v -> handler.handle(Future.succeededFuture(records)));
+          this.context.runOnContext(v -> promise.complete(records));
         } catch (WakeupException ignore) {
-          this.context.runOnContext(v -> handler.handle(Future.succeededFuture(ConsumerRecords.empty())));
+          this.context.runOnContext(v -> promise.complete(ConsumerRecords.empty()));
         } catch (Exception e) {
-          this.context.runOnContext(v -> handler.handle(Future.failedFuture(e)));
+          this.context.runOnContext(v -> promise.fail(e));
         }
       }
     });
-  }
-
-  @Override
-  public Future<ConsumerRecords<K, V>> poll(final Duration timeout) {
-    final Promise<ConsumerRecords<K, V>> promise = Promise.promise();
-    poll(timeout, promise);
     return promise.future();
   }
 }

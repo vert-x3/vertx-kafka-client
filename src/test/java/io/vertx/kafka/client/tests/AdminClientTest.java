@@ -242,7 +242,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
         ConfigResource configResource =
           new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "testCreateTopicWithConfigs");
 
-        adminClient.describeConfigs(Collections.singletonList(configResource), ctx.asyncAssertSuccess(descs -> {
+        adminClient.describeConfigs(Collections.singletonList(configResource)).onComplete(ctx.asyncAssertSuccess(descs -> {
 
           Optional<ConfigEntry> configEntry = descs.get(configResource).getEntries().stream()
             .filter(e -> e.getName().equals("segment.bytes"))
@@ -289,7 +289,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
     adminClient.describeConfigs(Collections.singletonList(
-      new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "first-topic")), ctx.asyncAssertSuccess(desc -> {
+      new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "first-topic"))).onComplete(ctx.asyncAssertSuccess(desc -> {
       ctx.assertFalse(desc.isEmpty());
       adminClient.close();
     }));
@@ -306,9 +306,9 @@ public class AdminClientTest extends KafkaClusterTestBase {
     Map<ConfigResource, Config> updateConfig = new HashMap<>();
     updateConfig.put(resource, new Config(Collections.singletonList(retentionEntry)));
 
-    adminClient.alterConfigs(updateConfig, ctx.asyncAssertSuccess(v -> {
+    adminClient.alterConfigs(updateConfig).onComplete(ctx.asyncAssertSuccess(v -> {
 
-      adminClient.describeConfigs(Collections.singletonList(resource), ctx.asyncAssertSuccess(describeConfig -> {
+      adminClient.describeConfigs(Collections.singletonList(resource)).onComplete(ctx.asyncAssertSuccess(describeConfig -> {
 
         ConfigEntry describeRetentionEntry =
           describeConfig.get(resource)
@@ -913,7 +913,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
 
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(10000, t -> {
-      adminClient.describeLogDirs(ids, ctx.asyncAssertSuccess(map -> {
+      adminClient.describeLogDirs(ids).onComplete(ctx.asyncAssertSuccess(map -> {
         Map<String, LogDirDescription> infoFirstEntry = map.get(1);
         Set<Map.Entry<String, LogDirDescription>> values = infoFirstEntry.entrySet();
         List<String> keys = new ArrayList<String>();
@@ -969,7 +969,7 @@ public class AdminClientTest extends KafkaClusterTestBase {
     });
 
     vertx.setTimer(10000, s -> {
-      adminClient.deleteRecords(recordsToDelete, ctx.asyncAssertSuccess( map -> {
+      adminClient.deleteRecords(recordsToDelete).onComplete(ctx.asyncAssertSuccess( map -> {
 
         // consume messages 1-3 from "first topic"
         final String groupIdLowerBound = "group-id-2";
