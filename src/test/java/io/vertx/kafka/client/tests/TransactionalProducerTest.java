@@ -98,13 +98,13 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
     });
     consumer.subscribe(Collections.singleton(topicName));
 
-    producer.initTransactions(ctx.asyncAssertSuccess());
-    producer.beginTransaction(ctx.asyncAssertSuccess());
+    producer.initTransactions().onComplete(ctx.asyncAssertSuccess());
+    producer.beginTransaction().onComplete(ctx.asyncAssertSuccess());
     for (int i = 0; i <= numMessages; i++) {
       final ProducerRecord<String, String> record = createRecord(topicName, i);
       producer.write(record).onComplete(ctx.asyncAssertSuccess());
     }
-    producer.commitTransaction(ctx.asyncAssertSuccess());
+    producer.commitTransaction().onComplete(ctx.asyncAssertSuccess());
   }
 
   @Test
@@ -112,15 +112,15 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
     final String topicName = "transactionalProduceAbort";
     final Async done = ctx.async();
 
-    producer.initTransactions(ctx.asyncAssertSuccess());
-    producer.beginTransaction(ctx.asyncAssertSuccess());
+    producer.initTransactions().onComplete(ctx.asyncAssertSuccess());
+    producer.beginTransaction().onComplete(ctx.asyncAssertSuccess());
     final ProducerRecord<String, String> record_0 = createRecord(topicName, 0);
     producer.write(record_0).onComplete(whenWritten -> {
-      producer.abortTransaction(ctx.asyncAssertSuccess());
+      producer.abortTransaction().onComplete(ctx.asyncAssertSuccess());
       final KafkaReadStream<String, String> consumer = consumer(topicName);
       consumer.exceptionHandler(ctx::fail);
       consumer.subscribe(Collections.singleton(topicName));
-      consumer.poll(Duration.ofSeconds(5), records -> {
+      consumer.poll(Duration.ofSeconds(5)).onComplete(records -> {
         ctx.assertTrue(records.result().isEmpty());
         done.complete();
       });
@@ -129,13 +129,13 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
 
   @Test
   public void transactionHandlingFailsIfInitWasNotCalled(TestContext ctx) {
-    producer.beginTransaction(ctx.asyncAssertFailure(cause -> {
+    producer.beginTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
       ctx.assertTrue(cause instanceof KafkaException);
     }));
-    producer.commitTransaction(ctx.asyncAssertFailure(cause -> {
+    producer.commitTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
       ctx.assertTrue(cause instanceof KafkaException);
     }));
-    producer.abortTransaction(ctx.asyncAssertFailure(cause -> {
+    producer.abortTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
       ctx.assertTrue(cause instanceof KafkaException);
     }));
   }
@@ -148,7 +148,7 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
 
     final KafkaWriteStream<Object, Object> nonTransactionalProducer = producer(Vertx.vertx(), noTransactionalIdConfigured);
     nonTransactionalProducer.exceptionHandler(ctx::fail);
-    nonTransactionalProducer.initTransactions(ctx.asyncAssertFailure(cause -> {
+    nonTransactionalProducer.initTransactions().onComplete(ctx.asyncAssertFailure(cause -> {
       ctx.assertTrue(cause instanceof IllegalStateException);
     }));
   }

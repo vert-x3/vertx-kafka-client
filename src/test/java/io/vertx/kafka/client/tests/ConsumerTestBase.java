@@ -335,8 +335,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       ctx.assertEquals("key-" + idx, rec.key());
       ctx.assertEquals("value-" + idx, rec.value());
       if (idx == numMessages - 1) {
-        consumer.commit(ctx.asyncAssertSuccess(v1 -> {
-          consumer.close(v2 -> {
+        consumer.commit().onComplete(ctx.asyncAssertSuccess(v1 -> {
+          consumer.close().onComplete(v2 -> {
             committed.complete();
           });
         }));
@@ -358,7 +358,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       ctx.assertEquals("key-" + idx, rec.key());
       ctx.assertEquals("value-" + idx, rec.value());
       if (idx == numMessages * 2 - 1) {
-        consumer.commit(ctx.asyncAssertSuccess(v1 -> {
+        consumer.commit().onComplete(ctx.asyncAssertSuccess(v1 -> {
           done.complete();
         }));
       }
@@ -388,7 +388,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       switch (val) {
         case 101:
           TopicPartition the_topic = new TopicPartition(topicName, 0);
-          consumer.commit(Collections.singletonMap(the_topic, new OffsetAndMetadata(rec.offset())),
+          consumer.commit(Collections.singletonMap(the_topic, new OffsetAndMetadata(rec.offset()))).onComplete(
             ctx.asyncAssertSuccess(v -> committed.countDown()));
           break;
         case 500:
@@ -402,7 +402,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     committed.awaitSuccess(10000);
     Async closed = ctx.async();
-    consumer.close(v -> closed.complete());
+    consumer.close().onComplete(v -> closed.complete());
     closed.awaitSuccess(10000);
     consumer = createConsumer(vertx, config);
     count.set(100);
@@ -437,13 +437,13 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.exceptionHandler(ctx::fail);
 
     Async subscribe = ctx.async();
-    consumer.subscribe(Collections.singleton(topicName), ar1 -> {
+    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar1 -> {
       subscribe.complete();
     });
     subscribe.await();
 
     Async consume = ctx.async();
-    consumer.poll(Duration.ofSeconds(10), rec -> {
+    consumer.poll(Duration.ofSeconds(10)).onComplete(rec -> {
       if (rec.result().count() == 10) {
         consume.countDown();
       }
@@ -452,7 +452,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     Async committed = ctx.async();
     TopicPartition the_topic = new TopicPartition(topicName, 0);
-    consumer.commit(Collections.singletonMap(the_topic, new OffsetAndMetadata(10)), ar2 -> {
+    consumer.commit(Collections.singletonMap(the_topic, new OffsetAndMetadata(10))).onComplete(ar2 -> {
       committed.complete();
     });
     committed.await();
@@ -604,7 +604,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     TopicPartition topicPartition = new TopicPartition(topic, 0);
     List<String> keys = new ArrayList<>();
-    consumer.assign(Collections.singleton(topicPartition), assignRes -> {
+    consumer.assign(Collections.singleton(topicPartition)).onComplete(assignRes -> {
       // We set a handler => consumer starts polling
       AtomicBoolean seek = new AtomicBoolean();
       consumer.handler(record -> {
@@ -613,8 +613,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
           // Need to pause the consumer as it's currently delivering a batch of 10 elements
           consumer.pause();
           // Seek to offset 0
-          consumer.seekToBeginning(Collections.singleton(topicPartition), res -> {
-            consumer.position(topicPartition, ctx.asyncAssertSuccess(posRes -> {
+          consumer.seekToBeginning(Collections.singleton(topicPartition)).onComplete(res -> {
+            consumer.position(topicPartition).onComplete(ctx.asyncAssertSuccess(posRes -> {
               ctx.assertEquals(0L, posRes, "Expecting offset 0 after seek to 0");
               consumer.resume();
             }));
@@ -649,11 +649,11 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       // no need for handling incoming records in this test
     });
 
-    consumer.subscribe(Collections.singleton(topicName), asyncResult -> {
+    consumer.subscribe(Collections.singleton(topicName)).onComplete(asyncResult -> {
 
       if (asyncResult.succeeded()) {
 
-        consumer.subscription(asyncResult1 -> {
+        consumer.subscription().onComplete(asyncResult1 -> {
 
           if (asyncResult1.succeeded()) {
 
@@ -691,11 +691,11 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     TopicPartition partition = new TopicPartition(topicName, 0);
 
-    consumer.assign(Collections.singleton(partition), asyncResult -> {
+    consumer.assign(Collections.singleton(partition)).onComplete(asyncResult -> {
 
       if (asyncResult.succeeded()) {
 
-        consumer.assignment(asyncResult1 -> {
+        consumer.assignment().onComplete(asyncResult1 -> {
 
           if (asyncResult1.succeeded()) {
 
@@ -745,7 +745,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     TopicPartition partition = new TopicPartition(topicName, 0);
 
-    consumer.assign(Collections.singleton(partition), asyncResult -> {
+    consumer.assign(Collections.singleton(partition)).onComplete(asyncResult -> {
 
       if (asyncResult.succeeded()) {
 
@@ -784,7 +784,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     TopicPartition partition = new TopicPartition(topicName, 0);
 
-    consumer.assign(Collections.singleton(partition), asyncResult -> {
+    consumer.assign(Collections.singleton(partition)).onComplete(asyncResult -> {
 
       if (asyncResult.succeeded()) {
 
@@ -822,7 +822,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer = createConsumer(context, config);
 
     TopicPartition partition = new TopicPartition(topicName, 0);
-    consumer.assign(Collections.singleton(partition), asyncResult -> {
+    consumer.assign(Collections.singleton(partition)).onComplete(asyncResult -> {
       ctx.assertTrue(asyncResult.succeeded());
     });
 
@@ -856,7 +856,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         case 1: // seek called but not completed
           if (offset == 5) {
             state.set(1);
-            consumer.seek(partition, 0, ar -> {
+            consumer.seek(partition, 0).onComplete(ar -> {
               state.set(2);
               ctx.assertTrue(ar.succeeded());
             });
@@ -893,7 +893,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     TopicPartition partition1 = new TopicPartition(topicName1, 0);
     TopicPartition partition2 = new TopicPartition(topicName2, 0);
-    consumer.assign(Collections.singleton(partition1), asyncResult -> {
+    consumer.assign(Collections.singleton(partition1)).onComplete(asyncResult -> {
       ctx.assertTrue(asyncResult.succeeded());
     });
 
@@ -928,7 +928,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
           }
           if (offset == 5) {
             state.set(1);
-            consumer.assign(Collections.singleton(partition2), ar -> {
+            consumer.assign(Collections.singleton(partition2)).onComplete(ar -> {
               state.set(2);
               ctx.assertTrue(ar.succeeded());
             });
@@ -956,11 +956,11 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       // no need for handling incoming records in this test
     });
 
-    consumer.subscribe(Collections.singleton(topicName), asyncResult -> {
+    consumer.subscribe(Collections.singleton(topicName)).onComplete(asyncResult -> {
 
       if (asyncResult.succeeded()) {
 
-        consumer.listTopics(asyncResult1 -> {
+        consumer.listTopics().onComplete(asyncResult1 -> {
 
           if (asyncResult1.succeeded()) {
 
@@ -992,7 +992,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
 
     Async done = ctx.async();
 
-    consumer.partitionsFor(topicName, ar -> {
+    consumer.partitionsFor(topicName).onComplete(ar -> {
       if (ar.succeeded()) {
         List<PartitionInfo> partitionInfo = ar.result();
         ctx.assertEquals(2, partitionInfo.size());
@@ -1020,14 +1020,14 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       // no need for handling incoming records in this test
     });
 
-    consumer.subscribe(Collections.singleton(topicName), asyncResult -> {
+    consumer.subscribe(Collections.singleton(topicName)).onComplete(asyncResult -> {
 
       if (asyncResult.succeeded()) {
-        consumer.partitionsFor(topicName, asyncResult1 -> {
+        consumer.partitionsFor(topicName).onComplete(asyncResult1 -> {
           if (asyncResult.succeeded()) {
             for (org.apache.kafka.common.PartitionInfo pi : asyncResult1.result()) {
               TopicPartition tp = new TopicPartition(topicName, pi.partition());
-              consumer.position(tp, asyncResult2 -> {
+              consumer.position(tp).onComplete(asyncResult2 -> {
                 if (asyncResult2.succeeded()) {
                   ctx.assertTrue(asyncResult2.result() == 0);
                   done.complete();
@@ -1071,11 +1071,11 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     consumer.exceptionHandler(ctx::fail);
     consumer.handler(rec -> {
       if (count.decrementAndGet() == 0) {
-        consumer.partitionsFor(topicName, asyncResult -> {
+        consumer.partitionsFor(topicName).onComplete(asyncResult -> {
           if (asyncResult.succeeded()) {
             for (org.apache.kafka.common.PartitionInfo pi : asyncResult.result()) {
               TopicPartition tp = new TopicPartition(topicName, pi.partition());
-              consumer.position(tp, asyncResult1 -> {
+              consumer.position(tp).onComplete(asyncResult1 -> {
                 if (asyncResult1.succeeded()) {
                   ctx.assertTrue(asyncResult1.result() == numMessages);
                   done.complete();
@@ -1143,9 +1143,9 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       // nothing to do in this test
     });
 
-    consumer.subscribe(Collections.singleton(topicName), ctx.asyncAssertSuccess(subscribeRes -> {
+    consumer.subscribe(Collections.singleton(topicName)).onComplete(ctx.asyncAssertSuccess(subscribeRes -> {
         if (beginningOffset) {
-          consumer.beginningOffsets(topicPartitions, beginningOffsetResult -> {
+          consumer.beginningOffsets(topicPartitions).onComplete(beginningOffsetResult -> {
             ctx.assertTrue(beginningOffsetResult.succeeded());
             // expect one result
             ctx.assertEquals(1, beginningOffsetResult.result().size());
@@ -1153,7 +1153,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
             ctx.assertEquals(0L, beginningOffsetResult.result().get(topicPartition));
             done.countDown();
           });
-          consumer.beginningOffsets(topicPartition, beginningOffsetResult -> {
+          consumer.beginningOffsets(topicPartition).onComplete(beginningOffsetResult -> {
             ctx.assertTrue(beginningOffsetResult.succeeded());
             // beginning offset must be 0
             ctx.assertEquals(0L, beginningOffsetResult.result());
@@ -1162,7 +1162,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         }
         // Tests for endOffset
         else {
-          consumer.endOffsets(topicPartitions, endOffsetResult -> {
+          consumer.endOffsets(topicPartitions).onComplete(endOffsetResult -> {
             ctx.assertTrue(endOffsetResult.succeeded());
             ctx.assertEquals(1, endOffsetResult.result().size());
             // endOffset must be equal to the number of ingested messages
@@ -1170,7 +1170,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
             done.countDown();
           });
 
-          consumer.endOffsets(topicPartition, endOffsetResult -> {
+          consumer.endOffsets(topicPartition).onComplete(endOffsetResult -> {
             ctx.assertTrue(endOffsetResult.succeeded());
             // endOffset must be equal to the number of ingested messages
             ctx.assertEquals((long) numMessages, endOffsetResult.result());
@@ -1211,11 +1211,11 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       // nothing to do in this test
     });
 
-    consumer.subscribe(Collections.singleton(topicName), ctx.asyncAssertSuccess(subscribeRes -> {
+    consumer.subscribe(Collections.singleton(topicName)).onComplete(ctx.asyncAssertSuccess(subscribeRes -> {
       // search by timestamp
       // take timestamp BEFORE start of ingestion and add half of the ingestion duration to it
       long searchTimestamp = beforeProduce + (produceDuration / 2);
-      consumer.offsetsForTimes(Collections.singletonMap(topicPartition, searchTimestamp), ctx.asyncAssertSuccess(offsetAndTimestamps -> {
+      consumer.offsetsForTimes(Collections.singletonMap(topicPartition, searchTimestamp)).onComplete(ctx.asyncAssertSuccess(offsetAndTimestamps -> {
         OffsetAndTimestamp offsetAndTimestamp = offsetAndTimestamps.get(topicPartition);
         ctx.assertEquals(1, offsetAndTimestamps.size());
         // Offset must be somewhere between beginningOffset and endOffset
@@ -1226,7 +1226,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         done.countDown();
       }));
 
-      consumer.offsetsForTimes(topicPartition, searchTimestamp, ctx.asyncAssertSuccess(offsetAndTimestamp -> {
+      consumer.offsetsForTimes(topicPartition, searchTimestamp).onComplete(ctx.asyncAssertSuccess(offsetAndTimestamp -> {
         // Offset must be somewhere between beginningOffset and endOffset
         ctx.assertTrue(offsetAndTimestamp.offset() >= 0L && offsetAndTimestamp.offset() <= (long) numMessages,
           "Invalid offset 0 <= " + offsetAndTimestamp.offset() + " <= " + numMessages);

@@ -18,7 +18,6 @@ package io.vertx.kafka.client.producer;
 
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.Nullable;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -212,52 +211,28 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   /**
    * Initializes the underlying kafka transactional producer. See {@link KafkaProducer#initTransactions()} ()}
    *
-   * @param handler handler called on operation completed
-   * @return current KafkaWriteStream instance
-   */
-  KafkaWriteStream<K, V> initTransactions(Handler<AsyncResult<Void>> handler);
-
-  /**
-   * Like {@link #initTransactions(Handler)} but with a future of the result
+   * @return a future notified with the result
    */
   Future<Void> initTransactions();
 
   /**
    * Starts a new kafka transaction. See {@link KafkaProducer#beginTransaction()}
    *
-   * @param handler handler called on operation completed
-   * @return current KafkaWriteStream instance
-   */
-  KafkaWriteStream<K, V> beginTransaction(Handler<AsyncResult<Void>> handler);
-
-  /**
-   * Like {@link #beginTransaction(Handler)} but with a future of the result
+   * @return a future notified with the result
    */
   Future<Void> beginTransaction();
 
   /**
    * Commits the ongoing transaction. See {@link KafkaProducer#commitTransaction()}
    *
-   * @param handler handler called on operation completed
-   * @return current KafkaWriteStream instance
-   */
-  KafkaWriteStream<K, V> commitTransaction(Handler<AsyncResult<Void>> handler);
-
-  /**
-   * Like {@link #commitTransaction(Handler)} but with a future of the result
+   * @return a future notified with the result
    */
   Future<Void> commitTransaction();
 
   /**
    * Aborts the ongoing transaction. See {@link org.apache.kafka.clients.producer.KafkaProducer#abortTransaction()}
    *
-   * @param handler handler called on operation completed
-   * @return current KafkaWriteStream instance
-   */
-  KafkaWriteStream<K, V> abortTransaction(Handler<AsyncResult<Void>> handler);
-
-  /**
-   * Like {@link #abortTransaction(Handler)} but with a future of the result
+   * @return a future notified with the result
    */
   Future<Void> abortTransaction();
 
@@ -270,38 +245,17 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   Future<RecordMetadata> send(ProducerRecord<K, V> record);
 
   /**
-   * Asynchronously write a record to a topic
-   *
-   * @param record  record to write
-   * @param handler handler called on operation completed
-   * @return  current KafkaWriteStream instance
-   */
-  KafkaWriteStream<K, V> send(ProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler);
-
-  /**
    * Get the partition metadata for the give topic.
    *
    * @param topic topic partition for which getting partitions info
-   * @param handler handler called on operation completed
-   * @return  current KafkaWriteStream instance
-   */
-  KafkaWriteStream<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler);
-
-  /**
-   * Like {@link #partitionsFor(String, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified with the result
    */
   Future<List<PartitionInfo>> partitionsFor(String topic);
 
   /**
    * Invoking this method makes all buffered records immediately available to write
    *
-   * @param completionHandler handler called on operation completed
-   * @return  current KafkaWriteStream instance
-   */
-  KafkaWriteStream<K, V> flush(Handler<AsyncResult<Void>> completionHandler);
-
-  /**
-   * Like {@link #flush(Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified with the result
    */
   Future<Void> flush();
 
@@ -313,20 +267,8 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
   /**
    * Close the stream
    *
-   * @param completionHandler handler called on operation completed
-   */
-  void close(Handler<AsyncResult<Void>> completionHandler);
-
-  /**
-   * Close the stream
-   *
    * @param timeout timeout to wait for closing
-   * @param completionHandler handler called on operation completed
-   */
-  void close(long timeout, Handler<AsyncResult<Void>> completionHandler);
-
-  /**
-   * Like {@link #close(long, Handler)} but returns a {@code Future} of the asynchronous result
+   * @return a future notified with the result
    */
   Future<Void> close(long timeout);
 

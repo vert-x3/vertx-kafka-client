@@ -69,9 +69,9 @@ public abstract class ConsumerMockTestBase {
       ctx.assertEquals(0, record.partition());
       ctx.assertEquals("abc", record.key());
       ctx.assertEquals("def", record.value());
-      consumer.close(v -> doneLatch.complete());
+      consumer.close().onComplete(v -> doneLatch.complete());
     });
-    consumer.subscribe(Collections.singleton("the_topic"), v -> {
+    consumer.subscribe(Collections.singleton("the_topic")).onComplete(v -> {
       mock.schedulePollTask(() -> {
         mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
         mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, "abc", "def"));
@@ -95,9 +95,9 @@ public abstract class ConsumerMockTestBase {
       Header header = headers[0];
       ctx.assertEquals("header_key", header.key());
       ctx.assertEquals("header_value", new String(header.value()));
-      consumer.close(v -> doneLatch.complete());
+      consumer.close().onComplete(v -> doneLatch.complete());
     });
-    consumer.subscribe(Collections.singleton("the_topic"), v -> {
+    consumer.subscribe(Collections.singleton("the_topic")).onComplete(v -> {
       mock.schedulePollTask(() -> {
         mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
         mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, 0L, TimestampType.NO_TIMESTAMP_TYPE, 0L, 0, 0, "abc", "def",
@@ -122,11 +122,11 @@ public abstract class ConsumerMockTestBase {
         ctx.assertEquals("key-" + val, record.key());
         ctx.assertEquals("value-" + val, record.value());
         if (val == num - 1) {
-          consumer.close(v -> doneLatch.complete());
+          consumer.close().onComplete(v -> doneLatch.complete());
         }
       }
     });
-    consumer.subscribe(Collections.singleton("the_topic"), v -> {
+    consumer.subscribe(Collections.singleton("the_topic")).onComplete(v -> {
       mock.schedulePollTask(() -> {
         mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
         mock.seek(new TopicPartition("the_topic", 0), 0);
@@ -148,7 +148,7 @@ public abstract class ConsumerMockTestBase {
       contexts.add(Vertx.currentContext());
       doneLatch.countDown();
     });
-    consumer.subscribe(Collections.singleton("the_topic"), v -> {
+    consumer.subscribe(Collections.singleton("the_topic")).onComplete(v -> {
       mock.schedulePollTask(() -> {
         mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
         mock.seek(new TopicPartition("the_topic", 0), 0L);
@@ -157,7 +157,7 @@ public abstract class ConsumerMockTestBase {
         }
       });
     });
-    doneLatch.handler(r -> consumer.close(v -> {
+    doneLatch.handler(r -> consumer.close().onComplete(v -> {
       ctx.assertEquals(messageCount, contexts.size());
       ctx.assertNotEquals(contexts.get(0), contexts.get(1));
     }));

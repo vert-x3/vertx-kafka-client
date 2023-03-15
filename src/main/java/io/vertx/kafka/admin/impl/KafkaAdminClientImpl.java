@@ -74,10 +74,8 @@ import org.apache.kafka.clients.admin.LogDirDescription;
 import org.apache.kafka.clients.admin.RecordsToDelete;
 
 import io.vertx.codegen.annotations.GenIgnore;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.KafkaFuture;
@@ -93,11 +91,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   public KafkaAdminClientImpl(Vertx vertx, AdminClient adminClient) {
       this.vertx = vertx;
       this.adminClient = adminClient;
-  }
-
-  @Override
-  public void describeTopics(List<String> topicNames, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler) {
-    describeTopics(topicNames).onComplete(completionHandler);
   }
 
   @Override
@@ -145,11 +138,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
     });
     return promise.future();
-  }
-
-  @Override
-  public void describeTopics(List<String> topicNames, DescribeTopicsOptions options, Handler<AsyncResult<Map<String, TopicDescription>>> completionHandler) {
-    describeTopics(topicNames, options).onComplete(completionHandler);
   }
 
   @Override
@@ -201,12 +189,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   @GenIgnore
-  public void describeLogDirs(List<Integer> brokers, Handler<AsyncResult<Map<Integer, Map<String, LogDirDescription>>>> completionHandler) {
-    describeLogDirs(brokers).onComplete(completionHandler);
-  }
-
-  @Override
-  @GenIgnore
   public Future<Map<Integer, Map<String, LogDirDescription>>> describeLogDirs(List<Integer> brokers) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Map<Integer, Map<String, LogDirDescription>>> promise = ctx.promise();
@@ -236,12 +218,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-
-  @Override
-  public void listTopics(Handler<AsyncResult<Set<String>>> completionHandler) {
-    listTopics().onComplete(completionHandler);
-  }
-
   @Override
   public Future<Set<String>> listTopics() {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
@@ -256,11 +232,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
     });
     return promise.future();
-  }
-
-  @Override
-  public void createTopics(List<NewTopic> topics, Handler<AsyncResult<Void>> completionHandler) {
-    createTopics(topics).onComplete(completionHandler);
   }
 
   @Override
@@ -281,11 +252,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
-  public void deleteTopics(List<String> topicNames, Handler<AsyncResult<Void>> completionHandler) {
-    deleteTopics(topicNames).onComplete(completionHandler);
-  }
-
-  @Override
   public Future<Void> deleteTopics(List<String> topicNames) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Void> promise = ctx.promise();
@@ -300,12 +266,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
     });
     return promise.future();
-  }
-
-  @Override
-  @GenIgnore
-  public void deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDelete,Handler<AsyncResult<Map<TopicPartition, DeletedRecords>>> completionHandler) {
-    deleteRecords(recordsToDelete).onComplete(completionHandler);
   }
 
   @Override
@@ -348,13 +308,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-
-
-  @Override
-  public void createPartitions(Map<String, NewPartitions> partitions, Handler<AsyncResult<Void>> completionHandler) {
-    createPartitions(partitions).onComplete(completionHandler);
-  }
-
   @Override
   public Future<Void> createPartitions(Map<String, NewPartitions> partitions) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
@@ -369,12 +322,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
     });
     return promise.future();
-  }
-
-
-  @Override
-  public void describeConfigs(List<ConfigResource> configResources, Handler<AsyncResult<Map<ConfigResource, Config>>> completionHandler) {
-    describeConfigs(configResources).onComplete(completionHandler);
   }
 
   @Override
@@ -406,11 +353,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
-  public void alterConfigs(Map<ConfigResource,Config> configs, Handler<AsyncResult<Void>> completionHandler) {
-    alterConfigs(configs).onComplete(completionHandler);
-  }
-
-  @Override
   public Future<Void> alterConfigs(Map<ConfigResource, Config> configs) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Void> promise = ctx.promise();
@@ -428,11 +370,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
-  public void listConsumerGroups(Handler<AsyncResult<List<ConsumerGroupListing>>> completionHandler) {
-    listConsumerGroups().onComplete(completionHandler);
-  }
-
-  @Override
   public Future<List<ConsumerGroupListing>> listConsumerGroups() {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<ConsumerGroupListing>> promise = ctx.promise();
@@ -447,11 +384,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
     });
     return promise.future();
-  }
-
-  @Override
-  public void describeConsumerGroups(List<java.lang.String> groupIds, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler) {
-    describeConsumerGroups(groupIds).onComplete(completionHandler);
   }
 
   @Override
@@ -498,11 +430,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
-  public void describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options, Handler<AsyncResult<Map<String, ConsumerGroupDescription>>> completionHandler) {
-    describeConsumerGroups(groupIds, options).onComplete(completionHandler);
-  }
-
-  @Override
   public Future<Map<String, ConsumerGroupDescription>> describeConsumerGroups(List<String> groupIds, DescribeConsumerGroupsOptions options) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Map<String, ConsumerGroupDescription>> promise = ctx.promise();
@@ -545,10 +472,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-  public void listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
-    listConsumerGroupOffsets(groupId, options).onComplete(completionHandler);
-  }
-
   public Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Map<TopicPartition, OffsetAndMetadata>> promise = ctx.promise();
@@ -571,11 +494,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
-  public void deleteConsumerGroups(List<String> groupIds, Handler<AsyncResult<Void>> completionHandler) {
-    deleteConsumerGroups(groupIds).onComplete(completionHandler);
-  }
-
-  @Override
   public Future<Void> deleteConsumerGroups(List<String> groupIds) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Void> promise = ctx.promise();
@@ -589,11 +507,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
     });
     return promise.future();
-  }
-
-  @Override
-  public void alterConsumerGroupOffsets(String groupId, Map<TopicPartition, OffsetAndMetadata> offsets, Handler<AsyncResult<Void>> completionHandler) {
-    alterConsumerGroupOffsets(groupId, offsets).onComplete(completionHandler);
   }
 
   @Override
@@ -612,12 +525,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-
-  @Override
-  public void deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions, Handler<AsyncResult<Void>> completionHandler) {
-    deleteConsumerGroupOffsets(groupId, partitions).onComplete(completionHandler);
-  }
-
   @Override
   public Future<Void> deleteConsumerGroupOffsets(String groupId, Set<TopicPartition> partitions) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
@@ -632,11 +539,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
     });
     return promise.future();
-  }
-
-  @Override
-  public void describeCluster(Handler<AsyncResult<ClusterDescription>> completionHandler) {
-    describeCluster().onComplete(completionHandler);
   }
 
   @Override
@@ -670,11 +572,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   @Override
-  public void describeCluster(DescribeClusterOptions options, Handler<AsyncResult<ClusterDescription>> completionHandler) {
-    describeCluster(options).onComplete(completionHandler);
-  }
-
-  @Override
   public Future<ClusterDescription> describeCluster(DescribeClusterOptions options) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<ClusterDescription> promise = ctx.promise();
@@ -704,10 +601,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-  public void listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets, Handler<AsyncResult<Map<TopicPartition, ListOffsetsResultInfo>>> completionHandler) {
-    listOffsets(topicPartitionOffsets).onComplete(completionHandler);
-  }
-
   @Override
   public Future<Map<TopicPartition, ListOffsetsResultInfo>> listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
@@ -729,10 +622,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-  public void describeAcls(AclBindingFilter aclBindingFilter, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
-    describeAcls(aclBindingFilter).onComplete(completionHandler);
-  }
-
   public Future<List<AclBinding>> describeAcls(AclBindingFilter aclBindingFilter) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<AclBinding>> promise = ctx.promise();
@@ -749,10 +638,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-  public void createAcls(List<AclBinding> aclBindings, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
-    createAcls(aclBindings).onComplete(completionHandler);
-  }
-
   public Future<List<AclBinding>> createAcls(List<AclBinding> aclBindings) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<List<AclBinding>> promise = ctx.promise();
@@ -766,10 +651,6 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
     });
     return promise.future();
-  }
-
-  public void deleteAcls(List<AclBindingFilter> aclBindingsFilters, Handler<AsyncResult<List<AclBinding>>> completionHandler) {
-    deleteAcls(aclBindingsFilters).onComplete(completionHandler);
   }
 
   public Future<List<AclBinding>> deleteAcls(List<AclBindingFilter> aclBindingsFilters) {
@@ -802,15 +683,5 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
       }
       prom.complete();
     });
-  }
-
-  @Override
-  public void close(Handler<AsyncResult<Void>> handler) {
-    close().onComplete(handler);
-  }
-
-  @Override
-  public void close(long timeout, Handler<AsyncResult<Void>> handler) {
-    close(timeout).onComplete(handler);
   }
 }

@@ -48,13 +48,13 @@ public class KafkaTestBase {
 
   public static void close(TestContext ctx, KafkaWriteStream<?, ?> producer) {
     if (producer != null) {
-      close(ctx, handler -> producer.close(2000L, handler));
+      close(ctx, handler -> producer.close(2000L).onComplete(handler));
     }
   }
 
   public static void close(TestContext ctx, KafkaReadStream<?, ?> consumer) {
     if (consumer != null) {
-      KafkaTestBase.close(ctx, consumer::close);
+      KafkaTestBase.close(ctx, asyncResultHandler -> consumer.close().onComplete(asyncResultHandler));
     }
   }
 

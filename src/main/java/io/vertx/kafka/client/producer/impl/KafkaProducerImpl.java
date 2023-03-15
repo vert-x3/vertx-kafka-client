@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -90,9 +91,11 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     final Producer producer;
     final CloseHandler closeHandler;
 
-    public SharedProducer(KafkaWriteStream stream) {
+    public SharedProducer(KafkaWriteStream<?, ?> stream) {
       this.producer = stream.unwrap();
-      this.closeHandler = new CloseHandler(stream::close);
+      this.closeHandler = new CloseHandler((timeout, handler) -> {
+        stream.close(timeout).onComplete(handler);
+      });
     }
   }
 
@@ -134,7 +137,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   public KafkaProducerImpl(Vertx vertx, KafkaWriteStream<K, V> stream) {
-    this(vertx, stream, new CloseHandler(stream::close));
+    this(vertx, stream, new CloseHandler((timeout, handler) -> stream.close(timeout).onComplete(handler)));
   }
 
   public KafkaProducerImpl<K, V> registerCloseHook() {
@@ -147,20 +150,8 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducer<K, V> initTransactions(Handler<AsyncResult<Void>> handler) {
-    this.stream.initTransactions(handler);
-    return this;
-  }
-
-  @Override
   public Future<Void> initTransactions() {
     return this.stream.initTransactions();
-  }
-
-  @Override
-  public KafkaProducer<K, V> beginTransaction(Handler<AsyncResult<Void>> handler) {
-    this.stream.beginTransaction(handler);
-    return this;
   }
 
   @Override
@@ -169,20 +160,8 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducer<K, V> commitTransaction(Handler<AsyncResult<Void>> handler) {
-    this.stream.commitTransaction(handler);
-    return this;
-  }
-
-  @Override
   public Future<Void> commitTransaction() {
     return this.stream.commitTransaction();
-  }
-
-  @Override
-  public KafkaProducer<K, V> abortTransaction(Handler<AsyncResult<Void>> handler) {
-    this.stream.abortTransaction(handler);
-    return this;
   }
 
   @Override
@@ -208,13 +187,6 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public KafkaProducer<K, V> send(KafkaProducerRecord<K, V> record, Handler<AsyncResult<RecordMetadata>> handler) {
-    this.send(record).onComplete(handler);
-    return this;
-  }
-
-  @Override
   public Future<List<PartitionInfo>> partitionsFor(String topic) {
     return this.stream.partitionsFor(topic).map(list ->
       list.stream().map(kafkaPartitionInfo ->
@@ -228,12 +200,6 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
             .setTopic(kafkaPartitionInfo.topic())
         ).collect(Collectors.toList())
     );
-  }
-
-  @Override
-  public KafkaProducer<K, V> partitionsFor(String topic, Handler<AsyncResult<List<PartitionInfo>>> handler) {
-    partitionsFor(topic).onComplete(handler);
-    return this;
   }
 
   @Override
@@ -259,12 +225,6 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public KafkaProducer<K, V> flush(Handler<AsyncResult<Void>> completionHandler) {
-    this.stream.flush(completionHandler);
-    return this;
-  }
-
-  @Override
   public Future<Void> flush() {
     return this.stream.flush();
   }
@@ -281,16 +241,6 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     Promise<Void> promise = Promise.promise();
     closeHandler.close(promise);
     return promise.future();
-  }
-
-  @Override
-  public void close(Handler<AsyncResult<Void>> completionHandler) {
-    closeHandler.close(completionHandler);
-  }
-
-  @Override
-  public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
-    closeHandler.close(completionHandler);
   }
 
   @Override
