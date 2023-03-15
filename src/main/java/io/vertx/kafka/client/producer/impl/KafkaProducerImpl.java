@@ -203,11 +203,6 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public void write(KafkaProducerRecord<K, V> record, Handler<AsyncResult<Void>> handler) {
-    this.stream.write(record.record()).onComplete(handler);
-  }
-
-  @Override
   public Future<RecordMetadata> send(KafkaProducerRecord<K, V> record) {
     return this.stream.send(record.record()).map(Helper::from);
   }
