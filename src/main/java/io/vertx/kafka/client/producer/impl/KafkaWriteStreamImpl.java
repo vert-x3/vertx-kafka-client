@@ -135,11 +135,6 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public void write(ProducerRecord<K, V> data, Handler<AsyncResult<Void>> handler) {
-    this.write(data).onComplete(handler);
-  }
-
-  @Override
   public Future<Void> write(ProducerRecord<K, V> record) {
     return this.send(record).mapEmpty();
   }
@@ -162,10 +157,10 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   }
 
   @Override
-  public void end(Handler<AsyncResult<Void>> handler) {
-    if (handler != null) {
-      vertx.runOnContext(v -> handler.handle(Future.succeededFuture()));
-    }
+  public Future<Void> end() {
+    Promise<Void> promise = Promise.promise();
+    vertx.runOnContext(v -> promise.complete());
+    return promise.future();
   }
 
   @Override

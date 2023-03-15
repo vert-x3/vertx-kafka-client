@@ -242,8 +242,8 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   @Override
-  public void end(Handler<AsyncResult<Void>> handler) {
-    this.stream.end().onComplete(handler);
+  public Future<Void> end() {
+    return stream.end();
   }
 
   @Override
