@@ -1491,6 +1491,24 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     });
   }
 
+  @Test
+  public void testPollNoSubscribe(TestContext ctx) {
+    final String topicName = "testPollWithoutSubscribe-" + this.getClass().getName();
+    final String consumerId = topicName;
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, config);
+    Async done = ctx.async();
+    consumer.poll(Duration.ofMillis(100)).onComplete(ctx.asyncAssertFailure(e -> {
+      ctx.assertTrue(e.getMessage().contains("subscribe"));
+      ctx.assertTrue(e.getMessage().contains("assign"));
+      done.complete();
+    }));
+  }
+
+
+
   <K, V> KafkaReadStream<K, V> createConsumer(Context context, Properties config) throws Exception {
     CompletableFuture<KafkaReadStream<K, V>> ret = new CompletableFuture<>();
     context.runOnContext(v -> {
