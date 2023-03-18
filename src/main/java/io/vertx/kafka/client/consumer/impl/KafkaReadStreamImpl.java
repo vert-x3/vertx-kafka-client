@@ -687,7 +687,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   public Future<ConsumerRecords<K, V>> poll(final Duration timeout) {
     final Promise<ConsumerRecords<K, V>> promise = Promise.promise();
     if (this.worker == null) {
-      promise.fail(new IllegalArgumentException("Before polling, partitions must be assigned to the consumer by either calling the assign or subscribe method"));
+      promise.fail(new IllegalStateException("Consumer is not subscribed to any topics or assigned any partitions"));
       return promise.future();
     }
     this.worker.submit(() -> {
