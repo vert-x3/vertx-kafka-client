@@ -30,8 +30,8 @@
 
   <properties>
     <stack.version>5.0.0-SNAPSHOT</stack.version>
-    <kafka.version>3.0.2</kafka.version>
-    <debezium.version>1.8.0.Final</debezium.version>
+    <kafka.version>3.4.0</kafka.version>
+    <debezium.version>2.1.4.Final</debezium.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
@@ -78,7 +78,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.1</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>

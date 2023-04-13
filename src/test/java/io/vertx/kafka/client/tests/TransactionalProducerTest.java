@@ -26,7 +26,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.After;
@@ -130,13 +129,13 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
   @Test
   public void transactionHandlingFailsIfInitWasNotCalled(TestContext ctx) {
     producer.beginTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
     producer.commitTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
     producer.abortTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
   }
 
