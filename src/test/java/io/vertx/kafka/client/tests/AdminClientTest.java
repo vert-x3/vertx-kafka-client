@@ -30,7 +30,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -55,7 +54,6 @@ import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.DeletedRecords;
 import org.apache.kafka.clients.admin.LogDirDescription;
 import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -66,16 +64,15 @@ import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.impl.Helper;
 import io.vertx.kafka.admin.KafkaAdminClient;
 
 import static junit.framework.TestCase.assertEquals;
@@ -873,10 +870,12 @@ public class AdminClientTest extends KafkaClusterTestBase {
         adminClient.createPartitions(Collections.singletonMap("testCreatePartitionInTopicWithAssignment", new NewPartitions(3, assigmnments))).onComplete(ctx.asyncAssertSuccess(v -> {
           adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment")).onComplete(ctx.asyncAssertSuccess(s -> {
 
-            List<TopicPartitionInfo> partitions = s.get("testCreatePartitionInTopicWithAssignment").getPartitions();
-            ctx.assertTrue(partitions.size() == 3, "Expect "+ partitions + " size == 3");
-            ctx.assertTrue(partitions.get(1).getReplicas().get(0).getId() == 2, "Expect replica 0 of partition 1 to be 2, partitions = " + partitions);
-            ctx.assertTrue(partitions.get(2).getReplicas().get(0).getId() == 1, "Expect replica 0 of partition 2 to be 1, partitions = " + partitions);
+            Awaitility.await().untilAsserted(() -> {
+              List<TopicPartitionInfo> partitions = s.get("testCreatePartitionInTopicWithAssignment").getPartitions();
+              ctx.assertTrue(partitions.size() == 3, "Expect "+ partitions + " size == 3");
+              ctx.assertTrue(partitions.get(1).getReplicas().get(0).getId() == 2, "Expect replica 0 of partition 1 to be 2, partitions = " + partitions);
+              ctx.assertTrue(partitions.get(2).getReplicas().get(0).getId() == 1, "Expect replica 0 of partition 2 to be 1, partitions = " + partitions);
+            });
             adminClient.close();
             async.complete();
           }));
