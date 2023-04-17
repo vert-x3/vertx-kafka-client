@@ -16,18 +16,13 @@
 
 package io.vertx.kafka.client.producer.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
+import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
-import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
@@ -35,7 +30,6 @@ import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.Serializer;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
