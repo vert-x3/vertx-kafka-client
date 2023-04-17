@@ -21,11 +21,13 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 
+import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -41,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -87,6 +90,17 @@ public class ProducerMockTest {
       return super.send(record, callback);
     }
   }
+
+//  private static class TestProducerCloseTimeout extends MockProducer<String, String> {
+//    private long timeout;
+//    public TestProducerCloseTimeout(long timeout) {
+//      super(false, new StringSerializer(), new StringSerializer());
+//    }
+//
+//    @Override
+//
+//
+//  }
 
 
 
@@ -203,4 +217,23 @@ public class ProducerMockTest {
     });
     prod.write(record);
   }
+
+  @Test
+  public void testCloseHandlerTimeout(TestContext ctx) {
+    long expectedTimeout = 100;
+    Async async = ctx.async(1);
+    CloseHandler closeHandler = new CloseHandler((timeout, v) -> {
+      ctx.assertEquals(expectedTimeout, timeout);
+      async.countDown();
+    });
+    HashMap<String, Object> config = new HashMap<>();
+    config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    KafkaWriteStream<String, String> stream = KafkaWriteStream.create(vertx, config, new StringSerializer(), new StringSerializer());
+    KafkaProducer<String, String> mock = new KafkaProducerImpl<>(vertx, stream, closeHandler);
+    mock.close(expectedTimeout, res -> {
+      ctx.assertEquals(0, async.count());
+      async.complete();
+    });
+  }
+
 }
