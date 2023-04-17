@@ -295,7 +295,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
-    closeHandler.close(completionHandler);
+    closeHandler.close(timeout, completionHandler);
   }
 
   @Override
