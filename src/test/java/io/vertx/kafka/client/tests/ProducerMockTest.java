@@ -91,19 +91,6 @@ public class ProducerMockTest {
     }
   }
 
-//  private static class TestProducerCloseTimeout extends MockProducer<String, String> {
-//    private long timeout;
-//    public TestProducerCloseTimeout(long timeout) {
-//      super(false, new StringSerializer(), new StringSerializer());
-//    }
-//
-//    @Override
-//
-//
-//  }
-
-
-
   private Vertx vertx;
 
   @Before
