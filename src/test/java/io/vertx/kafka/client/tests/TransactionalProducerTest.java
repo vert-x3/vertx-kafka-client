@@ -130,13 +130,13 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
   @Test
   public void transactionHandlingFailsIfInitWasNotCalled(TestContext ctx) {
     producer.beginTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
     producer.commitTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
     producer.abortTransaction().onComplete(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
   }
 
