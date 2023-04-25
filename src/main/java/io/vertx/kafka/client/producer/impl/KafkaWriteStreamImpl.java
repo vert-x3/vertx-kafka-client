@@ -186,20 +186,11 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   @Override
   public Future<List<PartitionInfo>> partitionsFor(String topic) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    Promise<List<PartitionInfo>> trampolineProm = ctx.promise();
-
-    // TODO: should be this timeout related to the Kafka producer property "metadata.fetch.timeout.ms" ?
-    this.vertx.setTimer(2000, id -> {
-      trampolineProm.tryFail("Kafka connect timeout");
-    });
-
-    ctx.<List<PartitionInfo>>executeBlocking(prom -> {
+    return ctx.<List<PartitionInfo>>executeBlocking(prom -> {
       prom.complete(
         this.producer.partitionsFor(topic)
       );
-    }, taskQueue).onComplete(trampolineProm);
-
-    return trampolineProm.future(); // Trampoline on caller context
+    }, taskQueue);
   }
 
   @Override
