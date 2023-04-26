@@ -277,7 +277,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param pattern  Pattern to subscribe to
    * @return a {@code Future} completed with the operation result
    */
-  @GenIgnore
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<Void> subscribe(Pattern pattern);
 
   /**
