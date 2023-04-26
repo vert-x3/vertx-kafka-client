@@ -232,6 +232,11 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
+  public Future<Void> seek(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {
+    return seek(topicPartition, offsetAndMetadata.getOffset());
+  }
+
+  @Override
   public Future<Void> seekToBeginning(TopicPartition topicPartition) {
     return this.seekToBeginning(Collections.singleton(topicPartition));
   }

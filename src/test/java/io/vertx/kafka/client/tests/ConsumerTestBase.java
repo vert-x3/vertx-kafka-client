@@ -536,6 +536,15 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
   }
 
   @Test
+  public void testSeekOffsetAndMetadata(TestContext ctx) throws Exception {
+    int numMessages = 500;
+    final String topicName = "the_topic_meta-" + this.getClass().getName();
+    testSeek(topicName, numMessages, ctx, () -> {
+      consumer.seek(new TopicPartition(topicName, 0), new OffsetAndMetadata(0));
+    }, -numMessages);
+  }
+
+  @Test
   public void testSeekToBeginning(TestContext ctx) throws Exception {
     int numMessages = 500;
     final String topicName = "the_topic_1-" + this.getClass().getName();
@@ -553,9 +562,21 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     }, 0);
   }
 
-  private void testSeek(String topic, int numMessages, TestContext ctx, Runnable seeker, int abc) throws Exception {
+  /**
+   * Produces `numMessages` to a topic, then consume those.
+   * When done, run `seeker`, and continue consuming records from the topic until `recordCounterThreshold` is reached
+   * @param topic the topic to write to / read from
+   * @param numMessages number of messages to publish to the cluster
+   * @param seeker the method to seek
+   * @param recordCounterThreshold the threshold after which we consider the test a success.
+   *                               For instance: if publishing 10 messages to the topic and seeking to beginning,
+   *                               recordCounterThreshold would be -10
+   *                               (counter = 10, write 10 records -> consume -> counter = 0 -> seekToBeginning -> consume 10 -> counter = -10)
+   * @throws Exception if an error happens at topic creation
+   */
+  private void testSeek(String topic, int numMessages, TestContext ctx, Runnable seeker, int recordCounterThreshold) throws Exception {
     kafkaCluster.createTopic(topic, 1, 1);
-    String consumerId = topic;
+    String consumerId = topic + "-consumer";
     Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
     config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -578,7 +599,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       if (dec == 0) {
         seeker.run();
       }
-      if (dec == abc) {
+      if (dec == recordCounterThreshold) {
         done.complete();
       }
     });
