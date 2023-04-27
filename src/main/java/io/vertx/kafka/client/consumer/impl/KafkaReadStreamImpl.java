@@ -360,6 +360,22 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
+  public Future<Void> seek(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {
+    Promise<Void> promise = Promise.promise();
+    this.context.runOnContext(r -> {
+      current = null;
+
+      this.submitTask((consumer, future) -> {
+        consumer.seek(topicPartition, offsetAndMetadata);
+        if (future != null) {
+          future.complete();
+        }
+      }, promise);
+    });
+    return promise.future();
+  }
+
+  @Override
   public KafkaReadStream<K, V> partitionsRevokedHandler(Handler<Set<TopicPartition>> handler) {
     this.partitionsRevokedHandler = handler;
     return this;

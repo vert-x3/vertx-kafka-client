@@ -431,6 +431,24 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    */
   Future<Void> seek(TopicPartition topicPartition, long offset);
 
+
+  /**
+   * Overrides the fetch offsets that the consumer will use on the next poll.
+   * <p>
+   * Due to internal buffering of messages,
+   * the {@linkplain #handler(Handler) record handler} will
+   * continue to observe messages fetched with respect to the old offset
+   * until some time <em>after</em> the given {@code completionHandler}
+   * is called. In contrast, the once the given {@code completionHandler}
+   * is called the {@link #batchHandler(Handler)} will only see messages
+   * consistent with the new offset.
+   *
+   * @param topicPartition  topic partition for which seek
+   * @param offsetAndMetadata  offset to seek inside the topic partition
+   * @return a {@code Future} completed with the operation result
+   */
+  Future<Void> seek(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata);
+
   /**
    * Seek to the first offset for each of the given partition.
    * <p>
@@ -494,6 +512,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @return a {@code Future} completed with the operation result
    */
   Future<Void> seekToEnd(Set<TopicPartition> topicPartitions);
+
 
   /**
    * Commit current offsets for all the subscribed list of topics and partition.
