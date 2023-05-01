@@ -280,7 +280,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     DeleteRecordsResult deleteRecordsResult = this.adminClient.deleteRecords(recordsToDeleteKafka);
     Map<org.apache.kafka.common.TopicPartition, KafkaFuture<DeletedRecords>> deletedRecordsInfo = deleteRecordsResult.lowWatermarks();
     Map<TopicPartition, DeletedRecords> deletedRecordsInfoMap = new HashMap<>();
-    List<Future> deletedRecords = new ArrayList<>();
+    List<Future<DeletedRecords>> deletedRecords = new ArrayList<>();
     List<org.apache.kafka.common.TopicPartition> topicPartitions = new ArrayList<>();
     for(Map.Entry<org.apache.kafka.common.TopicPartition, KafkaFuture<DeletedRecords>> entry : deletedRecordsInfo.entrySet()){
       Promise<DeletedRecords> promise1 = ctx.promise();
