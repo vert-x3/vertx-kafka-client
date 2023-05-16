@@ -74,7 +74,6 @@ import org.apache.kafka.clients.admin.LogDirDescription;
 import org.apache.kafka.clients.admin.RecordsToDelete;
 
 import io.vertx.codegen.annotations.GenIgnore;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
@@ -294,7 +293,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
         }
       });
     }
-    CompositeFuture.join(deletedRecords).onComplete((drs) -> {
+    Future.join(deletedRecords).onComplete((drs) -> {
       if(drs.failed()){
         promise.fail("Error message drs: " + drs);
         return;
