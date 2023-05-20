@@ -145,6 +145,6 @@ public class KafkaClientOptions {
   }
 
   public JsonObject toJson() {
-    return new JsonObject();
+    return new JsonObject(config);
   }
 }
