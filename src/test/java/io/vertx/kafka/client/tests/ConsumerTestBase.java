@@ -1358,7 +1358,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       }
       batchHandler.complete();
     });
-    wrappedConsumer.handler(rec -> {});
     wrappedConsumer.subscribe(Collections.singleton(topicName));
   }
 
