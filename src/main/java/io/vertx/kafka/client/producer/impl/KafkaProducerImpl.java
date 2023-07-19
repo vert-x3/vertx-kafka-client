@@ -84,9 +84,9 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     CloseFuture closeFuture = new CloseFuture();
     Producer<K, V> s = ((VertxInternal)vertx).createSharedResource("__vertx.shared.kafka.producer", name, closeFuture, cf -> {
       Producer<K, V> producer = streamFactory.get().unwrap();
-      cf.add(completion -> vertx.<Void>executeBlocking(p -> {
+      cf.add(completion -> vertx.<Void>executeBlocking(() -> {
         producer.close();
-        p.complete();
+        return null;
       }).onComplete(completion));
       return producer;
     });

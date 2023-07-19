@@ -674,13 +674,13 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
 
   @Override
   public Future<Void> close(long timeout) {
-    return vertx.executeBlocking(prom -> {
+    return vertx.executeBlocking(() -> {
       if (timeout > 0) {
         adminClient.close(Duration.ofMillis(timeout));
       } else {
         adminClient.close();
       }
-      prom.complete();
+      return null;
     });
   }
 }

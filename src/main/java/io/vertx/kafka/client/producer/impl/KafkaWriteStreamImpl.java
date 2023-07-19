@@ -74,7 +74,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     ProducerTracer.StartedSpan startedSpan = this.tracer == null ? null : this.tracer.prepareSendMessage(ctx, record);
     int len = this.len(record.value());
     this.pending += len;
-    return ctx.executeBlocking(prom -> {
+    return ctx.executeBlocking(() -> {
+      Promise<RecordMetadata> prom = ctx.promise();
       try {
         this.producer.send(record, (metadata, err) -> {
 
@@ -125,7 +126,9 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
         }
         prom.fail(e);
       }
-    }, taskQueue);
+      return prom.future();
+    }, taskQueue)
+      .compose(f -> f);
   }
 
   @Override
@@ -186,19 +189,15 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   @Override
   public Future<List<PartitionInfo>> partitionsFor(String topic) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    return ctx.<List<PartitionInfo>>executeBlocking(prom -> {
-      prom.complete(
-        this.producer.partitionsFor(topic)
-      );
-    }, taskQueue);
+    return ctx.executeBlocking(() -> this.producer.partitionsFor(topic), taskQueue);
   }
 
   @Override
   public Future<Void> flush() {
     ContextInternal ctx = vertx.getOrCreateContext();
-    return ctx.<Void>executeBlocking(prom -> {
+    return ctx.executeBlocking(() -> {
       this.producer.flush();
-      prom.complete();
+      return null;
     }, taskQueue);
   }
 
@@ -210,14 +209,13 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   @Override
   public Future<Void> close(long timeout) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    Promise<Void> trampolineProm = ctx.promise();
-    return ctx.executeBlocking(prom -> {
+    return ctx.executeBlocking(() -> {
       if (timeout > 0) {
         this.producer.close(Duration.ofMillis(timeout));
       } else {
         this.producer.close();
       }
-      prom.complete();
+      return null;
     }, taskQueue);
   }
 
@@ -228,13 +226,9 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
   Future<Void> executeBlocking(final BlockingStatement statement) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    return ctx.executeBlocking(promise -> {
-      try {
-        statement.execute();
-        promise.complete();
-      } catch (Exception e) {
-        promise.fail(e);
-      }
+    return ctx.executeBlocking(() -> {
+      statement.execute();
+      return null;
     }, taskQueue);
   }
 
