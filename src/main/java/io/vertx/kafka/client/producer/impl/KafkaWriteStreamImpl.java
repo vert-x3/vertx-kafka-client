@@ -35,6 +35,8 @@ import org.apache.kafka.common.PartitionInfo;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Kafka write stream implementation
@@ -50,6 +52,7 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
   private final ProducerTracer tracer;
   private final TaskQueue taskQueue;
 
+  private final ExecutorService executor = Executors.newSingleThreadExecutor();
   public KafkaWriteStreamImpl(Vertx vertx, Producer<K, V> producer, KafkaClientOptions options) {
     ContextInternal ctxInt = ((ContextInternal) vertx.getOrCreateContext()).unwrap();
     this.producer = producer;
@@ -77,42 +80,44 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
     return ctx.executeBlocking(() -> {
       Promise<RecordMetadata> prom = ctx.promise();
       try {
-        this.producer.send(record, (metadata, err) -> {
+        executor.execute(() -> {
+          this.producer.send(record, (metadata, err) -> {
 
-          // callback from Kafka IO thread
-          ctx.runOnContext(v1 -> {
-            synchronized (KafkaWriteStreamImpl.this) {
+            // callback from Kafka IO thread
+            ctx.runOnContext(v1 -> {
+              synchronized (KafkaWriteStreamImpl.this) {
 
-              // if exception happens, no record written
-              if (err != null) {
+                // if exception happens, no record written
+                if (err != null) {
 
-                if (this.exceptionHandler != null) {
-                  Handler<Throwable> exceptionHandler = this.exceptionHandler;
-                  ctx.runOnContext(v2 -> exceptionHandler.handle(err));
+                  if (this.exceptionHandler != null) {
+                    Handler<Throwable> exceptionHandler = this.exceptionHandler;
+                    ctx.runOnContext(v2 -> exceptionHandler.handle(err));
+                  }
+                }
+
+                long lowWaterMark = this.maxSize / 2;
+                this.pending -= len;
+                if (this.pending < lowWaterMark && this.drainHandler != null) {
+                  Handler<Void> drainHandler = this.drainHandler;
+                  this.drainHandler = null;
+                  ctx.runOnContext(drainHandler);
                 }
               }
+            });
 
-              long lowWaterMark = this.maxSize / 2;
-              this.pending -= len;
-              if (this.pending < lowWaterMark && this.drainHandler != null) {
-                Handler<Void> drainHandler = this.drainHandler;
-                this.drainHandler = null;
-                ctx.runOnContext(drainHandler);
+            if (err != null) {
+              if (startedSpan != null) {
+                startedSpan.fail(ctx, err);
               }
+              prom.fail(err);
+            } else {
+              if (startedSpan != null) {
+                startedSpan.finish(ctx);
+              }
+              prom.complete(metadata);
             }
           });
-
-          if (err != null) {
-            if (startedSpan != null) {
-              startedSpan.fail(ctx, err);
-            }
-            prom.fail(err);
-          } else {
-            if (startedSpan != null) {
-              startedSpan.finish(ctx);
-            }
-            prom.complete(metadata);
-          }
         });
       } catch (Throwable e) {
         synchronized (KafkaWriteStreamImpl.this) {
