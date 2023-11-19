@@ -20,16 +20,6 @@ public class TopicDescriptionConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, TopicDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
-        case "authorizedOperations":
-          if (member.getValue() instanceof JsonArray) {
-            java.util.LinkedHashSet<org.apache.kafka.common.acl.AclOperation> list =  new java.util.LinkedHashSet<>();
-            ((Iterable<Object>)member.getValue()).forEach( item -> {
-              if (item instanceof String)
-                list.add(org.apache.kafka.common.acl.AclOperation.valueOf((String)item));
-            });
-            obj.setAuthorizedOperations(list);
-          }
-          break;
         case "internal":
           if (member.getValue() instanceof Boolean) {
             obj.setInternal((Boolean)member.getValue());
@@ -38,6 +28,16 @@ public class TopicDescriptionConverter {
         case "name":
           if (member.getValue() instanceof String) {
             obj.setName((String)member.getValue());
+          }
+          break;
+        case "authorizedOperations":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.LinkedHashSet<org.apache.kafka.common.acl.AclOperation> list =  new java.util.LinkedHashSet<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                list.add(org.apache.kafka.common.acl.AclOperation.valueOf((String)item));
+            });
+            obj.setAuthorizedOperations(list);
           }
           break;
         case "partitions":
@@ -59,14 +59,14 @@ public class TopicDescriptionConverter {
   }
 
   public static void toJson(TopicDescription obj, java.util.Map<String, Object> json) {
+    json.put("internal", obj.isInternal());
+    if (obj.getName() != null) {
+      json.put("name", obj.getName());
+    }
     if (obj.getAuthorizedOperations() != null) {
       JsonArray array = new JsonArray();
       obj.getAuthorizedOperations().forEach(item -> array.add(item.name()));
       json.put("authorizedOperations", array);
-    }
-    json.put("internal", obj.isInternal());
-    if (obj.getName() != null) {
-      json.put("name", obj.getName());
     }
     if (obj.getPartitions() != null) {
       JsonArray array = new JsonArray();

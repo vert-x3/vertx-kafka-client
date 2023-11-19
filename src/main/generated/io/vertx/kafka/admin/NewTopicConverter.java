@@ -20,16 +20,6 @@ public class NewTopicConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, NewTopic obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
-        case "config":
-          if (member.getValue() instanceof JsonObject) {
-            java.util.Map<String, java.lang.String> map = new java.util.LinkedHashMap<>();
-            ((Iterable<java.util.Map.Entry<String, Object>>)member.getValue()).forEach(entry -> {
-              if (entry.getValue() instanceof String)
-                map.put(entry.getKey(), (String)entry.getValue());
-            });
-            obj.setConfig(map);
-          }
-          break;
         case "name":
           if (member.getValue() instanceof String) {
             obj.setName((String)member.getValue());
@@ -45,6 +35,16 @@ public class NewTopicConverter {
             obj.setReplicationFactor(((Number)member.getValue()).shortValue());
           }
           break;
+        case "config":
+          if (member.getValue() instanceof JsonObject) {
+            java.util.Map<String, java.lang.String> map = new java.util.LinkedHashMap<>();
+            ((Iterable<java.util.Map.Entry<String, Object>>)member.getValue()).forEach(entry -> {
+              if (entry.getValue() instanceof String)
+                map.put(entry.getKey(), (String)entry.getValue());
+            });
+            obj.setConfig(map);
+          }
+          break;
       }
     }
   }
@@ -54,15 +54,15 @@ public class NewTopicConverter {
   }
 
   public static void toJson(NewTopic obj, java.util.Map<String, Object> json) {
-    if (obj.getConfig() != null) {
-      JsonObject map = new JsonObject();
-      obj.getConfig().forEach((key, value) -> map.put(key, value));
-      json.put("config", map);
-    }
     if (obj.getName() != null) {
       json.put("name", obj.getName());
     }
     json.put("numPartitions", obj.getNumPartitions());
     json.put("replicationFactor", obj.getReplicationFactor());
+    if (obj.getConfig() != null) {
+      JsonObject map = new JsonObject();
+      obj.getConfig().forEach((key, value) -> map.put(key, value));
+      json.put("config", map);
+    }
   }
 }

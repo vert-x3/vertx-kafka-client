@@ -20,26 +20,6 @@ public class ClusterDescriptionConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ClusterDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
-        case "authorizedOperations":
-          if (member.getValue() instanceof JsonArray) {
-            java.util.LinkedHashSet<org.apache.kafka.common.acl.AclOperation> list =  new java.util.LinkedHashSet<>();
-            ((Iterable<Object>)member.getValue()).forEach( item -> {
-              if (item instanceof String)
-                list.add(org.apache.kafka.common.acl.AclOperation.valueOf((String)item));
-            });
-            obj.setAuthorizedOperations(list);
-          }
-          break;
-        case "clusterId":
-          if (member.getValue() instanceof String) {
-            obj.setClusterId((String)member.getValue());
-          }
-          break;
-        case "controller":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setController(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)member.getValue()));
-          }
-          break;
         case "nodes":
           if (member.getValue() instanceof JsonArray) {
             java.util.ArrayList<io.vertx.kafka.client.common.Node> list =  new java.util.ArrayList<>();
@@ -48,6 +28,26 @@ public class ClusterDescriptionConverter {
                 list.add(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)item));
             });
             obj.setNodes(list);
+          }
+          break;
+        case "controller":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setController(new io.vertx.kafka.client.common.Node((io.vertx.core.json.JsonObject)member.getValue()));
+          }
+          break;
+        case "clusterId":
+          if (member.getValue() instanceof String) {
+            obj.setClusterId((String)member.getValue());
+          }
+          break;
+        case "authorizedOperations":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.LinkedHashSet<org.apache.kafka.common.acl.AclOperation> list =  new java.util.LinkedHashSet<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                list.add(org.apache.kafka.common.acl.AclOperation.valueOf((String)item));
+            });
+            obj.setAuthorizedOperations(list);
           }
           break;
       }
@@ -59,21 +59,21 @@ public class ClusterDescriptionConverter {
   }
 
   public static void toJson(ClusterDescription obj, java.util.Map<String, Object> json) {
-    if (obj.getAuthorizedOperations() != null) {
-      JsonArray array = new JsonArray();
-      obj.getAuthorizedOperations().forEach(item -> array.add(item.name()));
-      json.put("authorizedOperations", array);
-    }
-    if (obj.getClusterId() != null) {
-      json.put("clusterId", obj.getClusterId());
-    }
-    if (obj.getController() != null) {
-      json.put("controller", obj.getController().toJson());
-    }
     if (obj.getNodes() != null) {
       JsonArray array = new JsonArray();
       obj.getNodes().forEach(item -> array.add(item.toJson()));
       json.put("nodes", array);
+    }
+    if (obj.getController() != null) {
+      json.put("controller", obj.getController().toJson());
+    }
+    if (obj.getClusterId() != null) {
+      json.put("clusterId", obj.getClusterId());
+    }
+    if (obj.getAuthorizedOperations() != null) {
+      JsonArray array = new JsonArray();
+      obj.getAuthorizedOperations().forEach(item -> array.add(item.name()));
+      json.put("authorizedOperations", array);
     }
   }
 }

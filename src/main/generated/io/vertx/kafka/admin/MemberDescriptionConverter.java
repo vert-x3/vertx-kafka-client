@@ -20,9 +20,9 @@ public class MemberDescriptionConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, MemberDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
-        case "assignment":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setAssignment(new io.vertx.kafka.admin.MemberAssignment((io.vertx.core.json.JsonObject)member.getValue()));
+        case "consumerId":
+          if (member.getValue() instanceof String) {
+            obj.setConsumerId((String)member.getValue());
           }
           break;
         case "clientId":
@@ -30,9 +30,9 @@ public class MemberDescriptionConverter {
             obj.setClientId((String)member.getValue());
           }
           break;
-        case "consumerId":
-          if (member.getValue() instanceof String) {
-            obj.setConsumerId((String)member.getValue());
+        case "assignment":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setAssignment(new io.vertx.kafka.admin.MemberAssignment((io.vertx.core.json.JsonObject)member.getValue()));
           }
           break;
         case "host":
@@ -49,14 +49,14 @@ public class MemberDescriptionConverter {
   }
 
   public static void toJson(MemberDescription obj, java.util.Map<String, Object> json) {
-    if (obj.getAssignment() != null) {
-      json.put("assignment", obj.getAssignment().toJson());
+    if (obj.getConsumerId() != null) {
+      json.put("consumerId", obj.getConsumerId());
     }
     if (obj.getClientId() != null) {
       json.put("clientId", obj.getClientId());
     }
-    if (obj.getConsumerId() != null) {
-      json.put("consumerId", obj.getConsumerId());
+    if (obj.getAssignment() != null) {
+      json.put("assignment", obj.getAssignment().toJson());
     }
     if (obj.getHost() != null) {
       json.put("host", obj.getHost());

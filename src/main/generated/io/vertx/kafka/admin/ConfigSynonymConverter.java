@@ -25,14 +25,14 @@ public class ConfigSynonymConverter {
             obj.setName((String)member.getValue());
           }
           break;
-        case "source":
-          if (member.getValue() instanceof String) {
-            obj.setSource(org.apache.kafka.clients.admin.ConfigEntry.ConfigSource.valueOf((String)member.getValue()));
-          }
-          break;
         case "value":
           if (member.getValue() instanceof String) {
             obj.setValue((String)member.getValue());
+          }
+          break;
+        case "source":
+          if (member.getValue() instanceof String) {
+            obj.setSource(org.apache.kafka.clients.admin.ConfigEntry.ConfigSource.valueOf((String)member.getValue()));
           }
           break;
       }
@@ -47,11 +47,11 @@ public class ConfigSynonymConverter {
     if (obj.getName() != null) {
       json.put("name", obj.getName());
     }
-    if (obj.getSource() != null) {
-      json.put("source", obj.getSource().name());
-    }
     if (obj.getValue() != null) {
       json.put("value", obj.getValue());
+    }
+    if (obj.getSource() != null) {
+      json.put("source", obj.getSource().name());
     }
   }
 }
