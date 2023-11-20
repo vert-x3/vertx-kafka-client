@@ -20,14 +20,14 @@ public class ConfigEntryConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ConfigEntry obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
-        case "default":
-          if (member.getValue() instanceof Boolean) {
-            obj.setDefault((Boolean)member.getValue());
-          }
-          break;
         case "name":
           if (member.getValue() instanceof String) {
             obj.setName((String)member.getValue());
+          }
+          break;
+        case "default":
+          if (member.getValue() instanceof Boolean) {
+            obj.setDefault((Boolean)member.getValue());
           }
           break;
         case "readOnly":
@@ -69,10 +69,10 @@ public class ConfigEntryConverter {
   }
 
   public static void toJson(ConfigEntry obj, java.util.Map<String, Object> json) {
-    json.put("default", obj.isDefault());
     if (obj.getName() != null) {
       json.put("name", obj.getName());
     }
+    json.put("default", obj.isDefault());
     json.put("readOnly", obj.isReadOnly());
     json.put("sensitive", obj.isSensitive());
     if (obj.getSource() != null) {

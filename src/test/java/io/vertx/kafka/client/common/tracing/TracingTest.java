@@ -64,7 +64,7 @@ public class TracingTest extends KafkaClusterTestBase {
   @Before
   public void beforeTest(TestContext ctx) {
     tracer = new TestTracer(ctx);
-    vertx = Vertx.vertx(new VertxOptions().setTracingOptions(new TracingOptions().setFactory(tracingOptions -> tracer)));
+    vertx = Vertx.builder().withTracer(tracingOptions -> tracer).build();
   }
 
   @After

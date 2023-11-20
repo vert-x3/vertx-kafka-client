@@ -30,14 +30,14 @@ public class KafkaClientOptionsConverter {
             obj.setConfig(map);
           }
           break;
-        case "tracePeerAddress":
-          if (member.getValue() instanceof String) {
-            obj.setTracePeerAddress((String)member.getValue());
-          }
-          break;
         case "tracingPolicy":
           if (member.getValue() instanceof String) {
             obj.setTracingPolicy(io.vertx.core.tracing.TracingPolicy.valueOf((String)member.getValue()));
+          }
+          break;
+        case "tracePeerAddress":
+          if (member.getValue() instanceof String) {
+            obj.setTracePeerAddress((String)member.getValue());
           }
           break;
       }
@@ -54,11 +54,11 @@ public class KafkaClientOptionsConverter {
       obj.getConfig().forEach((key, value) -> map.put(key, value));
       json.put("config", map);
     }
-    if (obj.getTracePeerAddress() != null) {
-      json.put("tracePeerAddress", obj.getTracePeerAddress());
-    }
     if (obj.getTracingPolicy() != null) {
       json.put("tracingPolicy", obj.getTracingPolicy().name());
+    }
+    if (obj.getTracePeerAddress() != null) {
+      json.put("tracePeerAddress", obj.getTracePeerAddress());
     }
   }
 }
