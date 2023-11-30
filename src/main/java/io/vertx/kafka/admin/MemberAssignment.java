@@ -17,6 +17,7 @@
 package io.vertx.kafka.admin;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.common.TopicPartition;
 
@@ -25,7 +26,8 @@ import java.util.Set;
 /**
  * A description of the assignments of a specific group member
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class MemberAssignment {
 
   private Set<TopicPartition> topicPartitions;

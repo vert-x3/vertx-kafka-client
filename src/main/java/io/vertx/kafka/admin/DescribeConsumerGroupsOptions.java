@@ -17,9 +17,11 @@
 package io.vertx.kafka.admin;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class DescribeConsumerGroupsOptions {
     private boolean includeAuthorizedOperations;
 

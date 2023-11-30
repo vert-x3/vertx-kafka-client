@@ -17,13 +17,15 @@
 package io.vertx.kafka.client.common;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import org.apache.kafka.common.config.ConfigResource.Type;
 
 /**
  * A class representing resources that have configuration
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class ConfigResource {
 
   private String name;

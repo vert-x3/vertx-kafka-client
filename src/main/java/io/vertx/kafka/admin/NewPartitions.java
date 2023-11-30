@@ -17,6 +17,7 @@
 package io.vertx.kafka.admin;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -26,7 +27,8 @@ import java.util.List;
  * Partitions can be increased only. If decrease, an exception from Kafka broker is received.
  * If no assignment is specifies brokers will randomly assign the partitions.
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class NewPartitions {
 
     private int totalCount;

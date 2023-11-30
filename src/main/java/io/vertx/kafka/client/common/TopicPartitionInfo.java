@@ -17,6 +17,7 @@
 package io.vertx.kafka.client.common;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
@@ -24,7 +25,8 @@ import java.util.List;
 /**
  * A class containing leadership, replicas and ISR information for a topic partition.
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class TopicPartitionInfo {
 
   private List<Node> isr;
