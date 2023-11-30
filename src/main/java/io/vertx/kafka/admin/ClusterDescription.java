@@ -17,6 +17,7 @@
 package io.vertx.kafka.admin;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.common.Node;
 
@@ -30,7 +31,8 @@ import org.apache.kafka.common.acl.AclOperation;
 /**
  * A detailed description of the cluster
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class ClusterDescription {
   private String clusterId;
   private Node controller;

@@ -17,6 +17,7 @@ package io.vertx.kafka.client.common;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.tracing.TracingPolicy;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -29,7 +30,8 @@ import java.util.Properties;
 /**
  * Generic KafkaClient options.
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class KafkaClientOptions {
   /**
    * Default peer address to set in traces tags is null, and will automatically pick up bootstrap server from config

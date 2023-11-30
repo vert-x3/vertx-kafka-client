@@ -17,13 +17,15 @@
 package io.vertx.kafka.admin;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import org.apache.kafka.clients.admin.ConfigEntry.ConfigSource;
 
 /**
  * Class representing a configuration synonym of a {@link ConfigEntry}
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class ConfigSynonym {
 
   private String name;

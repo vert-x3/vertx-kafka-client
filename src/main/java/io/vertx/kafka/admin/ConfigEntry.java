@@ -17,6 +17,7 @@
 package io.vertx.kafka.admin;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import org.apache.kafka.clients.admin.ConfigEntry.ConfigSource;
 
@@ -25,7 +26,8 @@ import java.util.List;
 /**
  * A class representing a configuration entry containing name, value and additional metadata
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class ConfigEntry {
 
   private String name;

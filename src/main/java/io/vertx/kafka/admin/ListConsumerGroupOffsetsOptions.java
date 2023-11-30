@@ -17,11 +17,13 @@
 package io.vertx.kafka.admin;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.common.TopicPartition;
 import java.util.List;
 
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class ListConsumerGroupOffsetsOptions {
 
   private List<TopicPartition> topicPartitions = null;

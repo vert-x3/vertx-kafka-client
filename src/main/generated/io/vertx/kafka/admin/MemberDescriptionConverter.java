@@ -17,7 +17,7 @@ public class MemberDescriptionConverter {
   private static final Base64.Decoder BASE64_DECODER = JsonUtil.BASE64_DECODER;
   private static final Base64.Encoder BASE64_ENCODER = JsonUtil.BASE64_ENCODER;
 
-  public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, MemberDescription obj) {
+   static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, MemberDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
         case "consumerId":
@@ -44,11 +44,11 @@ public class MemberDescriptionConverter {
     }
   }
 
-  public static void toJson(MemberDescription obj, JsonObject json) {
+   static void toJson(MemberDescription obj, JsonObject json) {
     toJson(obj, json.getMap());
   }
 
-  public static void toJson(MemberDescription obj, java.util.Map<String, Object> json) {
+   static void toJson(MemberDescription obj, java.util.Map<String, Object> json) {
     if (obj.getConsumerId() != null) {
       json.put("consumerId", obj.getConsumerId());
     }

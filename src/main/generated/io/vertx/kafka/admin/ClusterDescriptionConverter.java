@@ -17,7 +17,7 @@ public class ClusterDescriptionConverter {
   private static final Base64.Decoder BASE64_DECODER = JsonUtil.BASE64_DECODER;
   private static final Base64.Encoder BASE64_ENCODER = JsonUtil.BASE64_ENCODER;
 
-  public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ClusterDescription obj) {
+   static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ClusterDescription obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
         case "nodes":
@@ -54,11 +54,11 @@ public class ClusterDescriptionConverter {
     }
   }
 
-  public static void toJson(ClusterDescription obj, JsonObject json) {
+   static void toJson(ClusterDescription obj, JsonObject json) {
     toJson(obj, json.getMap());
   }
 
-  public static void toJson(ClusterDescription obj, java.util.Map<String, Object> json) {
+   static void toJson(ClusterDescription obj, java.util.Map<String, Object> json) {
     if (obj.getNodes() != null) {
       JsonArray array = new JsonArray();
       obj.getNodes().forEach(item -> array.add(item.toJson()));

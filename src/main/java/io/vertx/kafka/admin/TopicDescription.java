@@ -17,6 +17,7 @@
 package io.vertx.kafka.admin;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import org.apache.kafka.common.Uuid;
@@ -28,7 +29,8 @@ import java.util.Set;
 /**
  * A detailed description of a single topic in the cluster
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class TopicDescription {
 
   private boolean isInternal;
