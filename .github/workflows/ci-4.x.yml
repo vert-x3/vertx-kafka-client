@@ -9,7 +9,7 @@ on:
       - master
       - '[0-9]+.[0-9x]+'
   schedule:
-    - cron:  'CI (4.x)'
+    - cron: '0 4 * * *'
 jobs:
   Test:
     name: Run tests
