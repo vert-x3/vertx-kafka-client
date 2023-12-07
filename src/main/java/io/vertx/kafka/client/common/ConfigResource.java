@@ -17,7 +17,7 @@
 package io.vertx.kafka.client.common;
 
 import io.vertx.codegen.annotations.DataObject;
-import io.vertx.codegen.annotations.JsonGen;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import org.apache.kafka.common.config.ConfigResource.Type;
 
