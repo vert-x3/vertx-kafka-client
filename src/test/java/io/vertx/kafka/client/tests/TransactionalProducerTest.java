@@ -16,17 +16,15 @@
 
 package io.vertx.kafka.client.tests;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.consumer.KafkaReadStream;
+import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.After;
@@ -34,11 +32,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.client.consumer.KafkaReadStream;
-import io.vertx.kafka.client.producer.KafkaWriteStream;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Transactional Producer tests
@@ -130,13 +128,13 @@ public class TransactionalProducerTest extends KafkaClusterTestBase {
   @Test
   public void transactionHandlingFailsIfInitWasNotCalled(TestContext ctx) {
     producer.beginTransaction(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
     producer.commitTransaction(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
     producer.abortTransaction(ctx.asyncAssertFailure(cause -> {
-      ctx.assertTrue(cause instanceof KafkaException);
+      ctx.assertTrue(cause instanceof IllegalStateException);
     }));
   }
 
