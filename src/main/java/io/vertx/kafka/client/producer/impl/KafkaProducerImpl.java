@@ -21,13 +21,14 @@ import io.vertx.core.impl.CloseFuture;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
+import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
-import io.vertx.kafka.client.common.PartitionInfo;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.producer.RecordMetadata;
+import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -45,52 +46,86 @@ import java.util.stream.Stream;
 public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config));
+    return createShared(
+      vertx,
+      name,
+      () -> new org.apache.kafka.clients.producer.KafkaProducer<>(config),
+      KafkaClientOptions.fromProperties(config, true));
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config)));
+    Map<String, Object> copy = new HashMap<>(config);
+    return createShared(
+      vertx,
+      name,
+      () -> new org.apache.kafka.clients.producer.KafkaProducer<>(copy),
+      KafkaClientOptions.fromMap(copy, true));
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, options));
+    Map<String, Object> config = new HashMap<>();
+    if (options.getConfig() != null) {
+      config.putAll(options.getConfig());
+    }
+    return createShared(vertx, name, () -> new org.apache.kafka.clients.producer.KafkaProducer<>(config), options);
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config, Class<K> keyType, Class<V> valueType) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config, keyType, valueType));
+    Serializer<K> keySerializer = VertxSerdes.serdeFrom(keyType).serializer();
+    Serializer<V> valueSerializer = VertxSerdes.serdeFrom(valueType).serializer();
+    return createShared(vertx, name, config, keySerializer, valueSerializer);
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, config, keySerializer, valueSerializer));
+    KafkaClientOptions options = KafkaClientOptions.fromProperties(config, true);
+    return createShared(
+      vertx,
+      name,
+      () -> new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer),
+      options);
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Class<K> keyType, Class<V> valueType) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config), keyType, valueType));
+    Serializer<K> keySerializer = VertxSerdes.serdeFrom(keyType).serializer();
+    Serializer<V> valueSerializer = VertxSerdes.serdeFrom(valueType).serializer();
+    return createShared(vertx, name, config, keySerializer, valueSerializer);
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Map<String, String> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, new HashMap<>(config), keySerializer, valueSerializer));
+    Map<String, Object> copy = new HashMap<>(config);
+    return createShared(
+      vertx,
+      name,
+      () -> new org.apache.kafka.clients.producer.KafkaProducer<>(copy, keySerializer, valueSerializer),
+      KafkaClientOptions.fromMap(copy, true));
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options, Class<K> keyType, Class<V> valueType) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, options, keyType, valueType));
+    Serializer<K> keySerializer = VertxSerdes.serdeFrom(keyType).serializer();
+    Serializer<V> valueSerializer = VertxSerdes.serdeFrom(valueType).serializer();
+    return createShared(vertx, name, options, keySerializer, valueSerializer);
   }
 
   public static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, KafkaClientOptions options, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return createShared(vertx, name, () -> KafkaWriteStream.create(vertx, options, keySerializer, valueSerializer));
+    Map<String, Object> config = new HashMap<>();
+    if (options.getConfig() != null) {
+      config.putAll(options.getConfig());
+    }
+    return createShared(vertx, name, () -> new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer), options);
   }
 
-  private static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Supplier<KafkaWriteStream> streamFactory) {
+  private static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Supplier<Producer<K, V>> producerFactory, KafkaClientOptions options) {
     CloseFuture closeFuture = new CloseFuture();
     Producer<K, V> s = ((VertxInternal)vertx).createSharedResource("__vertx.shared.kafka.producer", name, closeFuture, cf -> {
-      Producer<K, V> producer = streamFactory.get().unwrap();
+      Producer<K, V> producer = producerFactory.get();
       cf.add(completion -> vertx.<Void>executeBlocking(() -> {
         producer.close();
         return null;
       }).onComplete(completion));
       return producer;
     });
-    KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>(vertx, KafkaWriteStream.create(vertx, s), new CloseHandler((timeout, ar) -> {
+    KafkaWriteStream<K, V> kafkaWriteStream = KafkaWriteStream.create(vertx, s, options);
+    KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>(vertx, kafkaWriteStream, new CloseHandler((timeout, ar) -> {
       closeFuture.close().onComplete(ar);
     }));
     producer.registerCloseHook();
