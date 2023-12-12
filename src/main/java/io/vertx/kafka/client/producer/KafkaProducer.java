@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static io.vertx.codegen.annotations.GenIgnore.PERMITTED_TYPE;
+
 /**
  * Vert.x Kafka producer.
  * <p>
@@ -202,9 +204,22 @@ public interface KafkaProducer<K, V> extends WriteStream<KafkaProducerRecord<K, 
    * @param producer the Kafka producer to wrap
    * @return  an instance of the KafkaProducer
    */
-  @GenIgnore
+  @GenIgnore(PERMITTED_TYPE)
   static <K, V> KafkaProducer<K, V> create(Vertx vertx, Producer<K, V> producer) {
-    KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, producer);
+    return create(vertx, producer, new KafkaClientOptions());
+  }
+
+  /**
+   * Create a new KafkaProducer instance from a native {@link Producer}.
+   *
+   * @param vertx    Vert.x instance to use
+   * @param producer the Kafka producer to wrap
+   * @param options  options used only for tracing settings
+   * @return an instance of the KafkaProducer
+   */
+  @GenIgnore(PERMITTED_TYPE)
+  static <K, V> KafkaProducer<K, V> create(Vertx vertx, Producer<K, V> producer, KafkaClientOptions options) {
+    KafkaWriteStream<K, V> stream = KafkaWriteStream.create(vertx, producer, options);
     return new KafkaProducerImpl<>(vertx, stream);
   }
 

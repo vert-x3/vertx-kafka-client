@@ -32,12 +32,10 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
+
+import static io.vertx.codegen.annotations.GenIgnore.PERMITTED_TYPE;
 
 /**
  * Vert.x Kafka consumer.
@@ -56,13 +54,27 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   /**
    * Create a new KafkaConsumer instance from a native {@link Consumer}.
    *
-   * @param vertx Vert.x instance to use
+   * @param vertx    Vert.x instance to use
    * @param consumer the Kafka consumer to wrap
-   * @return  an instance of the KafkaConsumer
+   * @return an instance of the KafkaConsumer
    */
-  @GenIgnore
+  @GenIgnore(PERMITTED_TYPE)
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Consumer<K, V> consumer) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, consumer);
+    return new KafkaConsumerImpl<>(stream);
+  }
+
+  /**
+   * Create a new KafkaConsumer instance from a native {@link Consumer}.
+   *
+   * @param vertx    Vert.x instance to use
+   * @param consumer the Kafka consumer to wrap
+   * @param options  options used only for tracing settings
+   * @return an instance of the KafkaConsumer
+   */
+  @GenIgnore(PERMITTED_TYPE)
+  static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Consumer<K, V> consumer, KafkaClientOptions options) {
+    KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, consumer, options);
     return new KafkaConsumerImpl<>(stream);
   }
 
