@@ -25,21 +25,15 @@ import io.vertx.core.streams.ReadStream;
 import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.consumer.impl.KafkaReadStreamImpl;
 import io.vertx.kafka.client.serialization.VertxSerdes;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -231,7 +225,19 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Consumer<K, V> consumer) {
-    return new KafkaReadStreamImpl<>(vertx, consumer, new KafkaClientOptions());
+    return create(vertx, consumer, new KafkaClientOptions());
+  }
+
+  /**
+   * Create a new KafkaReadStream instance
+   *
+   * @param vertx    Vert.x instance to use
+   * @param consumer native Kafka consumer instance
+   * @param options  options used only for tracing settings
+   * @return an instance of the KafkaReadStream
+   */
+  static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Consumer<K, V> consumer, KafkaClientOptions options) {
+    return new KafkaReadStreamImpl<>(vertx, consumer, options);
   }
 
   /**
