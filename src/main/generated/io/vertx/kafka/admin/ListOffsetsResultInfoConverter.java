@@ -17,7 +17,7 @@ public class ListOffsetsResultInfoConverter {
   private static final Base64.Decoder BASE64_DECODER = JsonUtil.BASE64_DECODER;
   private static final Base64.Encoder BASE64_ENCODER = JsonUtil.BASE64_ENCODER;
 
-  public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ListOffsetsResultInfo obj) {
+   static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ListOffsetsResultInfo obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
         case "leaderEpoch":
@@ -39,11 +39,11 @@ public class ListOffsetsResultInfoConverter {
     }
   }
 
-  public static void toJson(ListOffsetsResultInfo obj, JsonObject json) {
+   static void toJson(ListOffsetsResultInfo obj, JsonObject json) {
     toJson(obj, json.getMap());
   }
 
-  public static void toJson(ListOffsetsResultInfo obj, java.util.Map<String, Object> json) {
+   static void toJson(ListOffsetsResultInfo obj, java.util.Map<String, Object> json) {
     if (obj.getLeaderEpoch() != null) {
       json.put("leaderEpoch", obj.getLeaderEpoch());
     }
