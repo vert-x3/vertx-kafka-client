@@ -193,7 +193,18 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @param producer  native Kafka producer instance
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Producer<K, V> producer) {
-    return new KafkaWriteStreamImpl<>(vertx, producer, new KafkaClientOptions());
+    return create(vertx, producer, new KafkaClientOptions());
+  }
+
+  /**
+   * Create a new KafkaWriteStream instance.
+   *
+   * @param vertx    Vert.x instance to use
+   * @param producer native Kafka producer instance
+   * @param options  options used only for tracing settings
+   */
+  static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Producer<K, V> producer, KafkaClientOptions options) {
+    return new KafkaWriteStreamImpl<>(vertx, producer, options);
   }
 
   @Fluent
