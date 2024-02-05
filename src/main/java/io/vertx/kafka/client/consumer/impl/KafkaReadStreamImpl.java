@@ -181,23 +181,24 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   private void schedule(long delay) {
     Handler<ConsumerRecord<K, V>> handler = this.recordHandler;
+    Handler<ConsumerRecords<K, V>> multiHandler = this.batchHandler;
 
     if (this.consuming.get()
         && this.demand.get() > 0L
-        && handler != null) {
+        && (handler != null || batchHandler != null)) {
 
       this.context.runOnContext(v1 -> {
         if (delay > 0) {
-          this.context.owner().setTimer(delay, v2 -> run(handler));
+          this.context.owner().setTimer(delay, v2 -> run(handler, multiHandler));
         } else {
-          run(handler);
+          run(handler, multiHandler);
         }
       });
     }
   }
 
   // Access the consumer from the event loop since the consumer is not thread safe
-  private void run(Handler<ConsumerRecord<K, V>> handler) {
+  private void run(Handler<ConsumerRecord<K, V>> handler, Handler<ConsumerRecords<K, V>> multiHandler) {
 
     if (this.closed.get()) {
       return;
@@ -209,8 +210,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
         if (records != null && records.count() > 0) {
           this.current = records.iterator();
-          if (batchHandler != null) {
-            batchHandler.handle(records);
+          if (multiHandler != null) {
+            multiHandler.handle(records);
           }
           this.schedule(0);
         } else {
@@ -860,6 +861,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
 
   public KafkaReadStream batchHandler(Handler<ConsumerRecords<K, V>> handler) {
     this.batchHandler = handler;
+    this.schedule(0);
     return this;
   }
 
