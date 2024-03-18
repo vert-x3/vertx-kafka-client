@@ -545,7 +545,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    * @param topicPartition  topic partition for getting last committed offset
    * @return a future notified on operation completed
    */
-  Future<OffsetAndMetadata> committed(TopicPartition topicPartition);
+  Future<Map<TopicPartition,OffsetAndMetadata>> committed(TopicPartition topicPartition);
 
   /**
    * Get metadata about the partitions for a given topic.

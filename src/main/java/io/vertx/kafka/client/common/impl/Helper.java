@@ -37,11 +37,7 @@ import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import io.vertx.kafka.client.producer.RecordMetadata;
 import org.apache.kafka.clients.admin.AlterConfigOp;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -233,6 +229,14 @@ public class Helper {
 
   public static Set<org.apache.kafka.common.TopicPartition> toTopicPartitionSet(Set<TopicPartition> partitions) {
     return partitions.stream().map(Helper::to).collect(Collectors.toSet());
+  }
+
+  public static Set<org.apache.kafka.common.TopicPartition> topicPartitionSet(org.apache.kafka.common.TopicPartition topicPartition){
+    return Collections.singleton(topicPartition);
+  }
+
+  public static org.apache.kafka.common.TopicPartition topicPartition(TopicPartition tp){
+      return new org.apache.kafka.common.TopicPartition(tp.getTopic(), tp.getPartition());
   }
 
   public static org.apache.kafka.clients.admin.OffsetSpec to(OffsetSpec os) {
