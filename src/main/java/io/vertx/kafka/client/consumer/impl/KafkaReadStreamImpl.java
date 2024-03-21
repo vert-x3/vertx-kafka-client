@@ -39,13 +39,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 
 import java.time.Duration;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -305,9 +299,11 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   @Override
   public Future<OffsetAndMetadata> committed(TopicPartition topicPartition) {
     return this.submitTask2((consumer, future) -> {
-      OffsetAndMetadata result = consumer.committed(topicPartition);
+
+      Set<TopicPartition> var1 = Helper.topicPartitionSet(topicPartition);
+      Map<TopicPartition, OffsetAndMetadata> result = consumer.committed(var1);
       if (future != null) {
-        future.complete(result);
+        future.complete(result.values().stream().findFirst().get());
       }
     });
   }
