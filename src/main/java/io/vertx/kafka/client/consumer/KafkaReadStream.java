@@ -245,7 +245,7 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @param topicPartition  topic partition for getting last committed offset
    * @return a future notified on operation completed
    */
-  Future<Map<TopicPartition,OffsetAndMetadata>> committed(TopicPartition topicPartition);
+  Future<OffsetAndMetadata> committed(TopicPartition topicPartition);
 
   /**
    * Suspend fetching from the requested partitions.

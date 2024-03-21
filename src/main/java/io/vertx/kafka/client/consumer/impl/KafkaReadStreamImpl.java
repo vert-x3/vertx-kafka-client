@@ -297,13 +297,13 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   @Override
-  public Future<Map<TopicPartition,OffsetAndMetadata>> committed(TopicPartition topicPartition) {
+  public Future<OffsetAndMetadata> committed(TopicPartition topicPartition) {
     return this.submitTask2((consumer, future) -> {
 
       Set<TopicPartition> var1 = Helper.topicPartitionSet(topicPartition);
       Map<TopicPartition, OffsetAndMetadata> result = consumer.committed(var1);
       if (future != null) {
-        future.complete(result);
+        future.complete(result.values().stream().findFirst().get());
       }
     });
   }

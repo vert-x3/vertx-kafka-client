@@ -267,7 +267,7 @@ public class KafkaConsumerImpl<K, V> implements KafkaConsumer<K, V> {
   }
 
   @Override
-  public Future<Map<TopicPartition,OffsetAndMetadata>> committed(TopicPartition topicPartition) {
+  public Future<OffsetAndMetadata> committed(TopicPartition topicPartition) {
     return this.stream.committed(Helper.to(topicPartition)).map(Helper::from);
   }
 
