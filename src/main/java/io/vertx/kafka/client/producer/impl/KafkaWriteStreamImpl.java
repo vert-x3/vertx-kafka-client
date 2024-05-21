@@ -81,24 +81,29 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
 
           // callback from Kafka IO thread
           ctx.runOnContext(v1 -> {
+            Handler<Throwable> exceptionHandler;
+            Handler<Void> drainHandler;
             synchronized (KafkaWriteStreamImpl.this) {
-
-              // if exception happens, no record written
-              if (err != null) {
-
-                if (this.exceptionHandler != null) {
-                  Handler<Throwable> exceptionHandler = this.exceptionHandler;
-                  ctx.runOnContext(v2 -> exceptionHandler.handle(err));
-                }
-              }
-
+              exceptionHandler = this.exceptionHandler;
               long lowWaterMark = this.maxSize / 2;
               this.pending -= len;
               if (this.pending < lowWaterMark && this.drainHandler != null) {
-                Handler<Void> drainHandler = this.drainHandler;
+                drainHandler = this.drainHandler;
                 this.drainHandler = null;
-                ctx.runOnContext(drainHandler);
+              } else {
+                drainHandler = null;
               }
+            }
+            // if exception happens, no record written
+            if (err != null) {
+              if (exceptionHandler != null) {
+                ctx.runOnContext(v2 -> exceptionHandler.handle(err));
+              } else {
+                ctx.reportException(err);
+              }
+            }
+            if (drainHandler != null) {
+              ctx.runOnContext(drainHandler);
             }
           });
 

@@ -192,15 +192,24 @@ public class ProducerMockTest {
   }
 
   @Test
-  public void testWriteWithSimulatedError(TestContext ctx) {
+  public void testWriteWithSimulatedError(TestContext ctx) throws Exception {
+    Async async = ctx.async();
     TestProducerWriteError mock = new TestProducerWriteError();
     KafkaProducer<String, String> prod = KafkaProducer.create(vertx, mock);
     KafkaProducerRecord<String, String> record = KafkaProducerRecord.create("myTopic", "test");
-    vertx.exceptionHandler(h -> {
-      if(!(h instanceof SimulatedWriteException)) {
+    Context context = vertx.getOrCreateContext();
+    context.exceptionHandler(h -> {
+      if (h instanceof SimulatedWriteException) {
+        async.complete();
+      } else {
         ctx.fail(h);
       }
     });
     prod.write(record);
+    try {
+      async.awaitSuccess();
+    } finally {
+      context.exceptionHandler(null);
+    }
   }
 }
