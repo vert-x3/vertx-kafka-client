@@ -17,7 +17,7 @@
 package io.vertx.kafka.client.consumer.impl;
 
 import io.vertx.core.*;
-import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.internal.ContextInternal;
 import io.vertx.kafka.client.consumer.OffsetAndTimestamp;
 import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;

@@ -16,15 +16,13 @@
 
 package io.vertx.kafka.client.producer.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.common.tracing.ProducerTracer;
 import io.vertx.kafka.client.producer.KafkaWriteStream;

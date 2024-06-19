@@ -30,7 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Promise;
-import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.internal.ContextInternal;
 import io.vertx.kafka.admin.ClusterDescription;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConsumerGroupDescription;

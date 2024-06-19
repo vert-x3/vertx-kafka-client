@@ -17,11 +17,10 @@ package io.vertx.kafka.client.common.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Closeable;
-import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.VertxInternal;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
