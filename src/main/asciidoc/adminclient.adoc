@@ -1,4 +1,4 @@
-= Vert.x Kafka Admin Client
+== Vert.x Kafka Admin Client
 :toc: left
 :lang: $lang
 :$lang: $lang
@@ -7,7 +7,7 @@ This component provides a Vert.x wrapper around the Kafka Admin Client API.
 The Kafka Admin Client is used to create, modify, and delete topics.
 It also provides methods for handling ACLs (Access Control Lists), consumer groups and many more.
 
-== Creating the Kafka Admin Client
+=== Creating the Kafka Admin Client
 
 Creating the admin client is quite similar on how it works using the native Kafka client library.
 
@@ -21,8 +21,6 @@ static creation methods exposed by {@link io.vertx.kafka.admin.KafkaAdminClient}
 ----
 {@link examples.KafkaAdminClientExamples#exampleCreateAdminClient}
 ----
-
-== Using the Kafka Admin Client
 
 === Listing topics
 
