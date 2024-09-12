@@ -114,7 +114,13 @@ public class ProducerMockTest {
 
   private void testProducerDrain(TestContext ctx, RuntimeException failure) throws Exception {
     TestProducer mock = new TestProducer();
-    KafkaWriteStream<String, String> producer = ProducerTest.producer(Vertx.vertx(), mock);
+    Vertx vertx = Vertx.vertx();
+    if (failure != null) {
+      vertx.exceptionHandler(err -> {
+        // Ignore
+      });
+    }
+    KafkaWriteStream<String, String> producer = ProducerTest.producer(vertx, mock);
     int sent = 0;
     while (!producer.writeQueueFull()) {
       producer.write(new ProducerRecord<>("the_topic", 0, 0L, "abc", "def"));

@@ -16,12 +16,7 @@
 
 package io.vertx.kafka.client.consumer.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.common.impl.Helper;
@@ -111,12 +106,12 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
     this.tracer = ConsumerTracer.create(ctxInt.tracer(), options);
   }
 
-  private <T> void start(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task, Handler<AsyncResult<T>> handler) {
+  private <T> void start(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task, Completable<T> handler) {
     this.worker = Executors.newSingleThreadExecutor(r -> new Thread(r, "vert.x-kafka-consumer-thread-" + threadCount.getAndIncrement()));
     this.submitTaskWhenStarted(task, handler);
   }
 
-  private <T> void submitTaskWhenStarted(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task, Handler<AsyncResult<T>> handler) {
+  private <T> void submitTaskWhenStarted(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task, Completable<T> handler) {
     if (worker == null) {
       throw new IllegalStateException();
     }
@@ -124,11 +119,11 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       Promise<T> future = null;
       if (handler != null) {
         future = Promise.promise();
-        future.future().onComplete(event-> {
+        future.future().onComplete((res, err)-> {
           // When we've executed the task on the worker thread,
           // run the callback on the eventloop thread
           this.context.runOnContext(v-> {
-            handler.handle(event);
+            handler.complete(res, err);
             });
           });
       }
@@ -264,7 +259,7 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   }
 
   protected <T> void submitTask(java.util.function.BiConsumer<Consumer<K, V>, Promise<T>> task,
-      Handler<AsyncResult<T>> handler) {
+                                Completable<T> handler) {
     if (this.closed.compareAndSet(true, false)) {
       this.start(task, handler);
     } else {

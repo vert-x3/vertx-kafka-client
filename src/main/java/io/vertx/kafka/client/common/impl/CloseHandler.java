@@ -15,10 +15,7 @@
  */
 package io.vertx.kafka.client.common.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Closeable;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import io.vertx.core.*;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
 
@@ -34,9 +31,9 @@ public class CloseHandler {
 
   private Closeable closeable;
   private Runnable closeableHookCleanup;
-  private final BiConsumer<Long, Handler<AsyncResult<Void>>> close;
+  private final BiConsumer<Long, Completable<Void>> close;
 
-  public CloseHandler(BiConsumer<Long, Handler<AsyncResult<Void>>> close) {
+  public CloseHandler(BiConsumer<Long, Completable<Void>> close) {
     this.close = close;
   }
 
@@ -80,15 +77,15 @@ public class CloseHandler {
 
   public void close() {
     unregisterCloseHook();
-    close.accept(0L, ar -> {});
+    close.accept(0L, (res, err) -> {});
   }
 
-  public void close(Handler<AsyncResult<Void>> completionHandler) {
+  public void close(Completable<Void> completionHandler) {
     unregisterCloseHook();
     close.accept(0L, completionHandler);
   }
 
-  public void close(long timeout, Handler<AsyncResult<Void>> completionHandler) {
+  public void close(long timeout, Completable<Void> completionHandler) {
     unregisterCloseHook();
     close.accept(timeout, completionHandler);
   }
