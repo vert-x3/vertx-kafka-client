@@ -31,7 +31,6 @@ import org.apache.kafka.common.utils.Utils;
 public class ProducerTracer<S> {
   private final VertxTracer<Void, S> tracer;
   private final String address;
-  private final String hostname;
   private final String port;
   private final TracingPolicy policy;
 
@@ -65,14 +64,13 @@ public class ProducerTracer<S> {
   private ProducerTracer(VertxTracer<Void, S> tracer, TracingPolicy policy, String bootstrapServer) {
     this.tracer = tracer;
     this.address = bootstrapServer;
-    this.hostname = Utils.getHost(bootstrapServer);
     Integer port = Utils.getPort(bootstrapServer);
     this.port = port == null ? null : port.toString();
     this.policy = policy;
   }
 
   public StartedSpan prepareSendMessage(Context context, ProducerRecord record) {
-    TraceContext tc = new TraceContext("producer", address, hostname, port, record.topic());
+    TraceContext tc = new TraceContext("producer", address, port, record.topic());
     S span = tracer.sendRequest(context, SpanKind.MESSAGING, policy, tc, "kafka_send", (k, v) -> record.headers().add(k, v.getBytes()), TraceTags.TAG_EXTRACTOR);
     return new StartedSpan(span);
   }

@@ -21,14 +21,12 @@ package io.vertx.kafka.client.common.tracing;
 class TraceContext {
   final String kind;
   final String address;
-  final String hostname;
   final String port;
   final String topic;
 
-  TraceContext(String kind, String address, String hostname, String port, String topic) {
+  TraceContext(String kind, String address, String port, String topic) {
     this.kind = kind;
     this.address = address;
-    this.hostname = hostname;
     this.port = port;
     this.topic = topic;
   }

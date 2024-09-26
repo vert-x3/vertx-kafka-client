@@ -37,7 +37,6 @@ import java.util.stream.StreamSupport;
 public class ConsumerTracer<S> {
   private final VertxTracer<S, Void> tracer;
   private final String address;
-  private final String hostname;
   private final String port;
   private final TracingPolicy policy;
 
@@ -71,7 +70,6 @@ public class ConsumerTracer<S> {
   private ConsumerTracer(VertxTracer<S, Void> tracer, TracingPolicy policy, String bootstrapServer) {
     this.tracer = tracer;
     this.address = bootstrapServer;
-    this.hostname = Utils.getHost(bootstrapServer);
     Integer port = Utils.getPort(bootstrapServer);
     this.port = port == null ? null : port.toString();
     this.policy = policy;
@@ -86,7 +84,7 @@ public class ConsumerTracer<S> {
   }
 
   public StartedSpan prepareMessageReceived(Context context, ConsumerRecord rec) {
-    TraceContext tc = new TraceContext("consumer", address, hostname, port, rec.topic());
+    TraceContext tc = new TraceContext("consumer", address, port, rec.topic());
     S span = tracer.receiveRequest(context, SpanKind.MESSAGING, policy, tc, "kafka_receive", convertHeaders(rec.headers()), TraceTags.TAG_EXTRACTOR);
     return new StartedSpan(span);
   }

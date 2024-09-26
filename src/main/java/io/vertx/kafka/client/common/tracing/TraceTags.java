@@ -23,24 +23,25 @@ import java.util.function.Function;
  * Tags for Kafka Tracing
  */
 public enum TraceTags {
-  // See https://github.com/opentracing/specification/blob/master/semantic_conventions.md
-  PEER_ADDRESS("peer.address", q -> q.address),
-  PEER_HOSTNAME("peer.hostname", q -> q.hostname),
-  PEER_PORT("peer.port", q -> q.port),
+  // See https://opentelemetry.io/docs/specs/semconv/messaging/kafka/
+  SERVER_ADDRESS("server.address", q -> q.address),
+  SERVER_PORT("server.port", q -> q.port),
   PEER_SERVICE("peer.service", q -> "kafka"),
-  BUS_DESTINATION("message_bus.destination", q -> q.topic);
+  BUS_DESTINATION("messaging.destination.name", q -> q.topic);
 
-  static final TagExtractor<TraceContext> TAG_EXTRACTOR = new TagExtractor<TraceContext>() {
+  static final TagExtractor<TraceContext> TAG_EXTRACTOR = new TagExtractor<>() {
     private final TraceTags[] TAGS = TraceTags.values();
 
     @Override
     public int len(TraceContext obj) {
       return TAGS.length;
     }
+
     @Override
     public String name(TraceContext obj, int index) {
       return TAGS[index].name;
     }
+
     @Override
     public String value(TraceContext obj, int index) {
       return TAGS[index].fn.apply(obj);
