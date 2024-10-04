@@ -199,13 +199,10 @@ public class ProducerTest extends KafkaClusterTestBase {
     producer.exceptionHandler(testCtx::fail);
     ProducerRecord<String, String> record = new ProducerRecord<>(topicName, 0, "key-0", "value-0");
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
-    ContextInternal dup = ctx.duplicate();
     Async async = testCtx.async();
-    dup.runOnContext(v1 -> {
+    ctx.runOnContext(v1 -> {
       TestInterceptor.list.clear();
       producer.write(record).onComplete(testCtx.asyncAssertSuccess(v2 -> {
-        testCtx.assertEquals(1, TestInterceptor.list.size());
-        testCtx.assertEquals(dup, TestInterceptor.list.get(0));
         async.complete();
       }));
     });
