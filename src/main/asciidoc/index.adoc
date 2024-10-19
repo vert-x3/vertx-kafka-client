@@ -27,7 +27,7 @@ To use this component, add the following dependency to the dependencies section 
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-kafka-client:${maven.version}
+compile "io.vertx:vertx-kafka-client:${maven.version}"
 ----
 
 == Creating Kafka clients
