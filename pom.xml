@@ -36,7 +36,7 @@
 
   <properties>
     <kafka.version>3.9.0</kafka.version>
-    <debezium.version>2.6.1.Final</debezium.version>
+    <debezium.version>3.0.2.Final</debezium.version>
   </properties>
 
   <dependencyManagement>
