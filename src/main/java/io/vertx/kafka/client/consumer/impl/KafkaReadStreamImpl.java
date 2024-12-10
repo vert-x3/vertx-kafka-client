@@ -204,7 +204,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
       this.pollRecords(records -> {
 
         if (records != null && records.count() > 0) {
-          this.current = records.iterator();
+          if (handler != null) {
+            // only set iterator if records are going to be consumed by individual record handler
+            this.current = records.iterator();
+          }
           if (multiHandler != null) {
             multiHandler.handle(records);
           }
