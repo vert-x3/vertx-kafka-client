@@ -17,6 +17,7 @@ package io.vertx.kafka.client.common.tracing;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.spi.tracing.SpanKind;
 import io.vertx.core.spi.tracing.TagExtractor;
 import io.vertx.core.spi.tracing.VertxTracer;
@@ -117,7 +118,7 @@ public class TracingTest extends KafkaClusterTestBase {
     consumer.handler(rec -> {
       Context currentContext = Vertx.currentContext();
       ctx.assertNotNull(currentContext);
-      String spanName = currentContext.getLocal(CONTEXT_CONSUMER_SPAN);
+      String spanName = ((ContextInternal)currentContext).getLocal(CONTEXT_CONSUMER_SPAN);
       ctx.assertEquals("span-" + expectedSpanCountOnContext.decrementAndGet(), spanName);
     });
     consumer.subscribe(Collections.singleton(topicName));
@@ -249,7 +250,7 @@ public class TracingTest extends KafkaClusterTestBase {
         ctx.fail("Unexpected call to receiveRequest");
       }
       ctx.assertEquals(SpanKind.MESSAGING, kind);
-      context.putLocal(CONTEXT_CONSUMER_SPAN, "span-" + receivedCount.intValue());
+      ((ContextInternal)context).putLocal(CONTEXT_CONSUMER_SPAN, "span-" + receivedCount.intValue());
       Map<String, String> tags = tagExtractor.extract(request);
       ctx.assertEquals("kafka_receive", operation);
       ctx.assertEquals(peerAddress, tags.get("server.address"));
@@ -263,7 +264,7 @@ public class TracingTest extends KafkaClusterTestBase {
     @Override
     public <R> void sendResponse(Context context, R response, String payload, Throwable failure, TagExtractor<R> tagExtractor) {
       ctx.assertEquals("SPAN-CONSUMER", payload);
-      context.removeLocal(CONTEXT_CONSUMER_SPAN);
+      ((ContextInternal)context).removeLocal(CONTEXT_CONSUMER_SPAN);
       done.countDown();
     }
 
