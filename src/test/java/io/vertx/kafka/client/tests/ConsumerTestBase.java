@@ -1311,8 +1311,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     String consumerId = topicName;
     Async batch1 = ctx.async();
     AtomicInteger index = new AtomicInteger();
-    int batchSize = 500;
-    int numMessages = 1000;
+    int numMessages = 500;
     kafkaCluster.useTo().produceStrings(numMessages, batch1::complete, () ->
       new ProducerRecord<>(topicName, 0, "key-" + index.get(), "value-" + index.getAndIncrement()));
     batch1.awaitSuccess(10000);
@@ -1326,7 +1325,7 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async batchHandler = ctx.async();
     batchHandler.handler(ar -> wrappedConsumer.close());
     wrappedConsumer.batchHandler(records -> {
-      ctx.assertEquals(batchSize, records.size());
+      ctx.assertEquals(numMessages, records.size());
       for (int i = 0; i < records.size(); i++) {
         KafkaConsumerRecord<Object, Object> record = records.recordAt(i);
         int dec = count.decrementAndGet();
@@ -1335,10 +1334,8 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
         } else {
           ctx.assertEquals("key-" + (-1 - dec), record.key());
         }
-        if (dec == 0) {
-          batchHandler.complete();
-        }
       }
+      batchHandler.complete();
     });
     wrappedConsumer.subscribe(Collections.singleton(topicName));
   }
