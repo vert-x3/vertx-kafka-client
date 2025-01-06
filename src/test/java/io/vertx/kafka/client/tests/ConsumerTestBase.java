@@ -798,10 +798,17 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     Async assigned = ctx.async();
     Async handler = ctx.async();
 
+    consumer.handler(record -> {
+      ctx.assertTrue(handler.isCompleted() && assigned.isCompleted());
+      finished.countDown();
+    });
+
     consumer.batchHandler(records -> {
       ctx.assertTrue(handler.isCompleted() && assigned.isCompleted());
       finished.countDown();
     });
+
+    handler.complete();
 
     TopicPartition partition = new TopicPartition(topicName, 0);
 
@@ -816,13 +823,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       }
 
     });
-
-    consumer.handler(record -> {
-      ctx.assertTrue(handler.isCompleted() && assigned.isCompleted());
-      finished.countDown();
-    });
-    handler.complete();
-
   }
 
   @Test
@@ -850,6 +850,23 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     //state: 0=1st time, 1=seek called, 2=seek executed, 3=offset 0 for 2nd time
     AtomicInteger state = new AtomicInteger(0);
     Async async = ctx.async();
+
+    consumer.handler(record -> {
+      long offset = record.offset();
+      switch (state.get()) {
+        case 0: // seek not yet called
+        case 1: // seek called but not completed
+          if (offset == 5) {
+            state.set(1);
+            consumer.seek(partition, 0).onComplete(ar -> {
+              state.set(2);
+              ctx.assertTrue(ar.succeeded());
+            });
+          }
+          break;
+      }
+    });
+
     consumer.batchHandler(records -> {
       switch (state.get()) {
         case 0: // seek not yet called
@@ -870,23 +887,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       }
 
     });
-    consumer.handler(record -> {
-      long offset = record.offset();
-      switch (state.get()) {
-        case 0: // seek not yet called
-        case 1: // seek called but not completed
-          if (offset == 5) {
-            state.set(1);
-            consumer.seek(partition, 0).onComplete(ar -> {
-              state.set(2);
-              ctx.assertTrue(ar.succeeded());
-            });
-          }
-          break;
-      }
-
-    });
-
   }
 
   @Test
@@ -921,23 +921,6 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
     //state: 0=1st time, 1=seek called, 2=seek executed, 3=offset 0 for 2nd time
     AtomicInteger state = new AtomicInteger(0);
     Async async = ctx.async();
-    consumer.batchHandler(records -> {
-      switch (state.get()) {
-        case 0://initial assignment, not started reassignment
-        case 1://initial assignment, started reassignment, but not done yet
-          break;
-        case 2:
-          for (ConsumerRecord record : records) {
-            long offset = record.offset();
-            if (record.topic().equals(topicName1)) {
-              ctx.fail("Seen a " + topicName1 + " message after reassignment");
-            }
-            if (offset == numMessages - 1) {
-              async.complete();
-            }
-          }
-      }
-    });
 
     consumer.handler(record -> {
       long offset = record.offset();
@@ -958,6 +941,23 @@ public abstract class ConsumerTestBase extends KafkaClusterTestBase {
       }
     });
 
+    consumer.batchHandler(records -> {
+      switch (state.get()) {
+        case 0://initial assignment, not started reassignment
+        case 1://initial assignment, started reassignment, but not done yet
+          break;
+        case 2:
+          for (ConsumerRecord record : records) {
+            long offset = record.offset();
+            if (record.topic().equals(topicName1)) {
+              ctx.fail("Seen a " + topicName1 + " message after reassignment");
+            }
+            if (offset == numMessages - 1) {
+              async.complete();
+            }
+          }
+      }
+    });
   }
 
   @Test
