@@ -19,6 +19,7 @@ package io.vertx.kafka.client.common.impl;
 import io.vertx.core.Handler;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
+import io.vertx.kafka.admin.ConfigSynonym;
 import io.vertx.kafka.admin.ConsumerGroupListing;
 import io.vertx.kafka.admin.DescribeClusterOptions;
 import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
@@ -197,11 +198,21 @@ public class Helper {
   }
 
   public static ConfigEntry from(org.apache.kafka.clients.admin.ConfigEntry configEntry) {
-    return new ConfigEntry(configEntry.name(), configEntry.value());
+    ConfigEntry newConfigEntry = new ConfigEntry(configEntry.name(), configEntry.value(), configEntry.source(), configEntry.isSensitive(), configEntry.isReadOnly(), fromConfigSynonyms(configEntry.synonyms()));
+    newConfigEntry.setDefault(configEntry.isDefault());
+    return newConfigEntry;
   }
 
   public static List<ConfigEntry> fromConfigEntries(Collection<org.apache.kafka.clients.admin.ConfigEntry> configEntries) {
     return configEntries.stream().map(Helper::from).collect(Collectors.toList());
+  }
+
+  public static List<ConfigSynonym> fromConfigSynonyms(Collection<org.apache.kafka.clients.admin.ConfigEntry.ConfigSynonym> configSynonyms) {
+    return configSynonyms.stream().map(Helper::from).collect(Collectors.toList());
+  }
+
+  public static ConfigSynonym from(org.apache.kafka.clients.admin.ConfigEntry.ConfigSynonym configSynonym) {
+    return new ConfigSynonym(configSynonym.name(), configSynonym.value(), configSynonym.source());
   }
 
   public static ConsumerGroupListing from(org.apache.kafka.clients.admin.ConsumerGroupListing consumerGroupListing) {
