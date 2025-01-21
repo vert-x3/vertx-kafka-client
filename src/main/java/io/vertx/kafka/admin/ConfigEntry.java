@@ -58,15 +58,15 @@ public class ConfigEntry {
 
   /**
    * Constructor
-   * 
-   * @param name the non-null config name  
+   *
+   * @param name the non-null config name
    * @param value the config value or null
-   * @param source the source of this config entry 
+   * @param source the source of this config entry
    * @param isSensitive whether the config value is sensitive, the broker never returns the value if it is sensitive
    * @param isReadOnly whether the config is read-only and cannot be updated
    * @param synonyms Synonym configs in order of precedence
    */
-  public ConfigEntry(String name, String value, ConfigSource source, boolean isSensitive, 
+  public ConfigEntry(String name, String value, ConfigSource source, boolean isSensitive,
                     boolean isReadOnly, List<ConfigSynonym> synonyms) {
     this.name = name;
     this.value = value;

@@ -34,7 +34,7 @@ import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.client.common.ConfigResource;
 
 public class AdminClientConfigEntryTest extends KafkaClusterTestBase {
-    private static final String MIN_INSYNC_REPLICAS = "min.insync.replicas"; 
+    private static final String MIN_INSYNC_REPLICAS = "min.insync.replicas";
     private Vertx vertx;
     private Properties config;
 
@@ -58,15 +58,15 @@ public class AdminClientConfigEntryTest extends KafkaClusterTestBase {
     @Test
     public void testPropertiesOfEntryNotConfiguredExplicitly(TestContext ctx) {
         KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
-        
+
         String topicName = "topic-default-min-isr";
         NewTopic topic = new NewTopic(topicName, 1, (short)1);
 
         adminClient.createTopics(Collections.singletonList(topic)).onComplete(ctx.asyncAssertSuccess(v -> {
-    
+
             ConfigResource topicResource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicName);
             adminClient.describeConfigs(Collections.singletonList(topicResource)).onComplete(ctx.asyncAssertSuccess(desc -> {
-                
+
                 ConfigEntry minISREntry = desc.get(topicResource)
                 .getEntries()
                 .stream()
@@ -87,16 +87,16 @@ public class AdminClientConfigEntryTest extends KafkaClusterTestBase {
     @Test
     public void testPropertiesOfEntryConfiguredExplicitly(TestContext ctx) {
         KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
-        
+
         String topicName = "topic-custom-min-isr";
         NewTopic topic = new NewTopic(topicName, 1, (short)1);
         topic.setConfig(Collections.singletonMap(MIN_INSYNC_REPLICAS, "1"));
 
         adminClient.createTopics(Collections.singletonList(topic)).onComplete(ctx.asyncAssertSuccess(v -> {
-    
+
             ConfigResource topicResource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicName);
             adminClient.describeConfigs(Collections.singletonList(topicResource)).onComplete(ctx.asyncAssertSuccess(desc -> {
-                
+
                 ConfigEntry minISREntry = desc.get(topicResource)
                 .getEntries()
                 .stream()
