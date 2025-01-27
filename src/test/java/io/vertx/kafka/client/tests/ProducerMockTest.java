@@ -25,7 +25,6 @@ import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
-
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -203,19 +202,18 @@ public class ProducerMockTest {
     TestProducerWriteError mock = new TestProducerWriteError();
     KafkaProducer<String, String> prod = KafkaProducer.create(vertx, mock);
     KafkaProducerRecord<String, String> record = KafkaProducerRecord.create("myTopic", "test");
-    Context context = vertx.getOrCreateContext();
-    context.exceptionHandler(h -> {
-      if (h instanceof SimulatedWriteException) {
+    vertx.exceptionHandler(t -> {
+      if (t instanceof SimulatedWriteException) {
         async.complete();
       } else {
-        ctx.fail(h);
+        ctx.fail(t);
       }
     });
     prod.write(record);
     try {
       async.awaitSuccess();
     } finally {
-      context.exceptionHandler(null);
+      vertx.exceptionHandler(null);
     }
   }
 }
