@@ -29,7 +29,6 @@
   <name>Vert.x Kafka Client</name>
 
   <properties>
-    <stack.version>4.5.15-SNAPSHOT</stack.version>
     <kafka.version>3.7.1</kafka.version>
     <debezium.version>2.7.3.Final</debezium.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
@@ -43,7 +42,7 @@
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-dependencies</artifactId>
-        <version>${stack.version}</version>
+        <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
