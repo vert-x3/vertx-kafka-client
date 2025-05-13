@@ -50,7 +50,7 @@ public class CloseHandler {
       closeable = ar -> {
         synchronized (CloseHandler.this) {
           if (closeable == null) {
-            ar.handle(Future.succeededFuture());
+            ar.succeed();
             return;
           }
           closeable = null;
