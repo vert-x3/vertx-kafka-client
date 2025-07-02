@@ -98,7 +98,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     Promise<Map<String, TopicDescription>> promise = ctx.promise();
 
     DescribeTopicsResult describeTopicsResult = this.adminClient.describeTopics(topicNames);
-    describeTopicsResult.all().whenComplete((t, ex) -> {
+    describeTopicsResult.allTopicNames().whenComplete((t, ex) -> {
       if (ex == null) {
 
         Map<String, TopicDescription> topics = new HashMap<>();
@@ -145,7 +145,7 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     Promise<Map<String, TopicDescription>> promise = ctx.promise();
 
     DescribeTopicsResult describeTopicsResult = this.adminClient.describeTopics(topicNames, Helper.to(options));
-    describeTopicsResult.all().whenComplete((t, ex) -> {
+    describeTopicsResult.allTopicNames().whenComplete((t, ex) -> {
       if (ex == null) {
 
         Map<String, TopicDescription> topics = new HashMap<>();
