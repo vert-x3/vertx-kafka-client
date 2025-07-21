@@ -35,7 +35,7 @@
   </scm>
 
   <properties>
-    <kafka.version>3.7.1</kafka.version>
+    <kafka.version>3.9.1</kafka.version>
     <strimzi.testcontainer.version>0.109.1</strimzi.testcontainer.version>
   </properties>
 
