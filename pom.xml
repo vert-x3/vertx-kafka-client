@@ -113,7 +113,12 @@
       <version>${kafka.version}</version>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>io.strimzi</groupId>
+      <artifactId>strimzi-test-container</artifactId>
+      <version>0.112.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
