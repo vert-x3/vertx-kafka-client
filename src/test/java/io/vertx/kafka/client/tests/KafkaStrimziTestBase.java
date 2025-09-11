@@ -3,14 +3,20 @@ package io.vertx.kafka.client.tests;
 import io.strimzi.test.container.StrimziKafkaCluster;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
+import java.time.Duration;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -19,8 +25,15 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.junit.runner.RunWith;
 
 /**
@@ -111,25 +124,165 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
     }
 
     /**
-     * Get consumer properties for the specified consumer group and client ID
+     * Helper class to provide access to Kafka operations
      */
-    public Properties getConsumerProperties(String groupId, String clientId, OffsetResetStrategy offsetResetStrategy) {
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offsetResetStrategy.name().toLowerCase());
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
-        return props;
+    public KafkaTestHelper useTo() {
+        return new KafkaTestHelper();
     }
-    
+
     /**
-     * Get producer properties for the specified client ID
+     * Helper class for Kafka operations
      */
-    public Properties getProducerProperties(String clientId) {
-        Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
-        props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
-        return props;
+    public class KafkaTestHelper {
+        /**
+         * Get consumer properties for the specified consumer group and client ID
+         */
+        public Properties getConsumerProperties(String groupId, String clientId, OffsetResetStrategy offsetResetStrategy) {
+            Properties props = new Properties();
+            props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
+            props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+            props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
+            props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offsetResetStrategy.name().toLowerCase());
+            props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+            return props;
+        }
+    
+        /**
+         * Get producer properties for the specified client ID
+         */
+        public Properties getProducerProperties(String clientId) {
+            Properties props = new Properties();
+            props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
+            props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
+            return props;
+        }
+
+        /**
+         * Produce strings to a topic
+         */
+        public void produceStrings(int messageCount, Runnable completionCallback, java.util.function.Supplier<org.apache.kafka.clients.producer.ProducerRecord<String, String>> recordSupplier) {
+            Properties props = getProducerProperties("producer-" + UUID.randomUUID());
+            props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+            props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+            try (org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(props)) {
+                for (int i = 0; i < messageCount; i++) {
+                    producer.send(recordSupplier.get());
+                }
+                producer.flush();
+
+                if (completionCallback != null) {
+                    completionCallback.run();
+                }
+            }
+        }
+
+        /**
+         * Produce integers to a topic
+         */
+        public void produceIntegers(String topic, int messageCount, int startingOffset, Runnable completionCallback) {
+            Properties props = getProducerProperties("producer-" + UUID.randomUUID());
+            props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+            props.put("value.serializer", "org.apache.kafka.common.serialization.IntegerSerializer");
+
+            try (org.apache.kafka.clients.producer.KafkaProducer<String, Integer> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(props)) {
+                for (int i = 0; i < messageCount; i++) {
+                    producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(topic, 0, null, startingOffset + i));
+                }
+                producer.flush();
+
+                if (completionCallback != null) {
+                    completionCallback.run();
+                }
+            }
+        }
+
+        public <K, V> void consume(String groupId, String clientId, OffsetResetStrategy offsetResetStrategy,
+            Deserializer <K> keyDeserializer,
+            Deserializer<V> valueDeserializer,
+            Supplier<Boolean> continuePolling,
+            OffsetCommitCallback commitCallback,
+            Runnable completionCallback,
+            Collection<String> topics,
+            Consumer<ConsumerRecord<K, V>> recordConsumer) {
+                Properties props = getConsumerProperties(groupId, clientId, offsetResetStrategy);
+
+                Thread consumerThread = new Thread(() -> {
+                    try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(props, keyDeserializer, valueDeserializer)) {
+                        consumer.subscribe(topics);
+
+                        while(continuePolling.get()){
+                            ConsumerRecords<K, V> records = consumer.poll(Duration.ofMillis(100));
+                            for(ConsumerRecord<K, V> record : records) {
+                                recordConsumer.accept(record);
+                            }
+
+                            if(commitCallback != null) {
+                                consumer.commitAsync(commitCallback);
+                            } else {
+                                consumer.commitAsync();
+                            }
+                        }
+
+                        if (completionCallback != null) {
+                            completionCallback.run();
+                        }
+                    }
+                });
+
+                consumerThread.start();
+        }
+
+        /**
+         * Consume string messages from a topic
+         */
+        public void consumeStrings(String topic, int expectedMessageCount, long timeout, TimeUnit unit, Runnable completionCallback) {
+            CountDownLatch latch = new CountDownLatch(expectedMessageCount);
+
+            consume(
+                "group-" + UUID.randomUUID(), 
+                "consumer-" + UUID.randomUUID(),
+                OffsetResetStrategy.EARLIEST,
+                new StringDeserializer(),
+                new StringDeserializer(),
+                () -> latch.getCount() > 0,
+                null,
+                completionCallback,
+                Collections.singleton(topic),
+                record -> latch.countDown()
+            );
+
+            try {
+                latch.await(timeout, unit);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        /**
+         * Consume integer messages from a topic
+         */
+        public void consumeIntegers(String topic, int expectedMessageCount, long timeout, TimeUnit unit, Runnable completionCallback) {
+            CountDownLatch latch = new CountDownLatch(expectedMessageCount);
+
+            consume(
+                "group-" + UUID.randomUUID(), 
+                "consumer-" + UUID.randomUUID(),
+                OffsetResetStrategy.EARLIEST,
+                new StringDeserializer(),
+                new IntegerDeserializer(),
+                () -> latch.getCount() > 0,
+                null,
+                completionCallback,
+                Collections.singleton(topic),
+                record -> latch.countDown()
+            );
+
+            try {
+                latch.await(timeout, unit);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
