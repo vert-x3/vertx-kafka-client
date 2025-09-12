@@ -48,7 +48,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Codec tests
  */
-public class CodecsTest extends KafkaClusterTestBase {
+public class CodecsTest extends KafkaStrimziTestBase {
 
   final private String topic = "the_topic";
   private Vertx vertx;

@@ -30,7 +30,9 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
@@ -43,14 +45,14 @@ import org.junit.runner.RunWith;
 public abstract class KafkaStrimziTestBase extends KafkaTestBase {
 
     // Hold the strimzi kafka cluster instance
-    protected static StrimziKafkaCluster kafkaCluster;
+    protected static KafkaClusterWrapper kafkaCluster;
 
     // Hold the client instance to manage Kafka topics and configurations
     protected static AdminClient adminClient;
 
     protected static boolean ACL = false;
 
-    public static StrimziKafkaCluster kafkaCluster(boolean acl) {
+    public static KafkaClusterWrapper kafkaCluster(boolean acl) {
         if (kafkaCluster != null) {
             throw new IllegalStateException();
         }
@@ -62,19 +64,24 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         }
 
         // Create 3 node Kafka cluster
-        kafkaCluster = new StrimziKafkaCluster.StrimziKafkaClusterBuilder()
-            .withNumberOfBrokers(3)
-            .withKafkaVersion("3.7.1")
-            .withAdditionalKafkaConfiguration(kafkaConfig)
-            .build();
+        StrimziKafkaCluster strimziCluster = new StrimziKafkaCluster.StrimziKafkaClusterBuilder()
+                .withNumberOfBrokers(3)
+                .withKafkaVersion("4.0.0")
+                .withAdditionalKafkaConfiguration(kafkaConfig)
+                .build();
 
-        return kafkaCluster;
+        // We need to create the wrapper in the setUp method where we have an instance
+        return new KafkaClusterWrapper(strimziCluster, null);
     }
 
     @BeforeClass
     public static void setUp() {
-        // Create and start the Kafka cluster
-        kafkaCluster = kafkaCluster(false);
+        // Create the Kafka cluster
+        StrimziKafkaCluster strimziCluster = kafkaCluster(false).getDelegate();
+
+        // Create the wrapper with the current instance
+        kafkaCluster = new KafkaClusterWrapper(strimziCluster, new KafkaStrimziTestBase() {
+        });
         kafkaCluster.start();
 
         // Create admin client for topic management
@@ -137,7 +144,8 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         /**
          * Get consumer properties for the specified consumer group and client ID
          */
-        public Properties getConsumerProperties(String groupId, String clientId, OffsetResetStrategy offsetResetStrategy) {
+        public Properties getConsumerProperties(String groupId, String clientId,
+                OffsetResetStrategy offsetResetStrategy) {
             Properties props = new Properties();
             props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
             props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -146,7 +154,7 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
             props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
             return props;
         }
-    
+
         /**
          * Get producer properties for the specified client ID
          */
@@ -160,12 +168,14 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         /**
          * Produce strings to a topic
          */
-        public void produceStrings(int messageCount, Runnable completionCallback, java.util.function.Supplier<org.apache.kafka.clients.producer.ProducerRecord<String, String>> recordSupplier) {
+        public void produceStrings(int messageCount, Runnable completionCallback,
+                Supplier<ProducerRecord<String, String>> recordSupplier) {
             Properties props = getProducerProperties("producer-" + UUID.randomUUID());
             props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
             props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
-            try (org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(props)) {
+            try (KafkaProducer<String, String> producer = new KafkaProducer<>(
+                    props)) {
                 for (int i = 0; i < messageCount; i++) {
                     producer.send(recordSupplier.get());
                 }
@@ -185,9 +195,10 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
             props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
             props.put("value.serializer", "org.apache.kafka.common.serialization.IntegerSerializer");
 
-            try (org.apache.kafka.clients.producer.KafkaProducer<String, Integer> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(props)) {
+            try (KafkaProducer<String, Integer> producer = new KafkaProducer<>(
+                    props)) {
                 for (int i = 0; i < messageCount; i++) {
-                    producer.send(new org.apache.kafka.clients.producer.ProducerRecord<>(topic, 0, null, startingOffset + i));
+                    producer.send(new ProducerRecord<>(topic, 0, null, startingOffset + i));
                 }
                 producer.flush();
 
@@ -198,59 +209,59 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         }
 
         public <K, V> void consume(String groupId, String clientId, OffsetResetStrategy offsetResetStrategy,
-            Deserializer <K> keyDeserializer,
-            Deserializer<V> valueDeserializer,
-            Supplier<Boolean> continuePolling,
-            OffsetCommitCallback commitCallback,
-            Runnable completionCallback,
-            Collection<String> topics,
-            Consumer<ConsumerRecord<K, V>> recordConsumer) {
-                Properties props = getConsumerProperties(groupId, clientId, offsetResetStrategy);
+                Deserializer<K> keyDeserializer,
+                Deserializer<V> valueDeserializer,
+                Supplier<Boolean> continuePolling,
+                OffsetCommitCallback commitCallback,
+                Runnable completionCallback,
+                Collection<String> topics,
+                Consumer<ConsumerRecord<K, V>> recordConsumer) {
+            Properties props = getConsumerProperties(groupId, clientId, offsetResetStrategy);
 
-                Thread consumerThread = new Thread(() -> {
-                    try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(props, keyDeserializer, valueDeserializer)) {
-                        consumer.subscribe(topics);
+            Thread consumerThread = new Thread(() -> {
+                try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(props, keyDeserializer, valueDeserializer)) {
+                    consumer.subscribe(topics);
 
-                        while(continuePolling.get()){
-                            ConsumerRecords<K, V> records = consumer.poll(Duration.ofMillis(100));
-                            for(ConsumerRecord<K, V> record : records) {
-                                recordConsumer.accept(record);
-                            }
-
-                            if(commitCallback != null) {
-                                consumer.commitAsync(commitCallback);
-                            } else {
-                                consumer.commitAsync();
-                            }
+                    while (continuePolling.get()) {
+                        ConsumerRecords<K, V> records = consumer.poll(Duration.ofMillis(100));
+                        for (ConsumerRecord<K, V> record : records) {
+                            recordConsumer.accept(record);
                         }
 
-                        if (completionCallback != null) {
-                            completionCallback.run();
+                        if (commitCallback != null) {
+                            consumer.commitAsync(commitCallback);
+                        } else {
+                            consumer.commitAsync();
                         }
                     }
-                });
 
-                consumerThread.start();
+                    if (completionCallback != null) {
+                        completionCallback.run();
+                    }
+                }
+            });
+
+            consumerThread.start();
         }
 
         /**
          * Consume string messages from a topic
          */
-        public void consumeStrings(String topic, int expectedMessageCount, long timeout, TimeUnit unit, Runnable completionCallback) {
+        public void consumeStrings(String topic, int expectedMessageCount, long timeout, TimeUnit unit,
+                Runnable completionCallback) {
             CountDownLatch latch = new CountDownLatch(expectedMessageCount);
 
             consume(
-                "group-" + UUID.randomUUID(), 
-                "consumer-" + UUID.randomUUID(),
-                OffsetResetStrategy.EARLIEST,
-                new StringDeserializer(),
-                new StringDeserializer(),
-                () -> latch.getCount() > 0,
-                null,
-                completionCallback,
-                Collections.singleton(topic),
-                record -> latch.countDown()
-            );
+                    "group-" + UUID.randomUUID(),
+                    "consumer-" + UUID.randomUUID(),
+                    OffsetResetStrategy.EARLIEST,
+                    new StringDeserializer(),
+                    new StringDeserializer(),
+                    () -> latch.getCount() > 0,
+                    null,
+                    completionCallback,
+                    Collections.singleton(topic),
+                    record -> latch.countDown());
 
             try {
                 latch.await(timeout, unit);
@@ -262,27 +273,76 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         /**
          * Consume integer messages from a topic
          */
-        public void consumeIntegers(String topic, int expectedMessageCount, long timeout, TimeUnit unit, Runnable completionCallback) {
+        public void consumeIntegers(String topic, int expectedMessageCount, long timeout, TimeUnit unit,
+                Runnable completionCallback) {
             CountDownLatch latch = new CountDownLatch(expectedMessageCount);
 
             consume(
-                "group-" + UUID.randomUUID(), 
-                "consumer-" + UUID.randomUUID(),
-                OffsetResetStrategy.EARLIEST,
-                new StringDeserializer(),
-                new IntegerDeserializer(),
-                () -> latch.getCount() > 0,
-                null,
-                completionCallback,
-                Collections.singleton(topic),
-                record -> latch.countDown()
-            );
+                    "group-" + UUID.randomUUID(),
+                    "consumer-" + UUID.randomUUID(),
+                    OffsetResetStrategy.EARLIEST,
+                    new StringDeserializer(),
+                    new IntegerDeserializer(),
+                    () -> latch.getCount() > 0,
+                    null,
+                    completionCallback,
+                    Collections.singleton(topic),
+                    record -> latch.countDown());
 
             try {
                 latch.await(timeout, unit);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+        }
+    }
+
+    /**
+     * Wrapper for StrimziKafkaCluster that provides a useTo() method for
+     * compatibility
+     */
+    public static class KafkaClusterWrapper {
+        private final StrimziKafkaCluster delegate;
+        private final KafkaStrimziTestBase testBase;
+
+        public KafkaClusterWrapper(StrimziKafkaCluster delegate, KafkaStrimziTestBase testBase) {
+            this.delegate = delegate;
+            this.testBase = testBase;
+        }
+
+        /**
+         * Provides access to the test helper methods
+         */
+        public KafkaTestHelper useTo() {
+            return testBase.useTo();
+        }
+
+        /**
+         * Get the delegate StrimziKafkaCluster
+         */
+        public StrimziKafkaCluster getDelegate() {
+            return delegate;
+        }
+
+        /**
+         * Delegate method for getBootstrapServers
+         */
+        public String getBootstrapServers() {
+            return delegate.getBootstrapServers();
+        }
+
+        /**
+         * Delegate method for start
+         */
+        public void start() {
+            delegate.start();
+        }
+
+        /**
+         * Delegate method for stop
+         */
+        public void stop() {
+            delegate.stop();
         }
     }
 }
