@@ -30,7 +30,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -55,7 +54,6 @@ import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
 import io.vertx.kafka.client.common.TopicPartitionInfo;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.DeletedRecords;
 import org.apache.kafka.clients.admin.LogDirDescription;
 import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -71,16 +69,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.impl.Helper;
 import io.vertx.kafka.admin.KafkaAdminClient;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class AdminClientTest extends KafkaClusterTestBase {
+public class AdminClientTest extends KafkaStrimziTestBase {
   private Vertx vertx;
   private Properties config;
 
@@ -105,8 +101,8 @@ public class AdminClientTest extends KafkaClusterTestBase {
   }
 
   @BeforeClass
-  public static void setUp() throws IOException {
-    KafkaClusterTestBase.setUp();
+  public static void setUp() {
+    KafkaStrimziTestBase.setUp();
     kafkaCluster.createTopics(topics);
   }
 
