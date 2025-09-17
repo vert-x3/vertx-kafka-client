@@ -63,10 +63,9 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
             kafkaConfig.put("super.users", "User:ANONYMOUS");
         }
 
-        // Create 3 node Kafka cluster
         StrimziKafkaCluster strimziCluster = new StrimziKafkaCluster.StrimziKafkaClusterBuilder()
-                .withNumberOfBrokers(3)
-                .withKafkaVersion("4.0.0")
+                .withNumberOfBrokers(2)
+                .withKafkaVersion("3.7.1")
                 .withAdditionalKafkaConfiguration(kafkaConfig)
                 .build();
 
