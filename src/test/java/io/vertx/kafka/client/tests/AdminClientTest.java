@@ -548,17 +548,23 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         ctx.assertNotNull(cluster.getClusterId());
         Node controller = cluster.getController();
         ctx.assertNotNull(controller);
-        ctx.assertEquals(1, controller.getId());
-        ctx.assertEquals("localhost", controller.getHost());
+
+        // Strimzi test containers uses combined nodes by default so each node will be a broker
+        // and a controller and there is no guarantee what order we'll recieve the controllers back
+        // in the JSON response so expect controller to be 0 OR 1.
+        ctx.assertTrue(controller.getId() == 0 || controller.getId() == 1, "Controller ID should be either 0 or 1");
+        ctx.assertTrue(
+          controller.getIdString().equals("0") || controller.getIdString().equals("1"), 
+          "Controller ID should be either 0 or 1"
+        );
+        ctx.assertEquals("127.0.0.1", controller.getHost());
         ctx.assertEquals(false, controller.hasRack());
-        ctx.assertEquals("1", controller.getIdString());
         ctx.assertEquals(false, controller.isEmpty());
-        ctx.assertEquals(9092, controller.getPort());
         ctx.assertEquals(null, controller.rack());
         Collection<Node> nodes = cluster.getNodes();
         ctx.assertNotNull(nodes);
         ctx.assertEquals(2, nodes.size());
-        ctx.assertEquals(1, nodes.iterator().next().getId());
+        ctx.assertEquals(0, nodes.iterator().next().getId());
         adminClient.close();
         async.complete();
       }));
@@ -582,17 +588,24 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         ctx.assertNotNull(cluster.getClusterId());
         Node controller = cluster.getController();
         ctx.assertNotNull(controller);
-        ctx.assertEquals(1, controller.getId());
-        ctx.assertEquals("localhost", controller.getHost());
+
+        // Strimzi test containers uses combined nodes by default so each node will be a broker
+        // and a controller and there is no guarantee what order we'll recieve the controllers back
+        // in the JSON response so expect controller to be 0 OR 1.
+        ctx.assertTrue(controller.getId() == 0 || controller.getId() == 1, "Controller ID should be either 0 or 1");
+        ctx.assertTrue(
+          controller.getIdString().equals("0") || controller.getIdString().equals("1"), 
+        "Controller ID should be either 0 or 1"
+        ); 
+        ctx.assertEquals("127.0.0.1", controller.getHost());
         ctx.assertEquals(false, controller.hasRack());
-        ctx.assertEquals("1", controller.getIdString());
         ctx.assertEquals(false, controller.isEmpty());
         ctx.assertEquals(9092, controller.getPort());
         ctx.assertEquals(null, controller.rack());
         Collection<Node> nodes = cluster.getNodes();
         ctx.assertNotNull(nodes);
         ctx.assertEquals(2, nodes.size());
-        ctx.assertEquals(1, nodes.iterator().next().getId());
+        ctx.assertEquals(0, nodes.iterator().next().getId());
         Set<AclOperation> authorizedOperations = cluster.getAuthorizedOperations();
         ctx.assertNotNull(authorizedOperations);
         adminClient.close();
