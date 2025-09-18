@@ -92,7 +92,8 @@ public class AdminClientTest extends KafkaStrimziTestBase {
   public void beforeTest() {
     this.vertx = Vertx.vertx();
     this.config = new Properties();
-    this.config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    String bootstrapServers = kafkaCluster.getBootstrapServers();
+    this.config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
   }
 
   @After
