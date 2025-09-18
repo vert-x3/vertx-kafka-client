@@ -846,7 +846,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         ctx.assertTrue(topics.contains("testDecreasePartitionInTopic"));
 
         adminClient.createPartitions(Collections.singletonMap("testDecreasePartitionInTopic", new NewPartitions(1, null)), ctx.asyncAssertFailure(v -> {
-          ctx.assertTrue(v.getMessage().equals("Topic currently has 3 partitions, which is higher than the requested 1."));
+          ctx.assertTrue(v.getMessage().matches("The topic .* currently has 3 partition\\(s\\); 1 would not be an increase\\."));
           adminClient.close();
           async.complete();
         }));
