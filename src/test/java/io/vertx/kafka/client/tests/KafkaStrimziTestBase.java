@@ -66,6 +66,7 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         StrimziKafkaCluster strimziCluster = new StrimziKafkaCluster.StrimziKafkaClusterBuilder()
                 .withNumberOfBrokers(2)
                 .withKafkaVersion("3.7.1")
+                .withKraft()
                 .withAdditionalKafkaConfiguration(kafkaConfig)
                 .build();
 
