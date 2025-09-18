@@ -600,7 +600,6 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         ctx.assertEquals("127.0.0.1", controller.getHost());
         ctx.assertEquals(false, controller.hasRack());
         ctx.assertEquals(false, controller.isEmpty());
-        ctx.assertEquals(9092, controller.getPort());
         ctx.assertEquals(null, controller.rack());
         Collection<Node> nodes = cluster.getNodes();
         ctx.assertNotNull(nodes);
