@@ -237,22 +237,20 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
             // Describe the topic we just created
             adminClient.describeTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(topics -> {
-            TopicDescription topicDescription = topics.get("testCreateTopic");
+                TopicDescription topicDescription = topics.get("testCreateTopic");
 
-            // Check topic details match what we created
-            ctx.assertEquals("testCreateTopic", topicDescription.getName());
-            ctx.assertEquals(1, topicDescription.getPartitions().size());
-            ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
+                // Check topic details match what we created
+                ctx.assertEquals("testCreateTopic", topicDescription.getName());
+                ctx.assertEquals(1, topicDescription.getPartitions().size());
+                ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
 
-            // Cleanup
-            adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(v1 -> {
-                adminClient.close();
-                async.complete();
+                // Cleanup
+                adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(v1 -> {
+                    adminClient.close();
+                    async.complete();
                 }));
             }));
-
         });
-        
     }));
   }
 
@@ -266,30 +264,40 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     adminClient.createTopics(Collections.singletonList(newTopic), ctx.asyncAssertSuccess(v -> {
 
-      adminClient.describeTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(topics -> {
+        // Timer because, Kafka cluster takes time to create topics
+        Async async = ctx.async();
+        vertx.setTimer(1000, t -> {
 
-        TopicDescription topicDescription = topics.get("testCreateTopicWithConfigs");
+            // Describe the topic we just created
+            adminClient.describeTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(topics -> {
+                TopicDescription topicDescription = topics.get("testCreateTopicWithConfigs");
 
-        ctx.assertEquals("testCreateTopicWithConfigs", topicDescription.getName());
-        ctx.assertEquals(1, topicDescription.getPartitions().size());
-        ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
+                // Check topic details match what we created
+                ctx.assertEquals("testCreateTopicWithConfigs", topicDescription.getName());
+                ctx.assertEquals(1, topicDescription.getPartitions().size());
+                ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
 
-        ConfigResource configResource =
-          new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "testCreateTopicWithConfigs");
+                ConfigResource configResource =
+                    new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "testCreateTopicWithConfigs");
 
-        adminClient.describeConfigs(Collections.singletonList(configResource), ctx.asyncAssertSuccess(descs -> {
+                adminClient.describeConfigs(Collections.singletonList(configResource), ctx.asyncAssertSuccess(descs -> {
 
-          Optional<ConfigEntry> configEntry = descs.get(configResource).getEntries().stream()
-            .filter(e -> e.getName().equals("segment.bytes"))
-            .findFirst();
-          ctx.assertTrue(configEntry.isPresent());
-          ctx.assertEquals("1000", configEntry.get().getValue());
+                    Optional<ConfigEntry> configEntry = descs.get(configResource).getEntries().stream()
+                        .filter(e -> e.getName().equals("segment.bytes"))
+                        .findFirst();
+                    
+                    // Check value of segment.bytes is 1000, like we set it above
+                    ctx.assertTrue(configEntry.isPresent());
+                    ctx.assertEquals("1000", configEntry.get().getValue());
 
-          adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(v1 -> {
-            adminClient.close();
-          }));
-        }));
-      }));
+                    // Cleanup
+                    adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(v1 -> {
+                        adminClient.close();
+                        async.complete();
+                    }));
+                }));
+            }));
+        });
     }));
   }
 
