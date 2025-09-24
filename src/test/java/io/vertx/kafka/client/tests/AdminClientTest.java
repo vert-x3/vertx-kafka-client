@@ -230,17 +230,29 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
     adminClient.createTopics(Collections.singletonList(new NewTopic("testCreateTopic", 1, (short)1)), ctx.asyncAssertSuccess(v -> {
-      adminClient.describeTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(topics -> {
-        TopicDescription topicDescription = topics.get("testCreateTopic");
 
-        ctx.assertEquals("testCreateTopic", topicDescription.getName());
-        ctx.assertEquals(1, topicDescription.getPartitions().size());
-        ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
+        // Timer because, Kafka cluster takes time to create topics
+        Async async = ctx.async();
+        vertx.setTimer(1000, t -> {
 
-        adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(v1 -> {
-          adminClient.close();
-        }));
-      }));
+            // Describe the topic we just created
+            adminClient.describeTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(topics -> {
+            TopicDescription topicDescription = topics.get("testCreateTopic");
+
+            // Check topic details match what we created
+            ctx.assertEquals("testCreateTopic", topicDescription.getName());
+            ctx.assertEquals(1, topicDescription.getPartitions().size());
+            ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
+
+            // Cleanup
+            adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(v1 -> {
+                adminClient.close();
+                async.complete();
+                }));
+            }));
+
+        });
+        
     }));
   }
 
