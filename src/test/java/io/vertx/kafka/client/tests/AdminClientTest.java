@@ -185,19 +185,32 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     vertx.setTimer(1000, t -> {
 
       adminClient.describeTopics(Collections.singletonList("first-topic"), options, ctx.asyncAssertSuccess(map -> {
+          
+        // Should have got a description back
         TopicDescription topicDescription = map.get("first-topic");
         ctx.assertNotNull(topicDescription);
+
+        // We asked for first-topic to be described so we should've got that back
         ctx.assertEquals("first-topic", topicDescription.getName());
         ctx.assertEquals(false, topicDescription.isInternal());
+
+        // We should have 1 partition
         ctx.assertEquals(1, topicDescription.getPartitions().size());
 
+        // ... that has ID=0
         TopicPartitionInfo topicPartitionInfo = topicDescription.getPartitions().get(0);
         ctx.assertEquals(0, topicPartitionInfo.getPartition());
-        ctx.assertTrue(topicPartitionInfo.getLeader().getId() == 1 || topicPartitionInfo.getLeader().getId() == 2);
+
+        // Partition can be on Node ID = 0 or 1
+        ctx.assertInRange(0, topicPartitionInfo.getLeader().getId(), 1);
+
+        // Check partition has 1 replica and replica is on Node ID = 0 or 1
         ctx.assertEquals(1, topicPartitionInfo.getReplicas().size());
-        ctx.assertTrue(topicPartitionInfo.getReplicas().get(0).getId() == 1 || topicPartitionInfo.getReplicas().get(0).getId() == 2);
+        ctx.assertInRange(0, topicPartitionInfo.getReplicas().get(0).getId(), 1);
+
+        // Check partition has 1 in-sync replica and isr is on Node ID = 0 or 1
         ctx.assertEquals(1, topicPartitionInfo.getIsr().size());
-        ctx.assertTrue(topicPartitionInfo.getIsr().get(0).getId() == 1 || topicPartitionInfo.getIsr().get(0).getId() == 2);
+        ctx.assertInRange(0, topicPartitionInfo.getIsr().get(0).getId(), 1);
 
         Uuid topicId = topicDescription.getTopicId();
         ctx.assertNotNull(topicId);
