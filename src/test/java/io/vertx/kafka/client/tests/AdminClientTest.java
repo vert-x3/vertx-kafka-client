@@ -319,8 +319,13 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         ctx.assertTrue(topics.contains("topicToDelete"));
 
         adminClient.deleteTopics(Collections.singletonList("topicToDelete"), ctx.asyncAssertSuccess(v -> {
-          adminClient.close();
-          async.complete();
+            vertx.setTimer(1000, t2 -> {
+                adminClient.listTopics(ctx.asyncAssertSuccess(topicsAfterDelete -> {
+                    ctx.assertFalse(topicsAfterDelete.contains("topicToDelete"));
+                    adminClient.close();
+                    async.complete();
+                }));
+            });
         }));
       }));
     });
