@@ -311,24 +311,23 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     Async async = ctx.async();
 
-    // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
-
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
-
-        ctx.assertTrue(topics.contains("topicToDelete"));
-
-        adminClient.deleteTopics(Collections.singletonList("topicToDelete"), ctx.asyncAssertSuccess(v -> {
-            vertx.setTimer(1000, t2 -> {
-                adminClient.listTopics(ctx.asyncAssertSuccess(topicsAfterDelete -> {
-                    ctx.assertFalse(topicsAfterDelete.contains("topicToDelete"));
-                    adminClient.close();
-                    async.complete();
-                }));
-            });
-        }));
-      }));
-    });
+    waitForCondition(
+        vertx, 
+        () -> adminClient.listTopics().map(topics -> topics.contains("topicToDelete")),
+        5000,
+        100
+    )
+    .compose(v -> adminClient.deleteTopics(Collections.singletonList("topicToDelete")))
+    .compose(v -> waitForCondition(
+        vertx,
+        () -> adminClient.listTopics().map(topics -> !topics.contains("topicToDelete")),
+        5000,
+        100
+    ))
+    .onComplete(ctx.asyncAssertSuccess(v -> {
+        adminClient.close();
+        async.complete();
+    }));
   }
 
   @Test
