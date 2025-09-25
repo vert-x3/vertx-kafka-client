@@ -1,8 +1,13 @@
 package io.vertx.kafka.client.tests;
 
 import io.strimzi.test.container.StrimziKafkaCluster;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.kafka.admin.KafkaAdminClient;
 
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
@@ -11,11 +16,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.junit.AfterClass;
@@ -50,7 +57,98 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
     // Hold the client instance to manage Kafka topics and configurations
     protected static AdminClient adminClient;
 
+    private static final Map<String, KafkaConsumer<?, ?>> activeConsumers = new ConcurrentHashMap<>();
     protected static boolean ACL = false;
+
+    protected Future<Void> waitForTopicToExist(
+        Vertx v,
+        KafkaAdminClient client,
+        String topicName
+    ) {
+        return waitWithDetails(
+            v, 
+            client, 
+            topics -> topics.contains(topicName),
+            5000,
+            100,
+            String.format("Timeout waiting for topic '%s' to exist", topicName)    
+        );
+    }
+
+    protected Future<Void> waitForTopicToBeDeleted(
+        Vertx v,
+        KafkaAdminClient client,
+        String topicName
+    ) {
+        return waitWithDetails(
+            v, 
+            client, 
+            topics -> !topics.contains(topicName),
+            5000,
+            100,
+            String.format("Timeout waiting for topic '%s' to be deleted", topicName)    
+        );
+    }
+
+    protected Future<Void> waitWithDetails(
+        Vertx v,
+        KafkaAdminClient client, 
+        Function<Set<String>, Boolean> condition,
+        long timeout, 
+        long interval,
+        String timeoutMessage
+    ) {
+
+        Promise<Void> promise = Promise.promise();
+        long endTime = System.currentTimeMillis() + timeout;
+
+        v.setPeriodic(interval, timerId -> {
+            
+           client.listTopics().onComplete(ar -> {
+            if (ar.succeeded()) {
+                if (condition.apply(ar.result())) {
+                    v.cancelTimer(timerId);
+                    promise.complete();
+                } else if (System.currentTimeMillis() > endTime) {
+                    v.cancelTimer(timerId);
+                    Set<String> currentTopics = ar.result();
+                    promise.fail(String.format(
+                        "%s. Current topics: %s",
+                        timeoutMessage,
+                        currentTopics.size() > 10
+                            ? currentTopics.size() + " topics"
+                            : currentTopics 
+                    ));
+                }
+            } else if (System.currentTimeMillis() > endTime) {
+                v.cancelTimer(timerId);
+                promise.fail(timeoutMessage + ". Failed to list topics: " + ar.cause().getMessage());
+            }
+           });
+        });
+
+        return promise.future();
+    };
+
+    protected Future<Void> waitForCondition(Vertx v, Supplier<Future<Boolean>> condition, long timeout, long interval) {
+        Promise<Void> promise = Promise.promise();
+        long endTime = System.currentTimeMillis() + timeout;
+
+        v.setPeriodic(interval, timerId -> {
+            condition.get().onComplete(ar -> {
+                if (ar.succeeded() && ar.result()){
+                    v.cancelTimer(timerId);
+                    promise.complete();
+                } else if (System.currentTimeMillis() > endTime) {
+                    v.cancelTimer(timerId);
+                    promise.fail("Timeout waiting for condition");
+                }
+                // Otherwise keep polling
+            });
+        });
+
+        return promise.future();
+    };
 
     public static KafkaClusterWrapper kafkaCluster(boolean acl) {
         if (kafkaCluster != null) {

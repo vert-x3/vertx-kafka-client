@@ -311,23 +311,14 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     Async async = ctx.async();
 
-    waitForCondition(
-        vertx, 
-        () -> adminClient.listTopics().map(topics -> topics.contains("topicToDelete")),
-        5000,
-        100
-    )
-    .compose(v -> adminClient.deleteTopics(Collections.singletonList("topicToDelete")))
-    .compose(v -> waitForCondition(
-        vertx,
-        () -> adminClient.listTopics().map(topics -> !topics.contains("topicToDelete")),
-        5000,
-        100
-    ))
-    .onComplete(ctx.asyncAssertSuccess(v -> {
-        adminClient.close();
-        async.complete();
-    }));
+    waitForTopicToExist(vertx, adminClient, "topicToDelete")
+        .compose(v -> adminClient.deleteTopics(Collections.singletonList("topicToDelete")))
+        .compose(v -> waitForTopicToBeDeleted(vertx, adminClient, "topicToDelete"))
+        .onComplete(ctx.asyncAssertSuccess(v -> {
+            adminClient.close();
+            async.complete();
+        })
+    );
   }
 
   @Test
