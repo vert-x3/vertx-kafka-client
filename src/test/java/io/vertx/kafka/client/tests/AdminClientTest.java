@@ -311,14 +311,25 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     Async async = ctx.async();
 
-    waitForTopicToExist(vertx, adminClient, "topicToDelete")
-        .compose(v -> adminClient.deleteTopics(Collections.singletonList("topicToDelete")))
-        .compose(v -> waitForTopicToBeDeleted(vertx, adminClient, "topicToDelete"))
-        .onComplete(ctx.asyncAssertSuccess(v -> {
-            adminClient.close();
-            async.complete();
-        })
-    );
+    // timer because, Kafka cluster takes time to create topics
+    vertx.setTimer(1000, t -> {
+
+      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
+
+        ctx.assertTrue(topics.contains("topicToDelete"));
+
+        adminClient.deleteTopics(Collections.singletonList("topicToDelete"), ctx.asyncAssertSuccess(v -> {
+            vertx.setTimer(1000, t2 -> {
+                adminClient.listTopics(ctx.asyncAssertSuccess(topicsAfterDelete -> {
+                    ctx.assertFalse(topicsAfterDelete.contains("topicToDelete"));
+                    adminClient.close();
+                    async.complete();
+                }));
+            });
+        }));
+        
+      }));
+    });
   }
 
   @Test
@@ -692,7 +703,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     adminClient.listConsumerGroupOffsets(groupId, ctx.asyncAssertSuccess(consumerGroupOffsets -> {
 
       TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
-      TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(0);
+      TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(1);
       ctx.assertEquals(2, consumerGroupOffsets.size());
       ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition0));
       ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition0).getOffset());
