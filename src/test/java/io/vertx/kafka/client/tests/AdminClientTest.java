@@ -438,8 +438,6 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     Async async = ctx.async();
 
-    //kafkaCluster.useTo().consumeStrings(() -> true, null, Collections.singletonList("first-topic"), c -> { });
-
     kafkaCluster.useTo().consume("groupId-desc-with-options", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
@@ -447,7 +445,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     DescribeConsumerGroupsOptions options = new DescribeConsumerGroupsOptions().includeAuthorizedOperations(true);
 
     // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(5000, t -> {
 
       adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-with-options"), options, ctx.asyncAssertSuccess(groups -> {
 
