@@ -327,7 +327,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
                 }));
             });
         }));
-        
+
       }));
     });
   }
@@ -358,17 +358,18 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     adminClient.alterConfigs(updateConfig, ctx.asyncAssertSuccess(v -> {
 
       adminClient.describeConfigs(Collections.singletonList(resource), ctx.asyncAssertSuccess(describeConfig -> {
+        vertx.setTimer(1000, t -> {
+            ConfigEntry describeRetentionEntry =
+            describeConfig.get(resource)
+                .getEntries()
+                .stream()
+                .filter(entry -> entry.getName().equals(TopicConfig.RETENTION_MS_CONFIG))
+                .collect(Collectors.toList())
+                .get(0);
 
-        ConfigEntry describeRetentionEntry =
-          describeConfig.get(resource)
-            .getEntries()
-            .stream()
-            .filter(entry -> entry.getName().equals(TopicConfig.RETENTION_MS_CONFIG))
-            .collect(Collectors.toList())
-            .get(0);
-
-        ctx.assertEquals("51000", describeRetentionEntry.getValue());
-        adminClient.close();
+            ctx.assertEquals("51000", describeRetentionEntry.getValue());
+            adminClient.close();
+        });
       }));
     }));
   }
@@ -380,8 +381,6 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     Async async = ctx.async();
 
-    //kafkaCluster.useTo().consumeStrings(() -> true, null, Collections.singletonList("first-topic"), c -> { });
-
     kafkaCluster.useTo().consume("groupId", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
@@ -390,7 +389,6 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     vertx.setTimer(1000, t -> {
 
       adminClient.listConsumerGroups(ctx.asyncAssertSuccess(groups -> {
-
         ctx.assertTrue(groups.size() > 0);
         ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).anyMatch(g -> g.equals("groupId")));
         adminClient.close();
