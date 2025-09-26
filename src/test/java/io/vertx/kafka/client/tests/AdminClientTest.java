@@ -387,14 +387,12 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     // timer because, Kafka cluster takes time to start consumer
     vertx.setTimer(1000, t -> {
-
       adminClient.listConsumerGroups(ctx.asyncAssertSuccess(groups -> {
         ctx.assertTrue(groups.size() > 0);
         ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).anyMatch(g -> g.equals("groupId")));
         adminClient.close();
         async.complete();
       }));
-
     });
   }
 
@@ -405,14 +403,12 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     Async async = ctx.async();
 
-    //kafkaCluster.useTo().consumeStrings(() -> true, null, Collections.singletonList("first-topic"), c -> { });
-
     kafkaCluster.useTo().consume("groupId-desc-no-options", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
 
     // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
+    vertx.setTimer(5000, t -> {
 
       adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-no-options"), ctx.asyncAssertSuccess(groups -> {
 
