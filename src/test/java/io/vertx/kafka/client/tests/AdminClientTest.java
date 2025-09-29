@@ -689,8 +689,6 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     final String topicName = "offsets-topic";
     final Async async = ctx.async();
 
-    System.out.println(kafkaCluster.getBootstrapServers());
-
     kafkaCluster.createTopic(topicName, 2, 1);
     vertx.setTimer(1000, t -> {
 
@@ -939,26 +937,29 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
         ctx.assertTrue(topics.contains("testCreatePartitionInTopicWithAssignment"));
 
-        List sublist1 = new ArrayList<Integer>();
-        sublist1.add(2);
+        List<Integer> sublist1 = new ArrayList<Integer>();
+        sublist1.add(1);
 
-        List sublist2 = new ArrayList<Integer>();
-        sublist2.add(1);
+        List<Integer> sublist2 = new ArrayList<Integer>();
+        sublist2.add(0);
 
-        List assigmnments = new ArrayList<List<Integer>>();
+        List<List<Integer>> assigmnments = new ArrayList<List<Integer>>();
         assigmnments.add(sublist1);
         assigmnments.add(sublist2);
 
         adminClient.createPartitions(Collections.singletonMap("testCreatePartitionInTopicWithAssignment", new NewPartitions(3, assigmnments)), ctx.asyncAssertSuccess(v -> {
-          adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment"), ctx.asyncAssertSuccess(s -> {
-
-            List<TopicPartitionInfo> partitions = s.get("testCreatePartitionInTopicWithAssignment").getPartitions();
-            ctx.assertTrue(partitions.size() == 3, "Expect "+ partitions + " size == 3");
-            ctx.assertTrue(partitions.get(1).getReplicas().get(0).getId() == 2, "Expect replica 0 of partition 1 to be 2, partitions = " + partitions);
-            ctx.assertTrue(partitions.get(2).getReplicas().get(0).getId() == 1, "Expect replica 0 of partition 2 to be 1, partitions = " + partitions);
-            adminClient.close();
-            async.complete();
-          }));
+            
+            // Allow some time for the partitions to settle after creation
+            vertx.setTimer(1000, t2 -> {
+              adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment"), ctx.asyncAssertSuccess(s -> {
+                List<TopicPartitionInfo> partitions = s.get("testCreatePartitionInTopicWithAssignment").getPartitions();
+                ctx.assertTrue(partitions.size() == 3, "Expect "+ partitions + " size == 3");
+                ctx.assertTrue(partitions.get(1).getReplicas().get(0).getId() == 1, "Expect replica 0 of partition 1 to be 1, partitions = " + partitions);
+                ctx.assertTrue(partitions.get(2).getReplicas().get(0).getId() == 0, "Expect replica 0 of partition 2 to be 0, partitions = " + partitions);
+                adminClient.close();
+                async.complete();
+              }));
+            });
         }));
       }));
     });

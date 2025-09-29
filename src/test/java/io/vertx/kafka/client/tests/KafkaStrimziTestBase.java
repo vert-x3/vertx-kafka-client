@@ -5,9 +5,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.kafka.admin.KafkaAdminClient;
 
-import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,7 +38,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -298,38 +295,16 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
          * Produce integers to a topic
          */
         public void produceIntegers(String topic, int messageCount, int startingOffset, Runnable completionCallback) {
-            System.out.println("Did we make it?");
             Properties props = getProducerProperties("producer-" + UUID.randomUUID());
             props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
             props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerSerializer");
-            props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG,"org.apache.kafka.clients.producer.RoundRobinPartitioner");
 
             try (KafkaProducer<String, Integer> producer = new KafkaProducer<>(
                     props)) {
-                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(0).getClass().getCanonicalName());
-                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(0).toString());
-                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(0).leader());
-                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(0).partition());
-                         System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(1).getClass().getCanonicalName());
-                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(1).toString());
-                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(1).leader());
-                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(1).partition());
-
-                try {
-                    Field pField = KafkaProducer.class.getDeclaredField("partitioner");
-                    pField.setAccessible(true);
-                    Partitioner p = (Partitioner) pField.get(producer);
-                    System.out.println("Actual partitioner class: " + p.getClass().getName());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
+                
+                int topicPartitions = producer.partitionsFor(topic).size();
                 for (int i = 0; i < messageCount; i++) {
-                    producer.send(new ProducerRecord<>(topic, startingOffset + i), (metadata, exception) -> {
-                        if(exception == null){
-                            System.out.println("Message sent to partition: " + metadata.partition());
-                        }
-                    });
+                    producer.send(new ProducerRecord<>(topic, i % topicPartitions, null, startingOffset + i));
                 }
                 producer.flush();
 
