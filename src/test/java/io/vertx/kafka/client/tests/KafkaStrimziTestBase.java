@@ -30,7 +30,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -38,6 +40,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -59,96 +62,6 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
 
     private static final Map<String, KafkaConsumer<?, ?>> activeConsumers = new ConcurrentHashMap<>();
     protected static boolean ACL = false;
-
-    protected Future<Void> waitForTopicToExist(
-        Vertx v,
-        KafkaAdminClient client,
-        String topicName
-    ) {
-        return waitWithDetails(
-            v, 
-            client, 
-            topics -> topics.contains(topicName),
-            5000,
-            100,
-            String.format("Timeout waiting for topic '%s' to exist", topicName)    
-        );
-    }
-
-    protected Future<Void> waitForTopicToBeDeleted(
-        Vertx v,
-        KafkaAdminClient client,
-        String topicName
-    ) {
-        return waitWithDetails(
-            v, 
-            client, 
-            topics -> !topics.contains(topicName),
-            5000,
-            100,
-            String.format("Timeout waiting for topic '%s' to be deleted", topicName)    
-        );
-    }
-
-    protected Future<Void> waitWithDetails(
-        Vertx v,
-        KafkaAdminClient client, 
-        Function<Set<String>, Boolean> condition,
-        long timeout, 
-        long interval,
-        String timeoutMessage
-    ) {
-
-        Promise<Void> promise = Promise.promise();
-        long endTime = System.currentTimeMillis() + timeout;
-
-        v.setPeriodic(interval, timerId -> {
-            
-           client.listTopics().onComplete(ar -> {
-            if (ar.succeeded()) {
-                if (condition.apply(ar.result())) {
-                    v.cancelTimer(timerId);
-                    promise.complete();
-                } else if (System.currentTimeMillis() > endTime) {
-                    v.cancelTimer(timerId);
-                    Set<String> currentTopics = ar.result();
-                    promise.fail(String.format(
-                        "%s. Current topics: %s",
-                        timeoutMessage,
-                        currentTopics.size() > 10
-                            ? currentTopics.size() + " topics"
-                            : currentTopics 
-                    ));
-                }
-            } else if (System.currentTimeMillis() > endTime) {
-                v.cancelTimer(timerId);
-                promise.fail(timeoutMessage + ". Failed to list topics: " + ar.cause().getMessage());
-            }
-           });
-        });
-
-        return promise.future();
-    };
-
-    protected Future<Void> waitForCondition(Vertx v, Supplier<Future<Boolean>> condition, long timeout, long interval) {
-        Promise<Void> promise = Promise.promise();
-        long endTime = System.currentTimeMillis() + timeout;
-
-        v.setPeriodic(interval, timerId -> {
-            condition.get().onComplete(ar -> {
-                if (ar.succeeded() && ar.result()){
-                    v.cancelTimer(timerId);
-                    promise.complete();
-                } else if (System.currentTimeMillis() > endTime) {
-                    v.cancelTimer(timerId);
-                    promise.fail("Timeout waiting for condition");
-                }
-                // Otherwise keep polling
-            });
-        });
-
-        return promise.future();
-    };
 
     public static KafkaClusterWrapper kafkaCluster(boolean acl) {
         if (kafkaCluster != null) {
@@ -235,6 +148,102 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         return new KafkaTestHelper();
     }
 
+    protected Future<Void> waitForTopicToExist(
+        Vertx v,
+        String topicName
+    ) {
+        return waitWithDetails(
+            v, 
+            topics -> topics.contains(topicName),
+            5000,
+            100,
+            String.format("Timeout waiting for topic '%s' to exist", topicName)    
+        );
+    }
+
+    protected Future<Void> waitForTopicToBeDeleted(
+        Vertx v,
+        String topicName
+    ) {
+        return waitWithDetails(
+            v, 
+            topics -> !topics.contains(topicName),
+            5000,
+            100,
+            String.format("Timeout waiting for topic '%s' to be deleted", topicName)    
+        );
+    }
+
+    protected Future<Void> waitForTopicToBeReady(Vertx v, String topicName) {
+        return waitWithDetails(
+            v,
+            topics -> {
+                if (!topics.contains(topicName)){
+                    return false;
+                }
+
+                // Topic exists, we need to know if it's ready
+                try {
+                    DescribeTopicsResult result = adminClient.describeTopics(Collections.singletonList(topicName));
+
+                    // This will throw if topic isn't ready
+                    TopicDescription desc = result.all().get(1, TimeUnit.SECONDS).get(topicName);
+
+                    // Check if all partitions have leaders
+                    return desc.partitions().stream().allMatch(partition -> partition.leader() != null);
+                } catch (Exception e) {
+                    return false;
+                }
+            },
+            5000,
+            100,
+            String.format("Timeout waiting for topic '%s' to be ready", topicName)
+        );
+    }
+
+    protected Future<Void> waitWithDetails(
+        Vertx v,
+        Function<Set<String>, Boolean> condition,
+        long timeout, 
+        long interval,
+        String timeoutMessage
+    ) {
+
+        Promise<Void> promise = Promise.promise();
+        long endTime = System.currentTimeMillis() + timeout;
+
+        v.setPeriodic(interval, timerId -> {
+           // Execute blocking operation on worker thread
+           v.<Set<String>>executeBlocking(() -> {
+                return adminClient.listTopics()
+                    .names()
+                    .get(5, TimeUnit.SECONDS);
+           }).onComplete(ar -> {
+            if (ar.succeeded()) {
+                if (condition.apply(ar.result())) {
+                    v.cancelTimer(timerId);
+                    promise.complete();
+                } else if (System.currentTimeMillis() > endTime) {
+                    v.cancelTimer(timerId);
+                    Set<String> currentTopics = ar.result();
+                    promise.fail(new AssertionError(String.format(
+                        "%s. Current topics: %s",
+                        timeoutMessage,
+                        currentTopics.size() > 10
+                            ? currentTopics.size() + " topics"
+                            : currentTopics 
+                    )));
+                }
+            } else if (System.currentTimeMillis() > endTime) {
+                 v.cancelTimer(timerId);
+                promise.fail(new AssertionError(timeoutMessage + ". Failed to list topics: " + ar.cause().getMessage()));
+            }
+           }); 
+        });
+
+        return promise.future();
+    };
+
     /**
      * Helper class for Kafka operations
      */
@@ -289,14 +298,38 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
          * Produce integers to a topic
          */
         public void produceIntegers(String topic, int messageCount, int startingOffset, Runnable completionCallback) {
+            System.out.println("Did we make it?");
             Properties props = getProducerProperties("producer-" + UUID.randomUUID());
-            props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-            props.put("value.serializer", "org.apache.kafka.common.serialization.IntegerSerializer");
+            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerSerializer");
+            props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG,"org.apache.kafka.clients.producer.RoundRobinPartitioner");
 
             try (KafkaProducer<String, Integer> producer = new KafkaProducer<>(
                     props)) {
+                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(0).getClass().getCanonicalName());
+                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(0).toString());
+                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(0).leader());
+                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(0).partition());
+                         System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(1).getClass().getCanonicalName());
+                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(1).toString());
+                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(1).leader());
+                        System.out.println("Partitioner class: " + producer.partitionsFor(topic).get(1).partition());
+
+                try {
+                    Field pField = KafkaProducer.class.getDeclaredField("partitioner");
+                    pField.setAccessible(true);
+                    Partitioner p = (Partitioner) pField.get(producer);
+                    System.out.println("Actual partitioner class: " + p.getClass().getName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 for (int i = 0; i < messageCount; i++) {
-                    producer.send(new ProducerRecord<>(topic, 0, null, startingOffset + i));
+                    producer.send(new ProducerRecord<>(topic, startingOffset + i), (metadata, exception) -> {
+                        if(exception == null){
+                            System.out.println("Message sent to partition: " + metadata.partition());
+                        }
+                    });
                 }
                 producer.flush();
 
@@ -318,6 +351,9 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
 
             Thread consumerThread = new Thread(() -> {
                 try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(props, keyDeserializer, valueDeserializer)) {
+                    
+                    // Store consumer and subscribe
+                    activeConsumers.put(groupId, consumer);
                     consumer.subscribe(topics);
 
                     while (continuePolling.get()) {
@@ -332,40 +368,37 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
                             consumer.commitAsync();
                         }
                     }
+                    
+                    // Explicitly close the consumer before running the completion callback
+                    consumer.close();
 
                     if (completionCallback != null) {
                         completionCallback.run();
                     }
-                }
+                } 
             });
 
             consumerThread.start();
         }
 
         /**
-         * Consume string messages from a topic
+         * Consume string messages from a topic with a custom polling condition
          */
-        public void consumeStrings(String topic, int expectedMessageCount, long timeout, TimeUnit unit,
-                Runnable completionCallback) {
-            CountDownLatch latch = new CountDownLatch(expectedMessageCount);
-
+        public void consumeStrings(Supplier<Boolean> continuePolling,
+                Runnable completionCallback,
+                Collection<String> topics,
+                Consumer<ConsumerRecord<String, String>> recordConsumer) {
             consume(
                     "group-" + UUID.randomUUID(),
                     "consumer-" + UUID.randomUUID(),
                     OffsetResetStrategy.EARLIEST,
                     new StringDeserializer(),
                     new StringDeserializer(),
-                    () -> latch.getCount() > 0,
+                    continuePolling,
                     null,
                     completionCallback,
-                    Collections.singleton(topic),
-                    record -> latch.countDown());
-
-            try {
-                latch.await(timeout, unit);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+                    topics,
+                    recordConsumer);
         }
 
         /**
@@ -406,6 +439,14 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         public KafkaClusterWrapper(StrimziKafkaCluster delegate, KafkaStrimziTestBase testBase) {
             this.delegate = delegate;
             this.testBase = testBase;
+        }
+
+        public void createTopic(String topicName, int partitions, int replicationFactor) {
+            KafkaStrimziTestBase.createTopic(topicName, partitions, replicationFactor);
+        }
+
+        public void createTopics(Set<String> topics) {
+            KafkaStrimziTestBase.createTopics(topics);
         }
 
         /**

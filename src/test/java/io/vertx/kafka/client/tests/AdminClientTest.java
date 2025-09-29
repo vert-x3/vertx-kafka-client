@@ -59,6 +59,8 @@ import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetCommitCallback;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.clients.producer.Partitioner;
+import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.config.TopicConfig;
@@ -81,6 +83,23 @@ public class AdminClientTest extends KafkaStrimziTestBase {
   private Properties config;
 
   private static Set<String> topics = new HashSet<>();
+
+  public class MyPartitioner implements Partitioner {
+
+    int partition = 1;
+    @Override
+    public void configure(Map<String, ?> configs) {}
+
+    @Override
+    public int partition(String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
+       this.partition = partition == 0 ? 1 : 0;
+       return partition; 
+    }
+
+    @Override
+    public void close() {}
+
+  };
 
   static {
     topics.add("first-topic");
@@ -601,7 +620,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
           controller.getIdString().equals("0") || controller.getIdString().equals("1"), 
           "Controller ID should be either 0 or 1"
         );
-        ctx.assertEquals("127.0.0.1", controller.getHost());
+        ctx.assertEquals("localhost", controller.getHost());
         ctx.assertEquals(false, controller.hasRack());
         ctx.assertEquals(false, controller.isEmpty());
         ctx.assertEquals(null, controller.rack());
@@ -641,7 +660,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
           controller.getIdString().equals("0") || controller.getIdString().equals("1"), 
         "Controller ID should be either 0 or 1"
         ); 
-        ctx.assertEquals("127.0.0.1", controller.getHost());
+        ctx.assertEquals("localhost", controller.getHost());
         ctx.assertEquals(false, controller.hasRack());
         ctx.assertEquals(false, controller.isEmpty());
         ctx.assertEquals(null, controller.rack());
@@ -668,43 +687,50 @@ public class AdminClientTest extends KafkaStrimziTestBase {
   public void testListConsumerGroupOffsets(TestContext ctx) throws InterruptedException {
 
     final String topicName = "offsets-topic";
-    kafkaCluster.createTopic(topicName, 2, 1);
-
-    Async producerAsync = ctx.async();
-    kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
-    producerAsync.awaitSuccess(10000);
-
-    final String groupId = "group-id";
-    final String clientId = "client-id";
-    final AtomicInteger counter = new AtomicInteger();
-    final OffsetCommitCallback offsetCommitCallback = new OffsetCommitCallback() {
-      @Override
-      public void onComplete(Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> map, Exception e) {
-      }
-    };
-    final Async consumerAsync = ctx.async();
-
-    kafkaCluster.useTo().consume(groupId, clientId, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
-      () -> counter.get() < 6, offsetCommitCallback, consumerAsync::complete, Collections.singletonList(topicName),
-      record -> { counter.incrementAndGet(); });
-    consumerAsync.awaitSuccess(10000);
-
-    final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
     final Async async = ctx.async();
 
-    adminClient.listConsumerGroupOffsets(groupId, ctx.asyncAssertSuccess(consumerGroupOffsets -> {
+    System.out.println(kafkaCluster.getBootstrapServers());
 
-      TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
-      TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(1);
-      ctx.assertEquals(2, consumerGroupOffsets.size());
-      ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition0));
-      ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition0).getOffset());
-      ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition1));
-      ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition1).getOffset());
+    kafkaCluster.createTopic(topicName, 2, 1);
+    vertx.setTimer(1000, t -> {
 
-      adminClient.close();
-      async.complete();
-    }));
+        Async producerAsync = ctx.async();
+        kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
+        producerAsync.awaitSuccess(10000);
+
+        final String groupId = "group-id";
+        final String clientId = "client-id";
+        final AtomicInteger counter = new AtomicInteger();
+        final OffsetCommitCallback offsetCommitCallback = new OffsetCommitCallback() {
+            @Override
+            public void onComplete(Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> map, Exception e) {
+            }
+        };
+        final Async consumerAsync = ctx.async();
+
+        kafkaCluster.useTo().consume(groupId, clientId, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
+        () -> counter.get() < 6, offsetCommitCallback, consumerAsync::complete, Collections.singletonList(topicName),
+        record -> { counter.incrementAndGet(); });
+
+        consumerAsync.awaitSuccess(10000);
+
+        final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+        adminClient.listConsumerGroupOffsets(groupId, ctx.asyncAssertSuccess(consumerGroupOffsets -> {
+
+            TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
+            TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(1);
+            ctx.assertEquals(2, consumerGroupOffsets.size());
+            ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition0));
+            ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition0).getOffset());
+            ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition1));
+            ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition1).getOffset());
+
+            adminClient.close();
+            async.complete();
+        }));
+
+    });
   }
 
   @Test
