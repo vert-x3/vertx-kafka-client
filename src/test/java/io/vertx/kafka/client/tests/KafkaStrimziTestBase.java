@@ -1,9 +1,6 @@
 package io.vertx.kafka.client.tests;
 
 import io.strimzi.test.container.StrimziKafkaCluster;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 import java.time.Duration;
@@ -20,7 +17,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.junit.AfterClass;
@@ -28,9 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -144,102 +138,6 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
     public KafkaTestHelper useTo() {
         return new KafkaTestHelper();
     }
-
-    protected Future<Void> waitForTopicToExist(
-        Vertx v,
-        String topicName
-    ) {
-        return waitWithDetails(
-            v, 
-            topics -> topics.contains(topicName),
-            5000,
-            100,
-            String.format("Timeout waiting for topic '%s' to exist", topicName)    
-        );
-    }
-
-    protected Future<Void> waitForTopicToBeDeleted(
-        Vertx v,
-        String topicName
-    ) {
-        return waitWithDetails(
-            v, 
-            topics -> !topics.contains(topicName),
-            5000,
-            100,
-            String.format("Timeout waiting for topic '%s' to be deleted", topicName)    
-        );
-    }
-
-    protected Future<Void> waitForTopicToBeReady(Vertx v, String topicName) {
-        return waitWithDetails(
-            v,
-            topics -> {
-                if (!topics.contains(topicName)){
-                    return false;
-                }
-
-                // Topic exists, we need to know if it's ready
-                try {
-                    DescribeTopicsResult result = adminClient.describeTopics(Collections.singletonList(topicName));
-
-                    // This will throw if topic isn't ready
-                    TopicDescription desc = result.all().get(1, TimeUnit.SECONDS).get(topicName);
-
-                    // Check if all partitions have leaders
-                    return desc.partitions().stream().allMatch(partition -> partition.leader() != null);
-                } catch (Exception e) {
-                    return false;
-                }
-            },
-            5000,
-            100,
-            String.format("Timeout waiting for topic '%s' to be ready", topicName)
-        );
-    }
-
-    protected Future<Void> waitWithDetails(
-        Vertx v,
-        Function<Set<String>, Boolean> condition,
-        long timeout, 
-        long interval,
-        String timeoutMessage
-    ) {
-
-        Promise<Void> promise = Promise.promise();
-        long endTime = System.currentTimeMillis() + timeout;
-
-        v.setPeriodic(interval, timerId -> {
-           // Execute blocking operation on worker thread
-           v.<Set<String>>executeBlocking(() -> {
-                return adminClient.listTopics()
-                    .names()
-                    .get(5, TimeUnit.SECONDS);
-           }).onComplete(ar -> {
-            if (ar.succeeded()) {
-                if (condition.apply(ar.result())) {
-                    v.cancelTimer(timerId);
-                    promise.complete();
-                } else if (System.currentTimeMillis() > endTime) {
-                    v.cancelTimer(timerId);
-                    Set<String> currentTopics = ar.result();
-                    promise.fail(new AssertionError(String.format(
-                        "%s. Current topics: %s",
-                        timeoutMessage,
-                        currentTopics.size() > 10
-                            ? currentTopics.size() + " topics"
-                            : currentTopics 
-                    )));
-                }
-            } else if (System.currentTimeMillis() > endTime) {
-                 v.cancelTimer(timerId);
-                promise.fail(new AssertionError(timeoutMessage + ". Failed to list topics: " + ar.cause().getMessage()));
-            }
-           }); 
-        });
-
-        return promise.future();
-    };
 
     /**
      * Helper class for Kafka operations
