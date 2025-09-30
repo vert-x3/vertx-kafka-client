@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -36,7 +37,10 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
+import org.apache.kafka.common.serialization.IntegerSerializer;
+import org.apache.kafka.common.serialization.Serializer;
 import org.junit.runner.RunWith;
 
 /**
@@ -147,13 +151,20 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
          * Get consumer properties for the specified consumer group and client ID
          */
         public Properties getConsumerProperties(String groupId, String clientId,
-                OffsetResetStrategy offsetResetStrategy) {
+                OffsetResetStrategy autoOffsetReset) {
+            if (groupId == null) {
+                throw new IllegalArgumentException("The groupId is required");
+            } 
             Properties props = new Properties();
-            props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
-            props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-            props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
-            props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offsetResetStrategy.name().toLowerCase());
-            props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+            props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
+            props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+            props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, Boolean.FALSE.toString());
+            if (autoOffsetReset != null) {
+                props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset.toString().toLowerCase());
+            }
+            if (clientId != null) {
+                props.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
+            }
             return props;
         }
 
@@ -162,42 +173,65 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
          */
         public Properties getProducerProperties(String clientId) {
             Properties props = new Properties();
-            props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
-            props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
+            props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
+            props.setProperty(ProducerConfig.ACKS_CONFIG, Integer.toString(1));
+            if (clientId != null) {
+                props.setProperty(ProducerConfig.CLIENT_ID_CONFIG, clientId);
+            }
             return props;
+        }
+
+        public <K, V> void produce(String producerName, int messageCount, Serializer<K> keySerializer, Serializer<V> valueSerializer, Runnable completionCallback, Supplier<ProducerRecord<K, V>> messageSupplier) {
+            Properties props = this.getProducerProperties(producerName);
+            Thread t = new Thread(() -> {
+                try {
+                    KafkaProducer<K, V> producer = new KafkaProducer<K,V>(props, keySerializer, valueSerializer);
+
+                    try {
+                        for(int i = 0; i != messageCount; ++i) {
+                            ProducerRecord<K, V> record = (ProducerRecord<K,V>)messageSupplier.get();
+                            producer.send(record);
+                            producer.flush();
+                        }
+                    } catch (Throwable var15) {
+                        try {
+                            producer.close();
+                        } catch (Throwable var14) {
+                            var15.addSuppressed(var14);
+                        }
+                        throw var15;
+                    }
+
+                    producer.close();
+                } finally {
+                    if (completionCallback != null) {
+                        completionCallback.run();
+                    }
+                }
+
+            });
+            t.setName(producerName + "-thread");
+            t.start();
         }
 
         /**
          * Produce strings to a topic
          */
-        public void produceStrings(int messageCount, Runnable completionCallback,
-                Supplier<ProducerRecord<String, String>> recordSupplier) {
-            Properties props = getProducerProperties("producer-" + UUID.randomUUID());
-            props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-            props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-
-            try (KafkaProducer<String, String> producer = new KafkaProducer<>(
-                    props)) {
-                for (int i = 0; i < messageCount; i++) {
-                    producer.send(recordSupplier.get());
-                }
-                producer.flush();
-
-                if (completionCallback != null) {
-                    completionCallback.run();
-                }
-            }
+        public void produceStrings(int messageCount, Runnable completionCallback, Supplier<ProducerRecord<String, String>> messageSupplier) {
+            Serializer<String> keySer = new StringSerializer();
+            String randomId = UUID.randomUUID().toString();
+            this.produce(randomId, messageCount, keySer, keySer, completionCallback, messageSupplier);
         }
 
         /**
          * Produce integers to a topic
          */
-        public void produceIntegers(String topic, int messageCount, int startingOffset, Runnable completionCallback) {
-            Properties props = getProducerProperties("producer-" + UUID.randomUUID());
-            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                    "org.apache.kafka.common.serialization.StringSerializer");
-            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                    "org.apache.kafka.common.serialization.IntegerSerializer");
+        public void produceIntegers(int messageCount, Runnable completionCallback, Supplier<ProducerRecord<String, Integer>> messageSupplier) {
+            Serializer<String> keySer = new StringSerializer();
+            Serializer<Integer> valSer = new IntegerSerializer();
+            String randomId = UUID.randomUUID().toString();
+            this.produce(randomId, messageCount, keySer, valSer, completionCallback, messageSupplier);
+        }
 
             try (KafkaProducer<String, Integer> producer = new KafkaProducer<>(
                     props)) {
