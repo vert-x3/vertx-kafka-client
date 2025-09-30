@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Producer tests
  */
-public class ProducerTest extends KafkaClusterTestBase {
+public class ProducerTest extends KafkaStrimziTestBase {
 
   private Vertx vertx;
   private KafkaWriteStream<String, String> producer;
