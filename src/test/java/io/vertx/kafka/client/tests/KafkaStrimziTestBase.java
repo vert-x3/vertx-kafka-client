@@ -61,7 +61,7 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
 
         Map<String, String> kafkaConfig = new HashMap<>();
         if (acl) {
-            kafkaConfig.put("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer");
+            kafkaConfig.put("authorizer.class.name", "org.apache.kafka.metadata.authorizer.StandardAuthorizer");
             kafkaConfig.put("super.users", "User:ANONYMOUS");
         }
 

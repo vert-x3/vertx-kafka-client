@@ -16,7 +16,9 @@
 
 package io.vertx.kafka.client.tests;
 
+import io.strimzi.test.container.StrimziKafkaCluster;
 import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -30,11 +32,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Properties;
 
-public class AdminClientAclTest extends KafkaClusterTestBase {
+public class AdminClientAclTest extends KafkaStrimziTestBase {
     private Vertx vertx;
     private Properties config;
 
@@ -42,7 +43,7 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
     public void beforeTest() {
         this.vertx = Vertx.vertx();
         this.config = new Properties();
-        this.config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        this.config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
     }
 
     @After
@@ -51,8 +52,10 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
     }
 
     @BeforeClass
-    public static void setUp() throws IOException {
-        kafkaCluster = kafkaCluster(true).deleteDataPriorToStartup(true).addBrokers(2).startup();
+    public static void setUp() {
+        StrimziKafkaCluster strimziCluster = kafkaCluster(true).getDelegate();
+        kafkaCluster = new KafkaClusterWrapper(strimziCluster, new KafkaStrimziTestBase() {});
+        kafkaCluster.start();
     }
 
     @Test
@@ -71,6 +74,7 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
         String topicName = "test-topic";
         String host = "localhost:9092";
         String principal = "User:ANONYMOUS";
+        Async async = ctx.async();
         KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
         ResourcePattern resourcePattern = new ResourcePattern(ResourceType.TOPIC, topicName, PatternType.LITERAL);
         AccessControlEntry ace = new AccessControlEntry(principal, host, AclOperation.ALL, AclPermissionType.ALLOW);
@@ -81,29 +85,35 @@ public class AdminClientAclTest extends KafkaClusterTestBase {
 
         AclBindingFilter abf = new AclBindingFilter(rpf, acef);
         adminClient.createAcls(Collections.singletonList(aclBinding)).onComplete(ctx.asyncAssertSuccess(i ->
-            adminClient.describeAcls(abf, ctx.asyncAssertSuccess(list -> {
-                ctx.assertFalse(list.isEmpty());
-                ctx.assertTrue(list.get(0).entry().host().equals(host));
-                ctx.assertTrue(list.get(0).entry().principal().equals(principal));
-                ctx.assertTrue(list.get(0).entry().operation().equals(AclOperation.ALL));
-                ctx.assertTrue(list.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
-                ctx.assertTrue(list.get(0).pattern().name().equals(topicName));
-                ctx.assertTrue(list.get(0).pattern().patternType().equals(PatternType.LITERAL));
-                ctx.assertTrue(list.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
-                adminClient.deleteAcls(Collections.singletonList(abf)).onComplete(ctx.asyncAssertSuccess(deleted -> {
-                    ctx.assertFalse(deleted.isEmpty());
-                    ctx.assertTrue(deleted.get(0).entry().host().equals(host));
-                    ctx.assertTrue(deleted.get(0).entry().principal().equals(principal));
-                    ctx.assertTrue(deleted.get(0).entry().operation().equals(AclOperation.ALL));
-                    ctx.assertTrue(deleted.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
-                    ctx.assertTrue(deleted.get(0).pattern().name().equals(topicName));
-                    ctx.assertTrue(deleted.get(0).pattern().patternType().equals(PatternType.LITERAL));
-                    ctx.assertTrue(deleted.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
-                    adminClient.describeAcls(abf).onComplete(ctx.asyncAssertSuccess(list2 -> {
-                        ctx.assertTrue(list2.isEmpty());
-                        adminClient.close();
+            vertx.setTimer(1000, t1 -> {
+                adminClient.describeAcls(abf, ctx.asyncAssertSuccess(list -> {
+                    ctx.assertFalse(list.isEmpty());
+                    ctx.assertTrue(list.get(0).entry().host().equals(host));
+                    ctx.assertTrue(list.get(0).entry().principal().equals(principal));
+                    ctx.assertTrue(list.get(0).entry().operation().equals(AclOperation.ALL));
+                    ctx.assertTrue(list.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
+                    ctx.assertTrue(list.get(0).pattern().name().equals(topicName));
+                    ctx.assertTrue(list.get(0).pattern().patternType().equals(PatternType.LITERAL));
+                    ctx.assertTrue(list.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
+                    adminClient.deleteAcls(Collections.singletonList(abf)).onComplete(ctx.asyncAssertSuccess(deleted -> {
+                        vertx.setTimer(1000, t2 -> {
+                            ctx.assertFalse(deleted.isEmpty());
+                            ctx.assertTrue(deleted.get(0).entry().host().equals(host));
+                            ctx.assertTrue(deleted.get(0).entry().principal().equals(principal));
+                            ctx.assertTrue(deleted.get(0).entry().operation().equals(AclOperation.ALL));
+                            ctx.assertTrue(deleted.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
+                            ctx.assertTrue(deleted.get(0).pattern().name().equals(topicName));
+                            ctx.assertTrue(deleted.get(0).pattern().patternType().equals(PatternType.LITERAL));
+                            ctx.assertTrue(deleted.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
+                            adminClient.describeAcls(abf).onComplete(ctx.asyncAssertSuccess(list2 -> {
+                                ctx.assertTrue(list2.isEmpty());
+                                adminClient.close();
+                                async.complete();
+                            }));
+                        });
                     }));
                 }));
-            }))));
+            })
+        ));
     }
 }
