@@ -194,12 +194,14 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
          */
         public void produceIntegers(String topic, int messageCount, int startingOffset, Runnable completionCallback) {
             Properties props = getProducerProperties("producer-" + UUID.randomUUID());
-            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.IntegerSerializer");
+            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                    "org.apache.kafka.common.serialization.StringSerializer");
+            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                    "org.apache.kafka.common.serialization.IntegerSerializer");
 
             try (KafkaProducer<String, Integer> producer = new KafkaProducer<>(
                     props)) {
-                
+
                 int topicPartitions = producer.partitionsFor(topic).size();
                 for (int i = 0; i < messageCount; i++) {
                     producer.send(new ProducerRecord<>(topic, i % topicPartitions, null, startingOffset + i));
@@ -224,7 +226,7 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
 
             Thread consumerThread = new Thread(() -> {
                 try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(props, keyDeserializer, valueDeserializer)) {
-                    
+
                     // Store consumer and subscribe
                     activeConsumers.put(groupId, consumer);
                     consumer.subscribe(topics);
@@ -241,14 +243,14 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
                             consumer.commitAsync();
                         }
                     }
-                    
+
                     // Explicitly close the consumer before running the completion callback
                     consumer.close();
 
                     if (completionCallback != null) {
                         completionCallback.run();
                     }
-                } 
+                }
             });
 
             consumerThread.start();
