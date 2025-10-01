@@ -58,7 +58,7 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
     private static final Map<String, KafkaConsumer<?, ?>> activeConsumers = new ConcurrentHashMap<>();
     protected static boolean ACL = false;
 
-    public static KafkaClusterWrapper kafkaCluster(boolean acl) {
+    public static KafkaClusterWrapper kafkaCluster(boolean acl, int brokers) {
         if (kafkaCluster != null) {
             throw new IllegalStateException();
         }
@@ -70,7 +70,7 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         }
 
         StrimziKafkaCluster strimziCluster = new StrimziKafkaCluster.StrimziKafkaClusterBuilder()
-                .withNumberOfBrokers(2)
+                .withNumberOfBrokers(brokers)
                 .withKafkaVersion("3.7.1")
                 .withKraft()
                 .withAdditionalKafkaConfiguration(kafkaConfig)
@@ -78,6 +78,10 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
 
         // We need to create the wrapper in the setUp method where we have an instance
         return new KafkaClusterWrapper(strimziCluster, null);
+    }
+
+    public static KafkaClusterWrapper kafkaCluster(boolean acl) {
+        return kafkaCluster(acl, 2);
     }
 
     @BeforeClass
