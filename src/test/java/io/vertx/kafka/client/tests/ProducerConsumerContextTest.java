@@ -39,7 +39,7 @@ import java.util.Properties;
 /**
  * Producer tests
  */
-public class ProducerConsumerContextTest extends KafkaClusterTestBase {
+public class ProducerConsumerContextTest extends KafkaStrimziTestBase {
 
   private Vertx vertx;
   private KafkaWriteStream<String, String> producer;
