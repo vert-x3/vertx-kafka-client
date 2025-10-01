@@ -313,6 +313,26 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
                     topics,
                     recordConsumer);
         }
+        
+        /**
+         * Consume string messages from a topic with a specified count and timeout
+         */
+        public void consumeStrings(String topicName, int count, long timeout, TimeUnit unit, Runnable completionCallback) {
+            AtomicLong readCounter = new AtomicLong();
+            
+            consumeStrings(
+                    () -> readCounter.get() < count,
+                    completionCallback,
+                    Collections.singleton(topicName),
+                    record -> readCounter.incrementAndGet());
+            
+            try {
+                // Wait for the specified timeout
+                Thread.sleep(unit.toMillis(timeout));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
 
         /**
          * Consume integer messages from a topic
