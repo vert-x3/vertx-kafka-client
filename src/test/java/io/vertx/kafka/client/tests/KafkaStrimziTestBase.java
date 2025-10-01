@@ -237,6 +237,13 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
             this.produce(randomId, messageCount, keySer, valSer, completionCallback, messageSupplier);
         }
 
+        public void produceIntegers(String topic, int messageCount, int startingOffset, Runnable completionCallback) {
+            Properties props = getProducerProperties("producer-" + UUID.randomUUID());
+            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                    "org.apache.kafka.common.serialization.StringSerializer");
+            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                    "org.apache.kafka.common.serialization.IntegerSerializer");
+
             try (KafkaProducer<String, Integer> producer = new KafkaProducer<>(
                     props)) {
 
