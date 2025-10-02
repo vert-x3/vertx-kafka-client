@@ -36,7 +36,6 @@
 
   <properties>
     <kafka.version>3.7.1</kafka.version>
-    <debezium.version>2.7.3.Final</debezium.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
     <maven.compiler.testSource>17</maven.compiler.testSource>
     <maven.compiler.testTarget>17</maven.compiler.testTarget>
@@ -92,19 +91,6 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-unit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.debezium</groupId>
-      <artifactId>debezium-core</artifactId>
-      <version>${debezium.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.debezium</groupId>
-      <artifactId>debezium-core</artifactId>
-      <version>${debezium.version}</version>
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
