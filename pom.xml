@@ -115,6 +115,9 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
             <argLine>-server -Xmx1200M</argLine>
+            <systemPropertyVariables>
+              <kafka.version>${kafka.version}</kafka.version>
+            </systemPropertyVariables>
           </configuration>
         </plugin>
       </plugins>
