@@ -117,11 +117,6 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
         }
     }
 
-    @Test
-    public void dummy() {
-        // 'No runnable methods' is thrown without this
-    }
-
     /**
      * Create a topic with the specified name, partitions, and replication factor
      */
