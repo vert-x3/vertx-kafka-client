@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -193,13 +192,13 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
                             producer.send(record);
                             producer.flush();
                         }
-                    } catch (Throwable var15) {
+                    } catch (Throwable producerException) {
                         try {
                             producer.close();
-                        } catch (Throwable var14) {
-                            var15.addSuppressed(var14);
+                        } catch (Throwable closeException) {
+                            producerException.addSuppressed(closeException);
                         }
-                        throw var15;
+                        throw producerException;
                     }
 
                     producer.close();
