@@ -21,6 +21,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.client.RetryBuilder;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.acl.*;
 import org.apache.kafka.common.resource.PatternType;
@@ -32,6 +33,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -84,36 +86,39 @@ public class AdminClientAclTest extends KafkaStrimziTestBase {
         AccessControlEntryFilter acef = new AccessControlEntryFilter(principal, host, AclOperation.ALL, AclPermissionType.ALLOW);
 
         AclBindingFilter abf = new AclBindingFilter(rpf, acef);
-        adminClient.createAcls(Collections.singletonList(aclBinding)).onComplete(ctx.asyncAssertSuccess(i ->
-            vertx.setTimer(1000, t1 -> {
-                adminClient.describeAcls(abf, ctx.asyncAssertSuccess(list -> {
-                    ctx.assertFalse(list.isEmpty());
-                    ctx.assertTrue(list.get(0).entry().host().equals(host));
-                    ctx.assertTrue(list.get(0).entry().principal().equals(principal));
-                    ctx.assertTrue(list.get(0).entry().operation().equals(AclOperation.ALL));
-                    ctx.assertTrue(list.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
-                    ctx.assertTrue(list.get(0).pattern().name().equals(topicName));
-                    ctx.assertTrue(list.get(0).pattern().patternType().equals(PatternType.LITERAL));
-                    ctx.assertTrue(list.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
-                    adminClient.deleteAcls(Collections.singletonList(abf)).onComplete(ctx.asyncAssertSuccess(deleted -> {
-                        vertx.setTimer(1000, t2 -> {
-                            ctx.assertFalse(deleted.isEmpty());
-                            ctx.assertTrue(deleted.get(0).entry().host().equals(host));
-                            ctx.assertTrue(deleted.get(0).entry().principal().equals(principal));
-                            ctx.assertTrue(deleted.get(0).entry().operation().equals(AclOperation.ALL));
-                            ctx.assertTrue(deleted.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
-                            ctx.assertTrue(deleted.get(0).pattern().name().equals(topicName));
-                            ctx.assertTrue(deleted.get(0).pattern().patternType().equals(PatternType.LITERAL));
-                            ctx.assertTrue(deleted.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
-                            adminClient.describeAcls(abf).onComplete(ctx.asyncAssertSuccess(list2 -> {
-                                ctx.assertTrue(list2.isEmpty());
-                                adminClient.close();
-                                async.complete();
-                            }));
-                        });
-                    }));
-                }));
-            })
-        ));
+      adminClient.createAcls(Collections.singletonList(aclBinding)).onComplete(ctx.asyncAssertSuccess(created -> {
+        RetryBuilder.create(vertx, () -> adminClient.describeAcls(abf))
+          .until(ar -> ar.succeeded() && !ar.result().isEmpty())
+          .withTimeout(Duration.ofSeconds(1))
+          .execute()
+          .onComplete(ctx.asyncAssertSuccess(list -> {
+            ctx.assertTrue(list.get(0).entry().host().equals(host));
+            ctx.assertTrue(list.get(0).entry().principal().equals(principal));
+            ctx.assertTrue(list.get(0).entry().operation().equals(AclOperation.ALL));
+            ctx.assertTrue(list.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
+            ctx.assertTrue(list.get(0).pattern().name().equals(topicName));
+            ctx.assertTrue(list.get(0).pattern().patternType().equals(PatternType.LITERAL));
+            ctx.assertTrue(list.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
+            RetryBuilder.create(vertx, () -> adminClient.deleteAcls(Collections.singletonList(abf)))
+              .until(ar -> ar.succeeded() && !ar.result().isEmpty())
+              .withTimeout(Duration.ofSeconds(1))
+              .execute().onComplete(ctx.asyncAssertSuccess(deleted -> {
+                ctx.assertTrue(deleted.get(0).entry().host().equals(host));
+                ctx.assertTrue(deleted.get(0).entry().principal().equals(principal));
+                ctx.assertTrue(deleted.get(0).entry().operation().equals(AclOperation.ALL));
+                ctx.assertTrue(deleted.get(0).entry().permissionType().equals(AclPermissionType.ALLOW));
+                ctx.assertTrue(deleted.get(0).pattern().name().equals(topicName));
+                ctx.assertTrue(deleted.get(0).pattern().patternType().equals(PatternType.LITERAL));
+                ctx.assertTrue(deleted.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
+                RetryBuilder.create(vertx, () -> adminClient.describeAcls(abf))
+                  .until(ar -> ar.succeeded() && ar.result().isEmpty())
+                  .withTimeout(Duration.ofSeconds(1))
+                  .execute().onComplete(ctx.asyncAssertSuccess(described -> {
+                    adminClient.close();
+                    async.complete();
+                  }));
+              }));
+          }));
+      }));
     }
 }
