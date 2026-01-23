@@ -33,7 +33,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -89,7 +88,6 @@ public class AdminClientAclTest extends KafkaStrimziTestBase {
       adminClient.createAcls(Collections.singletonList(aclBinding)).onComplete(ctx.asyncAssertSuccess(created -> {
         RetryHelper.forAction(vertx, () -> adminClient.describeAcls(abf))
           .until(ar -> ar.succeeded() && !ar.result().isEmpty())
-          .withTimeout(Duration.ofSeconds(1))
           .execute()
           .onComplete(ctx.asyncAssertSuccess(list -> {
             ctx.assertTrue(list.get(0).entry().host().equals(host));
@@ -101,7 +99,6 @@ public class AdminClientAclTest extends KafkaStrimziTestBase {
             ctx.assertTrue(list.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
             RetryHelper.forAction(vertx, () -> adminClient.deleteAcls(Collections.singletonList(abf)))
               .until(ar -> ar.succeeded() && !ar.result().isEmpty())
-              .withTimeout(Duration.ofSeconds(1))
               .execute().onComplete(ctx.asyncAssertSuccess(deleted -> {
                 ctx.assertTrue(deleted.get(0).entry().host().equals(host));
                 ctx.assertTrue(deleted.get(0).entry().principal().equals(principal));
@@ -112,7 +109,6 @@ public class AdminClientAclTest extends KafkaStrimziTestBase {
                 ctx.assertTrue(deleted.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
                 RetryHelper.forAction(vertx, () -> adminClient.describeAcls(abf))
                   .until(ar -> ar.succeeded() && ar.result().isEmpty())
-                  .withTimeout(Duration.ofSeconds(1))
                   .execute().onComplete(ctx.asyncAssertSuccess(described -> {
                     adminClient.close();
                     async.complete();
