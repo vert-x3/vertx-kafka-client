@@ -20,18 +20,14 @@ import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.RetryHelper;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.consumer.impl.KafkaConsumerImpl;
 import io.vertx.kafka.client.producer.KafkaHeader;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
-import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.InvalidGroupIdException;
 import org.apache.kafka.common.header.Header;
@@ -42,12 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -983,75 +974,57 @@ public abstract class ConsumerTestBase extends KafkaStrimziTestBase {
   public void testPartitionsFor(TestContext ctx) {
     String topicName = "testPartitionsFor-" + this.getClass().getName();
     String consumerId = topicName;
-    Async async = ctx.async();
     kafkaCluster.createTopic(topicName, 2, 1);
-    vertx.setTimer(1000, t -> {
-        Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        try {
-            consumer = createConsumer(vertx, config);
-        } catch (Exception e) {
-           throw new RuntimeException(e); 
-        }
-        consumer.partitionsFor(topicName, ar -> {
-            if (ar.succeeded()) {
-                List<PartitionInfo> partitionInfo = ar.result();
-                ctx.assertEquals(2, partitionInfo.size());
-            } else {
-                ctx.fail();
-            }
-            async.complete();
-        });
-    });
+
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    try {
+      consumer = createConsumer(vertx, config);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    RetryHelper.forAction(vertx, () -> {
+        return consumer.partitionsFor(topicName)
+          .expecting(partitionInfos -> partitionInfos.size() == 2);
+      })
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess());
   }
 
   @Test
   public void testPositionEmptyTopic(TestContext ctx) {
     String topicName = "testPositionEmptyTopic-" + this.getClass().getName();
     String consumerId = topicName;
-    Async async = ctx.async();
     kafkaCluster.createTopic(topicName, 1, 1);
-    vertx.setTimer(1000, t -> {
-        Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        try {
-            consumer = createConsumer(vertx, config);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
 
-        consumer.handler(record -> {
-        // no need for handling incoming records in this test
-        });
+    Properties config = kafkaCluster.useTo().getConsumerProperties(consumerId, consumerId, OffsetResetStrategy.EARLIEST);
+    config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    try {
+      consumer = createConsumer(vertx, config);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
-        consumer.subscribe(Collections.singleton(topicName), asyncResult -> {
-            vertx.setTimer(5000, t1 -> {
-                if (asyncResult.succeeded()) {
-                    consumer.partitionsFor(topicName, asyncResult1 -> {
-                        if (asyncResult.succeeded()) {
-                            for (org.apache.kafka.common.PartitionInfo pi : asyncResult1.result()) {
-                                TopicPartition tp = new TopicPartition(topicName, pi.partition());
-                                consumer.position(tp, asyncResult2 -> {
-                                    if (asyncResult2.succeeded()) {
-                                        ctx.assertTrue(asyncResult2.result() == 0);
-                                        async.complete();
-                                    } else {
-                                        ctx.fail(asyncResult2.cause());
-                                    }
-                                });
-                            }
-                        } else {
-                            ctx.fail(asyncResult.cause());
-                        }
-                    });
-                } else {
-                    ctx.fail(asyncResult.cause());
-                }
-            });
-        });
+    consumer.handler(record -> {
+      // no need for handling incoming records in this test
     });
+
+    consumer.subscribe(Collections.singleton(topicName), ctx.asyncAssertSuccess(v -> {
+      RetryHelper.forAction(vertx, () -> {
+          return consumer.partitionsFor(topicName)
+            .expecting(partitionInfos -> partitionInfos.size() == 1)
+            .compose(partitionInfos -> {
+              TopicPartition topicPartition = new TopicPartition(topicName, partitionInfos.get(0).partition());
+              return consumer.position(topicPartition);
+            });
+        })
+        .withTimeout(Duration.ofSeconds(10))
+        .execute()
+        .onComplete(ctx.asyncAssertSuccess());
+    }));
   }
 
   @Test
