@@ -16,39 +16,11 @@
 
 package io.vertx.kafka.client.tests;
 
-import io.vertx.kafka.admin.ConsumerGroupListing;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import io.vertx.kafka.admin.Config;
-import io.vertx.kafka.admin.ConfigEntry;
-import io.vertx.kafka.admin.ConsumerGroupDescription;
-import io.vertx.kafka.admin.ListOffsetsResultInfo;
-import io.vertx.kafka.admin.MemberAssignment;
-import io.vertx.kafka.admin.MemberDescription;
-import io.vertx.kafka.admin.NewPartitions;
-import io.vertx.kafka.admin.NewTopic;
-import io.vertx.kafka.admin.OffsetSpec;
-import io.vertx.kafka.admin.TopicDescription;
-import io.vertx.kafka.admin.DescribeClusterOptions;
-import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
-import io.vertx.kafka.admin.DescribeTopicsOptions;
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.admin.*;
+import io.vertx.kafka.client.RetryHelper;
 import io.vertx.kafka.client.common.ConfigResource;
 import io.vertx.kafka.client.common.Node;
 import io.vertx.kafka.client.common.TopicPartition;
@@ -69,10 +41,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.admin.KafkaAdminClient;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -112,17 +89,12 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
-
-    // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
-      adminClient.listTopics(ctx.asyncAssertSuccess(res ->{
-        ctx.assertTrue(res.containsAll(topics), "Was expecting topics " + topics + " to be in " + res);
-
+    RetryHelper.forAction(vertx, () -> adminClient.listTopics())
+      .until(ar -> ar.succeeded() && ar.result().containsAll(topics))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(res -> {
         adminClient.close();
-        async.complete();
       }));
-    });
   }
 
   @Test
@@ -130,16 +102,13 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
-
-    // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
-
-      adminClient.describeTopics(Collections.singletonList("first-topic"), ctx.asyncAssertSuccess(map -> {
+    RetryHelper.forAction(vertx, () -> adminClient.describeTopics(Collections.singletonList("first-topic")))
+      .until(ar -> ar.succeeded() && ar.result().containsKey("first-topic"))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(map -> {
 
         // Should have got a description back
         TopicDescription topicDescription = map.get("first-topic");
-        ctx.assertNotNull(topicDescription);
 
         // We asked for first-topic to be described so we should've got that back
         ctx.assertEquals("first-topic", topicDescription.getName());
@@ -167,9 +136,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         ctx.assertNotNull(topicId);
 
         adminClient.close();
-        async.complete();
       }));
-    });
   }
 
   @Test
@@ -177,18 +144,15 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
-
     DescribeTopicsOptions options = new DescribeTopicsOptions().includeAuthorizedOperations(true);
 
-    // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
+    RetryHelper.forAction(vertx, () -> adminClient.describeTopics(Collections.singletonList("first-topic"), options))
+      .until(ar -> ar.succeeded() && ar.result().containsKey("first-topic"))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(map -> {
 
-      adminClient.describeTopics(Collections.singletonList("first-topic"), options, ctx.asyncAssertSuccess(map -> {
-          
         // Should have got a description back
         TopicDescription topicDescription = map.get("first-topic");
-        ctx.assertNotNull(topicDescription);
 
         // We asked for first-topic to be described so we should've got that back
         ctx.assertEquals("first-topic", topicDescription.getName());
@@ -219,9 +183,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         ctx.assertNotNull(authorizedOperations);
 
         adminClient.close();
-        async.complete();
       }));
-    });
   }
 
   @Test
@@ -229,28 +191,23 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    adminClient.createTopics(Collections.singletonList(new NewTopic("testCreateTopic", 1, (short)1)), ctx.asyncAssertSuccess(v -> {
+    adminClient.createTopics(Collections.singletonList(new NewTopic("testCreateTopic", 1, (short) 1)), ctx.asyncAssertSuccess(v -> {
+      RetryHelper.forAction(vertx, () -> adminClient.describeTopics(Collections.singletonList("testCreateTopic")))
+        .until(ar -> ar.succeeded() && ar.result().containsKey("testCreateTopic"))
+        .execute()
+        .onComplete(ctx.asyncAssertSuccess(topics -> {
+          TopicDescription topicDescription = topics.get("testCreateTopic");
 
-        // Timer because, Kafka cluster takes time to create topics
-        Async async = ctx.async();
-        vertx.setTimer(1000, t -> {
+          // Check topic details match what we created
+          ctx.assertEquals("testCreateTopic", topicDescription.getName());
+          ctx.assertEquals(1, topicDescription.getPartitions().size());
+          ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
 
-            // Describe the topic we just created
-            adminClient.describeTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(topics -> {
-                TopicDescription topicDescription = topics.get("testCreateTopic");
-
-                // Check topic details match what we created
-                ctx.assertEquals("testCreateTopic", topicDescription.getName());
-                ctx.assertEquals(1, topicDescription.getPartitions().size());
-                ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
-
-                // Cleanup
-                adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(v1 -> {
-                    adminClient.close();
-                    async.complete();
-                }));
-            }));
-        });
+          // Cleanup
+          adminClient.deleteTopics(Collections.singletonList("testCreateTopic"), ctx.asyncAssertSuccess(v1 -> {
+            adminClient.close();
+          }));
+        }));
     }));
   }
 
@@ -264,40 +221,36 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     adminClient.createTopics(Collections.singletonList(newTopic), ctx.asyncAssertSuccess(v -> {
 
-        // Timer because, Kafka cluster takes time to create topics
-        Async async = ctx.async();
-        vertx.setTimer(1000, t -> {
+      RetryHelper.forAction(vertx, () -> adminClient.describeTopics(Collections.singletonList("testCreateTopicWithConfigs")))
+        .until(ar -> ar.succeeded() && ar.result().containsKey("testCreateTopicWithConfigs"))
+        .execute()
+        .onComplete(ctx.asyncAssertSuccess(topics -> {
+          TopicDescription topicDescription = topics.get("testCreateTopicWithConfigs");
 
-            // Describe the topic we just created
-            adminClient.describeTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(topics -> {
-                TopicDescription topicDescription = topics.get("testCreateTopicWithConfigs");
+          // Check topic details match what we created
+          ctx.assertEquals("testCreateTopicWithConfigs", topicDescription.getName());
+          ctx.assertEquals(1, topicDescription.getPartitions().size());
+          ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
 
-                // Check topic details match what we created
-                ctx.assertEquals("testCreateTopicWithConfigs", topicDescription.getName());
-                ctx.assertEquals(1, topicDescription.getPartitions().size());
-                ctx.assertEquals(1, topicDescription.getPartitions().get(0).getReplicas().size());
+          ConfigResource configResource =
+            new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "testCreateTopicWithConfigs");
 
-                ConfigResource configResource =
-                    new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, "testCreateTopicWithConfigs");
+          adminClient.describeConfigs(Collections.singletonList(configResource), ctx.asyncAssertSuccess(descs -> {
 
-                adminClient.describeConfigs(Collections.singletonList(configResource), ctx.asyncAssertSuccess(descs -> {
+            Optional<ConfigEntry> configEntry = descs.get(configResource).getEntries().stream()
+              .filter(e -> e.getName().equals("segment.bytes"))
+              .findFirst();
 
-                    Optional<ConfigEntry> configEntry = descs.get(configResource).getEntries().stream()
-                        .filter(e -> e.getName().equals("segment.bytes"))
-                        .findFirst();
-                    
-                    // Check value of segment.bytes is 1000, like we set it above
-                    ctx.assertTrue(configEntry.isPresent());
-                    ctx.assertEquals("1000", configEntry.get().getValue());
+            // Check value of segment.bytes is 1000, like we set it above
+            ctx.assertTrue(configEntry.isPresent());
+            ctx.assertEquals("1000", configEntry.get().getValue());
 
-                    // Cleanup
-                    adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(v1 -> {
-                        adminClient.close();
-                        async.complete();
-                    }));
-                }));
+            // Cleanup
+            adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(v1 -> {
+              adminClient.close();
             }));
-        });
+          }));
+        }));
     }));
   }
 
@@ -309,27 +262,20 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     kafkaCluster.createTopic("topicToDelete", 1, 1);
 
-    Async async = ctx.async();
-
-    // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
-
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
-
-        ctx.assertTrue(topics.contains("topicToDelete"));
-
+    RetryHelper.forAction(vertx, () -> adminClient.listTopics())
+      .until(ar -> ar.succeeded() && ar.result().contains("topicToDelete"))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(topics -> {
         adminClient.deleteTopics(Collections.singletonList("topicToDelete"), ctx.asyncAssertSuccess(v -> {
-            vertx.setTimer(1000, t2 -> {
-                adminClient.listTopics(ctx.asyncAssertSuccess(topicsAfterDelete -> {
-                    ctx.assertFalse(topicsAfterDelete.contains("topicToDelete"));
-                    adminClient.close();
-                    async.complete();
-                }));
-            });
+          RetryHelper.forAction(vertx, () -> adminClient.listTopics())
+            .until(ar -> ar.succeeded() && !ar.result().contains("topicToDelete"))
+            .execute()
+            .onComplete(ctx.asyncAssertSuccess(topicsAfterDelete -> {
+              adminClient.close();
+            }));
         }));
 
       }));
-    });
   }
 
   @Test
@@ -357,20 +303,22 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     adminClient.alterConfigs(updateConfig, ctx.asyncAssertSuccess(v -> {
 
-      adminClient.describeConfigs(Collections.singletonList(resource), ctx.asyncAssertSuccess(describeConfig -> {
-        vertx.setTimer(1000, t -> {
-            ConfigEntry describeRetentionEntry =
-            describeConfig.get(resource)
+      RetryHelper.forAction(vertx, () -> {
+          return adminClient.describeConfigs(Collections.singletonList(resource))
+            .map(desc -> {
+              return desc.get(resource)
                 .getEntries()
                 .stream()
-                .filter(entry -> entry.getName().equals(TopicConfig.RETENTION_MS_CONFIG))
-                .collect(Collectors.toList())
-                .get(0);
-
-            ctx.assertEquals("51000", describeRetentionEntry.getValue());
-            adminClient.close();
-        });
-      }));
+                .filter(e -> e.getName().equals(TopicConfig.RETENTION_MS_CONFIG) && "51000".equals(e.getValue()))
+                .findFirst();
+            })
+            .expecting(Optional::isPresent)
+            .map(Optional::get);
+        })
+        .execute()
+        .onComplete(ctx.asyncAssertSuccess(ignored -> {
+          adminClient.close();
+        }));
     }));
   }
 
@@ -379,21 +327,16 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
-
     kafkaCluster.useTo().consume("groupId", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
 
-    // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
-      adminClient.listConsumerGroups(ctx.asyncAssertSuccess(groups -> {
-        ctx.assertTrue(groups.size() > 0);
-        ctx.assertTrue(groups.stream().map(ConsumerGroupListing::getGroupId).anyMatch(g -> g.equals("groupId")));
+    RetryHelper.forAction(vertx, () -> adminClient.listConsumerGroups())
+      .until(ar -> ar.succeeded() && ar.result().stream().map(ConsumerGroupListing::getGroupId).anyMatch(g -> g.equals("groupId")))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(v -> {
         adminClient.close();
-        async.complete();
       }));
-    });
   }
 
   @Test
@@ -401,34 +344,36 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
-
     kafkaCluster.useTo().consume("groupId-desc-no-options", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
 
-    // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(5000, t -> {
-
-      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-no-options"), ctx.asyncAssertSuccess(groups -> {
-
-        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId-desc-no-options");
-        ctx.assertNotNull(consumerGroupDescription);
-        ctx.assertEquals("groupId-desc-no-options", consumerGroupDescription.getGroupId());
-        ctx.assertEquals(1, consumerGroupDescription.getMembers().size());
+    RetryHelper.forAction(vertx, () -> {
+        return adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-no-options"))
+          .map(groups -> groups.get("groupId-desc-no-options"));
+      })
+      .until(ar -> {
+        if (ar.failed()) {
+          return false;
+        }
+        ConsumerGroupDescription desc = ar.result();
+        if (desc == null || desc.getMembers().size() != 1) {
+          return false;
+        }
+        return desc.getMembers().get(0).getAssignment().getTopicPartitions().size() == 1;
+      })
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(consumerGroupDescription -> {
 
         MemberDescription memberDescription = consumerGroupDescription.getMembers().get(0);
         ctx.assertEquals("clientId", memberDescription.getClientId());
-        ctx.assertEquals(1, memberDescription.getAssignment().getTopicPartitions().size());
 
         Iterator<TopicPartition> iterator = memberDescription.getAssignment().getTopicPartitions().iterator();
         ctx.assertTrue(iterator.hasNext());
         ctx.assertEquals("first-topic", iterator.next().getTopic());
 
         adminClient.close();
-        async.complete();
       }));
-    });
   }
 
   @Test
@@ -436,27 +381,31 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
-
     kafkaCluster.useTo().consume("groupId-desc-with-options", "clientId", OffsetResetStrategy.EARLIEST,
       new StringDeserializer(), new StringDeserializer(), () -> true, null, null,
       Collections.singleton("first-topic"), c -> { });
 
     DescribeConsumerGroupsOptions options = new DescribeConsumerGroupsOptions().includeAuthorizedOperations(true);
 
-    // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(5000, t -> {
-
-      adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-with-options"), options, ctx.asyncAssertSuccess(groups -> {
-
-        ConsumerGroupDescription consumerGroupDescription = groups.get("groupId-desc-with-options");
-        ctx.assertNotNull(consumerGroupDescription);
-        ctx.assertEquals("groupId-desc-with-options", consumerGroupDescription.getGroupId());
-        ctx.assertEquals(1, consumerGroupDescription.getMembers().size());
+    RetryHelper.forAction(vertx, () -> {
+        return adminClient.describeConsumerGroups(Collections.singletonList("groupId-desc-with-options"), options)
+          .map(groups -> groups.get("groupId-desc-with-options"));
+      })
+      .until(ar -> {
+        if (ar.failed()) {
+          return false;
+        }
+        ConsumerGroupDescription desc = ar.result();
+        if (desc == null || desc.getMembers().size() != 1) {
+          return false;
+        }
+        return desc.getMembers().get(0).getAssignment().getTopicPartitions().size() == 1;
+      })
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(consumerGroupDescription -> {
 
         MemberDescription memberDescription = consumerGroupDescription.getMembers().get(0);
         ctx.assertEquals("clientId", memberDescription.getClientId());
-        ctx.assertEquals(1, memberDescription.getAssignment().getTopicPartitions().size());
 
         Iterator<TopicPartition> iterator = memberDescription.getAssignment().getTopicPartitions().iterator();
         ctx.assertTrue(iterator.hasNext());
@@ -464,10 +413,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         Set<AclOperation> authorizedOperations = consumerGroupDescription.getAuthorizedOperations();
         ctx.assertNotNull(authorizedOperations);
         adminClient.close();
-        async.complete();
       }));
-
-    });
   }
 
   @Test
@@ -583,12 +529,9 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
-
-    // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
-
-      adminClient.describeCluster(ctx.asyncAssertSuccess(cluster -> {
+    RetryHelper.forAction(vertx, () -> adminClient.describeCluster())
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(cluster -> {
         ctx.assertNotNull(cluster.getClusterId());
         Node controller = cluster.getController();
         ctx.assertNotNull(controller);
@@ -598,7 +541,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         // in the JSON response so expect controller to be 0 OR 1.
         ctx.assertTrue(controller.getId() == 0 || controller.getId() == 1, "Controller ID should be either 0 or 1");
         ctx.assertTrue(
-          controller.getIdString().equals("0") || controller.getIdString().equals("1"), 
+          controller.getIdString().equals("0") || controller.getIdString().equals("1"),
           "Controller ID should be either 0 or 1"
         );
         ctx.assertEquals("localhost", controller.getHost());
@@ -610,10 +553,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         ctx.assertEquals(2, nodes.size());
         ctx.assertEquals(0, nodes.iterator().next().getId());
         adminClient.close();
-        async.complete();
       }));
-
-    });
   }
 
   @Test
@@ -621,14 +561,11 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
-
     DescribeClusterOptions options = new DescribeClusterOptions().includeAuthorizedOperations(true);
 
-    // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
-
-      adminClient.describeCluster(options, ctx.asyncAssertSuccess(cluster -> {
+    RetryHelper.forAction(vertx, () -> adminClient.describeCluster(options))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(cluster -> {
         ctx.assertNotNull(cluster.getClusterId());
         Node controller = cluster.getController();
         ctx.assertNotNull(controller);
@@ -638,9 +575,9 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         // in the JSON response so expect controller to be 0 OR 1.
         ctx.assertTrue(controller.getId() == 0 || controller.getId() == 1, "Controller ID should be either 0 or 1");
         ctx.assertTrue(
-          controller.getIdString().equals("0") || controller.getIdString().equals("1"), 
+          controller.getIdString().equals("0") || controller.getIdString().equals("1"),
         "Controller ID should be either 0 or 1"
-        ); 
+        );
         ctx.assertEquals("localhost", controller.getHost());
         ctx.assertEquals(false, controller.hasRack());
         ctx.assertEquals(false, controller.isEmpty());
@@ -652,10 +589,7 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         Set<AclOperation> authorizedOperations = cluster.getAuthorizedOperations();
         ctx.assertNotNull(authorizedOperations);
         adminClient.close();
-        async.complete();
       }));
-
-    });
   }
 
 
@@ -668,10 +602,15 @@ public class AdminClientTest extends KafkaStrimziTestBase {
   public void testListConsumerGroupOffsets(TestContext ctx) throws InterruptedException {
 
     final String topicName = "offsets-topic";
-    final Async async = ctx.async();
 
     kafkaCluster.createTopic(topicName, 2, 1);
-    vertx.setTimer(1000, t -> {
+
+    final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
+
+    RetryHelper.forAction(vertx, () -> adminClient.listTopics())
+      .until(ar -> ar.succeeded() && ar.result().contains(topicName))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(topics -> {
 
         Async producerAsync = ctx.async();
         kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
@@ -681,35 +620,34 @@ public class AdminClientTest extends KafkaStrimziTestBase {
         final String clientId = "client-id";
         final AtomicInteger counter = new AtomicInteger();
         final OffsetCommitCallback offsetCommitCallback = new OffsetCommitCallback() {
-            @Override
-            public void onComplete(Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> map, Exception e) {
-            }
+          @Override
+          public void onComplete(Map<org.apache.kafka.common.TopicPartition, OffsetAndMetadata> map, Exception e) {
+          }
         };
         final Async consumerAsync = ctx.async();
 
         kafkaCluster.useTo().consume(groupId, clientId, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
-        () -> counter.get() < 6, offsetCommitCallback, consumerAsync::complete, Collections.singletonList(topicName),
-        record -> { counter.incrementAndGet(); });
+          () -> counter.get() < 6, offsetCommitCallback, consumerAsync::complete, Collections.singletonList(topicName),
+          record -> {
+            counter.incrementAndGet();
+          });
 
         consumerAsync.awaitSuccess(10000);
 
-        final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
-
         adminClient.listConsumerGroupOffsets(groupId, ctx.asyncAssertSuccess(consumerGroupOffsets -> {
 
-            TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
-            TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(1);
-            ctx.assertEquals(2, consumerGroupOffsets.size());
-            ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition0));
-            ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition0).getOffset());
-            ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition1));
-            ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition1).getOffset());
+          TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
+          TopicPartition topicPartition1 = new TopicPartition().setTopic(topicName).setPartition(1);
+          ctx.assertEquals(2, consumerGroupOffsets.size());
+          ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition0));
+          ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition0).getOffset());
+          ctx.assertTrue(consumerGroupOffsets.containsKey(topicPartition1));
+          ctx.assertEquals(3L, consumerGroupOffsets.get(topicPartition1).getOffset());
 
-            adminClient.close();
-            async.complete();
+          adminClient.close();
         }));
 
-    });
+      }));
   }
 
   @Test
@@ -807,14 +745,14 @@ public class AdminClientTest extends KafkaStrimziTestBase {
   public void testListOffsets(TestContext ctx) {
     final String topicName = "list-offsets-topic";
     kafkaCluster.createTopic(topicName, 1, 1);
-    
+
     // Add a timer to wait for topic creation to propagate through the cluster
     Async topicCreationAsync = ctx.async();
     vertx.setTimer(2000, t -> {
       topicCreationAsync.complete();
     });
     topicCreationAsync.awaitSuccess(10000);
-    
+
     Async producerAsync = ctx.async();
     kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
     producerAsync.awaitSuccess(10000);
@@ -863,26 +801,20 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     kafkaCluster.createTopic("testCreateNewPartitionInTopic", 1, 1);
 
-    Async async = ctx.async();
-
-    // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
-
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
-
-        ctx.assertTrue(topics.contains("testCreateNewPartitionInTopic"));
-
+    RetryHelper.forAction(vertx, () -> adminClient.listTopics())
+      .until(ar -> ar.succeeded() && ar.result().contains("testCreateNewPartitionInTopic"))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(topics -> {
         adminClient.createPartitions(Collections.singletonMap("testCreateNewPartitionInTopic", new NewPartitions(3, null))).onComplete(ctx.asyncAssertSuccess(v -> {
-          vertx.setTimer(500, t2 -> { // although the Future is completed, it takes some time for the change to be reflected in DescribeTopics
-            adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic")).onComplete(ctx.asyncAssertSuccess(s -> {
+          RetryHelper.forAction(vertx, () -> adminClient.describeTopics(Collections.singletonList("testCreateNewPartitionInTopic")))
+            .until(ar -> ar.succeeded() && ar.result().get("testCreateNewPartitionInTopic").getPartitions().size() == 3)
+            .execute()
+            .onComplete(ctx.asyncAssertSuccess(s -> {
               ctx.assertEquals(3, s.get("testCreateNewPartitionInTopic").getPartitions().size());
               adminClient.close();
-              async.complete();
             }));
-          });
         }));
       }));
-    });
   }
 
   @Test
@@ -892,22 +824,15 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     kafkaCluster.createTopic("testDecreasePartitionInTopic", 3, 1);
 
-    Async async = ctx.async();
-
-    // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
-
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
-
-        ctx.assertTrue(topics.contains("testDecreasePartitionInTopic"));
-
+    RetryHelper.forAction(vertx, () -> adminClient.listTopics())
+      .until(ar -> ar.succeeded() && ar.result().contains("testDecreasePartitionInTopic"))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(topics -> {
         adminClient.createPartitions(Collections.singletonMap("testDecreasePartitionInTopic", new NewPartitions(1, null)), ctx.asyncAssertFailure(v -> {
           ctx.assertTrue(v.getMessage().matches("The topic .* currently has 3 partition\\(s\\); 1 would not be an increase\\."));
           adminClient.close();
-          async.complete();
         }));
       }));
-    });
   }
 
   @Test
@@ -916,41 +841,40 @@ public class AdminClientTest extends KafkaStrimziTestBase {
 
     kafkaCluster.createTopic("testCreatePartitionInTopicWithAssignment", 1, 1);
 
-    Async async = ctx.async();
+    RetryHelper.forAction(vertx, () -> adminClient.listTopics())
+      .until(ar -> ar.succeeded() && ar.result().contains("testCreatePartitionInTopicWithAssignment"))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(topics -> {
 
-    // timer because, Kafka cluster takes time to create topics
-    vertx.setTimer(1000, t -> {
-
-      adminClient.listTopics(ctx.asyncAssertSuccess(topics -> {
-
-        ctx.assertTrue(topics.contains("testCreatePartitionInTopicWithAssignment"));
-
-        List<Integer> sublist1 = new ArrayList<Integer>();
+        List<Integer> sublist1 = new ArrayList<>();
         sublist1.add(1);
 
-        List<Integer> sublist2 = new ArrayList<Integer>();
+        List<Integer> sublist2 = new ArrayList<>();
         sublist2.add(0);
 
-        List<List<Integer>> assigmnments = new ArrayList<List<Integer>>();
+        List<List<Integer>> assigmnments = new ArrayList<>();
         assigmnments.add(sublist1);
         assigmnments.add(sublist2);
 
         adminClient.createPartitions(Collections.singletonMap("testCreatePartitionInTopicWithAssignment", new NewPartitions(3, assigmnments)), ctx.asyncAssertSuccess(v -> {
-            
-            // Allow some time for the partitions to settle after creation
-            vertx.setTimer(1000, t2 -> {
-              adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment"), ctx.asyncAssertSuccess(s -> {
-                List<TopicPartitionInfo> partitions = s.get("testCreatePartitionInTopicWithAssignment").getPartitions();
-                ctx.assertTrue(partitions.size() == 3, "Expect "+ partitions + " size == 3");
-                ctx.assertTrue(partitions.get(1).getReplicas().get(0).getId() == 1, "Expect replica 0 of partition 1 to be 1, partitions = " + partitions);
-                ctx.assertTrue(partitions.get(2).getReplicas().get(0).getId() == 0, "Expect replica 0 of partition 2 to be 0, partitions = " + partitions);
-                adminClient.close();
-                async.complete();
-              }));
-            });
+
+          RetryHelper.forAction(vertx, () -> adminClient.describeTopics(Collections.singletonList("testCreatePartitionInTopicWithAssignment")))
+            .until(ar -> {
+              if (ar.failed()) {
+                return false;
+              }
+              TopicDescription desc = ar.result().get("testCreatePartitionInTopicWithAssignment");
+              return desc != null && desc.getPartitions().size() == 3;
+            })
+            .execute()
+            .onComplete(ctx.asyncAssertSuccess(s -> {
+              List<TopicPartitionInfo> partitions = s.get("testCreatePartitionInTopicWithAssignment").getPartitions();
+              ctx.assertTrue(partitions.get(1).getReplicas().get(0).getId() == 1, "Expect replica 0 of partition 1 to be 1, partitions = " + partitions);
+              ctx.assertTrue(partitions.get(2).getReplicas().get(0).getId() == 0, "Expect replica 0 of partition 2 to be 0, partitions = " + partitions);
+              adminClient.close();
+            }));
         }));
       }));
-    });
   }
 
   @Test
@@ -965,37 +889,30 @@ public class AdminClientTest extends KafkaStrimziTestBase {
   public void testDescribeLogDirs(TestContext ctx) {
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
-    Async async = ctx.async();
+    List<Integer> ids = new ArrayList<>();
 
-    List<Integer> ids = new ArrayList<Integer>();
-    // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(1000, t -> {
-
-      adminClient.describeCluster(ctx.asyncAssertSuccess(cluster -> {
+    RetryHelper.forAction(vertx, () -> adminClient.describeCluster())
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(cluster -> {
         Collection<Node> nodes = cluster.getNodes();
         for (Node node : nodes){
           ids.add(node.getId());
         }
-      }));
-    });
 
-    // timer because, Kafka cluster takes time to start consumer
-    vertx.setTimer(10000, t -> {
-      adminClient.describeLogDirs(ids, ctx.asyncAssertSuccess(map -> {
-        Map<String, LogDirDescription> infoFirstEntry = map.get(1);
-        Set<Map.Entry<String, LogDirDescription>> values = infoFirstEntry.entrySet();
-        List<String> keys = new ArrayList<String>();
-        for (Map.Entry<String, LogDirDescription> entry : values){
-          keys.add(entry.getKey());
-        }
-        LogDirDescription logDirDescription = infoFirstEntry.get(keys.get(0));
-        ctx.assertNotNull(logDirDescription);
-        ctx.assertNotNull(logDirDescription.replicaInfos());
-        ctx.assertNull(logDirDescription.error());
-        adminClient.close();
-        async.complete();
+        adminClient.describeLogDirs(ids, ctx.asyncAssertSuccess(map -> {
+          Map<String, LogDirDescription> infoFirstEntry = map.get(1);
+          Set<Map.Entry<String, LogDirDescription>> values = infoFirstEntry.entrySet();
+          List<String> keys = new ArrayList<>();
+          for (Map.Entry<String, LogDirDescription> entry : values) {
+            keys.add(entry.getKey());
+          }
+          LogDirDescription logDirDescription = infoFirstEntry.get(keys.get(0));
+          ctx.assertNotNull(logDirDescription);
+          ctx.assertNotNull(logDirDescription.replicaInfos());
+          ctx.assertNull(logDirDescription.error());
+          adminClient.close();
+        }));
       }));
-   });
   }
 
   @Test
