@@ -12,9 +12,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * A fluent builder for retrying asynchronous Vert.x actions until a condition is met or a timeout is reached.
+ * Helper for retrying asynchronous Vert.x actions until a condition is met or a timeout is reached.
  */
-public class RetryBuilder<T> {
+public class RetryHelper<T> {
 
   private final Vertx vertx;
   private final Supplier<Future<T>> action;
@@ -23,19 +23,19 @@ public class RetryBuilder<T> {
   private Duration timeout = Duration.ofSeconds(5);
   private Duration interval = Duration.ofMillis(500);
 
-  private RetryBuilder(Vertx vertx, Supplier<Future<T>> action) {
+  private RetryHelper(Vertx vertx, Supplier<Future<T>> action) {
     this.vertx = Objects.requireNonNull(vertx, "Vertx instance cannot be null");
     this.action = Objects.requireNonNull(action, "Action supplier cannot be null");
   }
 
   /**
-   * Create a new RetryBuilder with a mandatory action.
+   * Create a new RetryHelper with a mandatory action.
    *
    * @param vertx  the Vert.x instance used to schedule retries
    * @param action a supplier of asynchronous actions
    */
-  public static <T> RetryBuilder<T> create(Vertx vertx, Supplier<Future<T>> action) {
-    return new RetryBuilder<>(vertx, action);
+  public static <T> RetryHelper<T> forAction(Vertx vertx, Supplier<Future<T>> action) {
+    return new RetryHelper<>(vertx, action);
   }
 
   /**
@@ -43,7 +43,7 @@ public class RetryBuilder<T> {
    *
    * @param condition a function that evaluates the result of an attempt, returning {@code true} to stop retrying
    */
-  public RetryBuilder<T> until(Function<AsyncResult<T>, Boolean> condition) {
+  public RetryHelper<T> until(Function<AsyncResult<T>, Boolean> condition) {
     this.condition = Objects.requireNonNull(condition, "Condition function cannot be null");
     return this;
   }
@@ -51,7 +51,7 @@ public class RetryBuilder<T> {
   /**
    * Sets the maximum duration to keep retrying. Defaults to 5 seconds.
    */
-  public RetryBuilder<T> withTimeout(Duration timeout) {
+  public RetryHelper<T> withTimeout(Duration timeout) {
     this.timeout = Objects.requireNonNull(timeout, "Timeout duration cannot be null");
     return this;
   }
@@ -59,7 +59,7 @@ public class RetryBuilder<T> {
   /**
    * Sets the delay between retries. Defaults to 500 milliseconds.
    */
-  public RetryBuilder<T> every(Duration interval) {
+  public RetryHelper<T> every(Duration interval) {
     this.interval = Objects.requireNonNull(interval, "Interval duration cannot be null");
     return this;
   }

@@ -13,7 +13,7 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(VertxUnitRunner.class)
-public class RetryBuilderTest {
+public class RetryHelperTest {
 
   private Vertx vertx = Vertx.vertx();
 
@@ -26,7 +26,7 @@ public class RetryBuilderTest {
   public void testEventualSuccess(TestContext ctx) {
     Async async = ctx.async();
     AtomicInteger attempts = new AtomicInteger(0);
-    RetryBuilder.create(vertx, () -> {
+    RetryHelper.forAction(vertx, () -> {
         if (attempts.incrementAndGet() < 3) {
           return Future.failedFuture("Try again");
         }
@@ -46,7 +46,7 @@ public class RetryBuilderTest {
   @Test
   public void testTimeout(TestContext ctx) {
     Async async = ctx.async();
-    RetryBuilder.create(vertx, () -> Future.failedFuture("Persistent error"))
+    RetryHelper.forAction(vertx, () -> Future.failedFuture("Persistent error"))
       .every(Duration.ofMillis(10))
       .withTimeout(Duration.ofMillis(100))
       .execute()
@@ -61,7 +61,7 @@ public class RetryBuilderTest {
   public void testCustomCondition(TestContext ctx) {
     Async async = ctx.async();
     AtomicInteger status = new AtomicInteger(0);
-    RetryBuilder.create(vertx, () -> Future.succeededFuture(status.incrementAndGet()))
+    RetryHelper.forAction(vertx, () -> Future.succeededFuture(status.incrementAndGet()))
       .until(ar -> ar.succeeded() && ar.result() == 3)
       .every(Duration.ofMillis(10))
       .execute()
