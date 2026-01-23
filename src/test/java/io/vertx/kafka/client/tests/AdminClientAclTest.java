@@ -21,7 +21,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.admin.KafkaAdminClient;
-import io.vertx.kafka.client.RetryBuilder;
+import io.vertx.kafka.client.RetryHelper;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.common.acl.*;
 import org.apache.kafka.common.resource.PatternType;
@@ -87,7 +87,7 @@ public class AdminClientAclTest extends KafkaStrimziTestBase {
 
         AclBindingFilter abf = new AclBindingFilter(rpf, acef);
       adminClient.createAcls(Collections.singletonList(aclBinding)).onComplete(ctx.asyncAssertSuccess(created -> {
-        RetryBuilder.create(vertx, () -> adminClient.describeAcls(abf))
+        RetryHelper.forAction(vertx, () -> adminClient.describeAcls(abf))
           .until(ar -> ar.succeeded() && !ar.result().isEmpty())
           .withTimeout(Duration.ofSeconds(1))
           .execute()
@@ -99,7 +99,7 @@ public class AdminClientAclTest extends KafkaStrimziTestBase {
             ctx.assertTrue(list.get(0).pattern().name().equals(topicName));
             ctx.assertTrue(list.get(0).pattern().patternType().equals(PatternType.LITERAL));
             ctx.assertTrue(list.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
-            RetryBuilder.create(vertx, () -> adminClient.deleteAcls(Collections.singletonList(abf)))
+            RetryHelper.forAction(vertx, () -> adminClient.deleteAcls(Collections.singletonList(abf)))
               .until(ar -> ar.succeeded() && !ar.result().isEmpty())
               .withTimeout(Duration.ofSeconds(1))
               .execute().onComplete(ctx.asyncAssertSuccess(deleted -> {
@@ -110,7 +110,7 @@ public class AdminClientAclTest extends KafkaStrimziTestBase {
                 ctx.assertTrue(deleted.get(0).pattern().name().equals(topicName));
                 ctx.assertTrue(deleted.get(0).pattern().patternType().equals(PatternType.LITERAL));
                 ctx.assertTrue(deleted.get(0).pattern().resourceType().equals(ResourceType.TOPIC));
-                RetryBuilder.create(vertx, () -> adminClient.describeAcls(abf))
+                RetryHelper.forAction(vertx, () -> adminClient.describeAcls(abf))
                   .until(ar -> ar.succeeded() && ar.result().isEmpty())
                   .withTimeout(Duration.ofSeconds(1))
                   .execute().onComplete(ctx.asyncAssertSuccess(described -> {
