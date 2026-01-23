@@ -26,13 +26,8 @@ import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
-
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.MockProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.After;
 import org.junit.Before;
@@ -43,7 +38,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -115,7 +109,14 @@ public class ProducerMockTest {
 
   private void testProducerDrain(TestContext ctx, RuntimeException failure) throws Exception {
     TestProducer mock = new TestProducer();
-    KafkaWriteStream<String, String> producer = ProducerTest.producer(Vertx.vertx(), mock);
+    vertx.close();
+    vertx = Vertx.vertx();
+    if (failure != null) {
+      vertx.exceptionHandler(err -> {
+        // Ignore
+      });
+    }
+    KafkaWriteStream<String, String> producer = ProducerTest.producer(vertx, mock);
     int sent = 0;
     while (!producer.writeQueueFull()) {
       producer.write(new ProducerRecord<>("the_topic", 0, 0L, "abc", "def"));
@@ -145,7 +146,9 @@ public class ProducerMockTest {
   @Test
   public void testProducerError(TestContext ctx) throws Exception {
     TestProducer mock = new TestProducer();
-    KafkaWriteStream<String, String> producer = ProducerTest.producer(Vertx.vertx(), mock);
+    vertx.close();
+    vertx = Vertx.vertx();
+    KafkaWriteStream<String, String> producer = ProducerTest.producer(vertx, mock);
     producer.write(new ProducerRecord<>("the_topic", 0, 0L, "abc", "def"));
     RuntimeException cause = new RuntimeException();
     Async async = ctx.async();
