@@ -746,40 +746,38 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     final String topicName = "list-offsets-topic";
     kafkaCluster.createTopic(topicName, 1, 1);
 
-    // Add a timer to wait for topic creation to propagate through the cluster
-    Async topicCreationAsync = ctx.async();
-    vertx.setTimer(2000, t -> {
-      topicCreationAsync.complete();
-    });
-    topicCreationAsync.awaitSuccess(10000);
-
-    Async producerAsync = ctx.async();
-    kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
-    producerAsync.awaitSuccess(10000);
-
     final KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
     final TopicPartition topicPartition0 = new TopicPartition().setTopic(topicName).setPartition(0);
 
-    // BeginOffsets
-    Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.EARLIEST);
-    final Async async1 = ctx.async();
-    adminClient.listOffsets(topicPartitionBeginOffsets, ctx.asyncAssertSuccess(listOffsets -> {
-      ListOffsetsResultInfo offsets = listOffsets.get(topicPartition0);
-      ctx.assertNotNull(offsets);
-      ctx.assertEquals(0L, offsets.getOffset());
-      async1.complete();
-    }));
+    RetryHelper.forAction(vertx, () -> adminClient.listTopics())
+      .until(ar -> ar.succeeded() && ar.result().contains(topicName))
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(topics -> {
+        Async producerAsync = ctx.async();
+        kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
+        producerAsync.awaitSuccess(10000);
 
-    // EndOffsets
-    Map<TopicPartition, OffsetSpec> topicPartitionEndOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.LATEST);
-    final Async async2 = ctx.async();
-    adminClient.listOffsets(topicPartitionEndOffsets, ctx.asyncAssertSuccess(listOffsets -> {
-      ListOffsetsResultInfo offsets = listOffsets.get(topicPartition0);
-      ctx.assertNotNull(offsets);
-      ctx.assertEquals(6L, offsets.getOffset());
-      adminClient.close();
-      async2.complete();
-    }));
+        // BeginOffsets
+        Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.EARLIEST);
+        final Async async1 = ctx.async();
+        adminClient.listOffsets(topicPartitionBeginOffsets, ctx.asyncAssertSuccess(listOffsets -> {
+          ListOffsetsResultInfo offsets = listOffsets.get(topicPartition0);
+          ctx.assertNotNull(offsets);
+          ctx.assertEquals(0L, offsets.getOffset());
+          async1.complete();
+        }));
+
+        // EndOffsets
+        Map<TopicPartition, OffsetSpec> topicPartitionEndOffsets = Collections.singletonMap(topicPartition0, OffsetSpec.LATEST);
+        final Async async2 = ctx.async();
+        adminClient.listOffsets(topicPartitionEndOffsets, ctx.asyncAssertSuccess(listOffsets -> {
+          ListOffsetsResultInfo offsets = listOffsets.get(topicPartition0);
+          ctx.assertNotNull(offsets);
+          ctx.assertEquals(6L, offsets.getOffset());
+          adminClient.close();
+          async2.complete();
+        }));
+      }));
   }
 
   @Test
@@ -919,16 +917,18 @@ public class AdminClientTest extends KafkaStrimziTestBase {
   public void testDeleteRecords(TestContext ctx){
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
+    final String topicName = "testDeleteRecords";
+    kafkaCluster.createTopic(topicName, 1, 1);
+
     Async async = ctx.async();
-    // produce 6 integer messages to "first-topic"
+    // produce 6 integer messages
     Async producerAsync = ctx.async();
-    kafkaCluster.useTo().produceIntegers("first-topic", 6, 1, producerAsync::complete);
+    kafkaCluster.useTo().produceIntegers(topicName, 6, 1, producerAsync::complete);
     producerAsync.awaitSuccess(10000);
 
-    // consume messages from "first topic"
+    // consume messages from topic
     final String groupId = "group-id-1";
     final String clientId = "client-id-1";
-    final String topicName = "first-topic";
     final AtomicInteger counter = new AtomicInteger();
     final OffsetCommitCallback offsetCommitCallback = new OffsetCommitCallback() {
       @Override
@@ -943,36 +943,38 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     consumerAsync.awaitSuccess(10000);
 
     // delete records with offset < 3
-    Map<TopicPartition, RecordsToDelete> recordsToDelete = new HashMap<>();
-    vertx.setTimer(10000, t -> {
-      adminClient.describeTopics(Collections.singletonList(topicName), ctx.asyncAssertSuccess(map -> {
-        TopicDescription topicDescription = map.get(topicName);
-        List<TopicPartitionInfo> topicPartitionInfo = topicDescription.getPartitions();
-        TopicPartition topicPartition = new TopicPartition(topicName, topicPartitionInfo.get(0).getPartition());
-        recordsToDelete.put(topicPartition, RecordsToDelete.beforeOffset(3));
+    adminClient.describeTopics(Collections.singletonList(topicName), ctx.asyncAssertSuccess(map -> {
+      TopicDescription topicDescription = map.get(topicName);
+      List<TopicPartitionInfo> topicPartitionInfo = topicDescription.getPartitions();
+      TopicPartition topicPartition = new TopicPartition(topicName, topicPartitionInfo.get(0).getPartition());
+      Map<TopicPartition, RecordsToDelete> recordsToDelete = new HashMap<>();
+      recordsToDelete.put(topicPartition, RecordsToDelete.beforeOffset(3));
+
+      adminClient.deleteRecords(recordsToDelete, ctx.asyncAssertSuccess(deleteResult -> {
+        // Wait for deletion to propagate by checking the beginning offset
+        Map<TopicPartition, OffsetSpec> beginningOffsetSpec = Collections.singletonMap(topicPartition, OffsetSpec.EARLIEST);
+        RetryHelper.forAction(vertx, () -> adminClient.listOffsets(beginningOffsetSpec))
+          .until(ar -> ar.succeeded() && ar.result().get(topicPartition).getOffset() == 3)
+          .execute()
+          .onComplete(ctx.asyncAssertSuccess(offsetsResult -> {
+            // consume messages 1-3 from "first topic"
+            final String groupIdLowerBound = "group-id-2";
+            final String clientIdLowerBound = "client-id-2";
+            final AtomicInteger counterLowerBound = new AtomicInteger();
+            final Async consumerAsyncLowerBound = ctx.async();
+            List<Integer> records = new ArrayList<>();
+            kafkaCluster.useTo().consume(groupIdLowerBound, clientIdLowerBound, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
+                () -> counterLowerBound.get() < 3, offsetCommitCallback, consumerAsyncLowerBound::complete, Collections.singletonList(topicName),
+                record -> { counterLowerBound.incrementAndGet(); records.add(record.value()); });
+            consumerAsyncLowerBound.awaitSuccess(10000);
+            ctx.assertEquals(4, records.get(0));
+            ctx.assertEquals(5, records.get(1));
+            ctx.assertEquals(6, records.get(2));
+            ctx.assertEquals(3, records.size());
+            adminClient.close();
+            async.complete();
+          }));
+      }));
     }));
-    });
-
-    vertx.setTimer(10000, s -> {
-      adminClient.deleteRecords(recordsToDelete, ctx.asyncAssertSuccess( map -> {
-
-        // consume messages 1-3 from "first topic"
-        final String groupIdLowerBound = "group-id-2";
-        final String clientIdLowerBound = "client-id-2";
-        final AtomicInteger counterLowerBound = new AtomicInteger();
-        final Async consumerAsyncLowerBound = ctx.async();
-        List<Integer> records = new ArrayList<>();
-        kafkaCluster.useTo().consume(groupIdLowerBound, clientIdLowerBound, OffsetResetStrategy.EARLIEST, new StringDeserializer(), new IntegerDeserializer(),
-            () -> counterLowerBound.get() < 3, offsetCommitCallback, consumerAsyncLowerBound::complete, Collections.singletonList(topicName),
-            record -> { counterLowerBound.incrementAndGet(); records.add(record.value()); });
-        consumerAsyncLowerBound.awaitSuccess(10000);
-        ctx.assertEquals(5, records.get(0));
-        ctx.assertEquals(6, records.get(1));
-        ctx.assertEquals(7, records.get(2));
-        ctx.assertEquals(3, records.size());
-        }));
-      });
-    adminClient.close();
-    async.complete();
   };
 }
