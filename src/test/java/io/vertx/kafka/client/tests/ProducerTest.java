@@ -86,6 +86,8 @@ public class ProducerTest extends KafkaStrimziTestBase {
     Properties config = kafkaCluster.useTo().getProducerProperties("testProducerProduce_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    // Add max.in.flight.requests.per.connection=1 to ensure ordering
+    config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1");
     producer = producer(Vertx.vertx(), config);
     producer.exceptionHandler(ctx::fail);
     KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
