@@ -16,24 +16,24 @@
 
 package io.vertx.kafka.client.tests;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Properties;
-
+import io.strimzi.test.container.StrimziKafkaCluster;
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.admin.KafkaAdminClient;
+import io.vertx.kafka.admin.NewTopic;
+import io.vertx.kafka.client.RetryHelper;
+import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.admin.ConfigEntry;
-import io.vertx.kafka.admin.KafkaAdminClient;
-import io.vertx.kafka.admin.NewTopic;
-import io.vertx.kafka.client.common.ConfigResource;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Properties;
 
-public class AdminClientConfigEntryTest extends KafkaClusterTestBase {
+public class AdminClientConfigEntryTest extends KafkaStrimziTestBase {
     private static final String MIN_INSYNC_REPLICAS = "min.insync.replicas";
     private Vertx vertx;
     private Properties config;
@@ -42,7 +42,7 @@ public class AdminClientConfigEntryTest extends KafkaClusterTestBase {
     public void beforeTest() {
         this.vertx = Vertx.vertx();
         this.config = new Properties();
-        this.config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        this.config.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
     }
 
     @After
@@ -51,35 +51,39 @@ public class AdminClientConfigEntryTest extends KafkaClusterTestBase {
     }
 
     @BeforeClass
-    public static void setUp() throws IOException {
-        kafkaCluster = kafkaCluster(true).deleteDataPriorToStartup(true).addBrokers(2).startup();
+    public static void setUp() {
+        StrimziKafkaCluster strimziCluster = kafkaCluster(true).getDelegate();
+        kafkaCluster = new KafkaClusterWrapper(strimziCluster, new KafkaStrimziTestBase() {});
+        kafkaCluster.start();
     }
 
     @Test
     public void testPropertiesOfEntryNotConfiguredExplicitly(TestContext ctx) {
         KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
-
         String topicName = "topic-default-min-isr";
         NewTopic topic = new NewTopic(topicName, 1, (short)1);
 
         adminClient.createTopics(Collections.singletonList(topic)).onComplete(ctx.asyncAssertSuccess(v -> {
-
-            ConfigResource topicResource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicName);
-            adminClient.describeConfigs(Collections.singletonList(topicResource)).onComplete(ctx.asyncAssertSuccess(desc -> {
-
-                ConfigEntry minISREntry = desc.get(topicResource)
-                .getEntries()
-                .stream()
-                .filter(entry -> MIN_INSYNC_REPLICAS.equals(entry.getName()))
-                .findFirst()
-                .get();
-
-                ctx.assertTrue(minISREntry.isDefault());
-                ctx.assertEquals(minISREntry.getSource(), org.apache.kafka.clients.admin.ConfigEntry.ConfigSource.DEFAULT_CONFIG);
-
-                adminClient.deleteTopics(Collections.singletonList(topicName)).onComplete(ctx.asyncAssertSuccess(r -> {
-                    adminClient.close();
-                }));
+          ConfigResource topicResource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicName);
+          RetryHelper.forAction(vertx, () -> {
+              return adminClient.describeConfigs(Collections.singletonList(topicResource))
+                .map(desc -> {
+                  return desc.get(topicResource)
+                    .getEntries()
+                    .stream()
+                    .filter(entry -> MIN_INSYNC_REPLICAS.equals(entry.getName()))
+                    .findFirst();
+                })
+                .expecting(Optional::isPresent)
+                .map(Optional::get);
+            })
+            .execute()
+            .onComplete(ctx.asyncAssertSuccess(minISREntry -> {
+              ctx.assertTrue(minISREntry.isDefault());
+              ctx.assertEquals(minISREntry.getSource(), org.apache.kafka.clients.admin.ConfigEntry.ConfigSource.DEFAULT_CONFIG);
+              adminClient.deleteTopics(Collections.singletonList(topicName)).onComplete(ctx.asyncAssertSuccess(r -> {
+                adminClient.close();
+              }));
             }));
         }));
     }
@@ -87,32 +91,33 @@ public class AdminClientConfigEntryTest extends KafkaClusterTestBase {
     @Test
     public void testPropertiesOfEntryConfiguredExplicitly(TestContext ctx) {
         KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
-
         String topicName = "topic-custom-min-isr";
         NewTopic topic = new NewTopic(topicName, 1, (short)1);
         topic.setConfig(Collections.singletonMap(MIN_INSYNC_REPLICAS, "1"));
 
         adminClient.createTopics(Collections.singletonList(topic)).onComplete(ctx.asyncAssertSuccess(v -> {
+          ConfigResource topicResource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicName);
+          RetryHelper.forAction(vertx, () -> {
+              return adminClient.describeConfigs(Collections.singletonList(topicResource))
+                .map(desc -> {
+                  return desc.get(topicResource)
+                    .getEntries()
+                    .stream()
+                    .filter(entry -> MIN_INSYNC_REPLICAS.equals(entry.getName()))
+                    .findFirst();
+                })
+                .expecting(Optional::isPresent)
+                .map(Optional::get);
+            })
+            .execute()
+            .onComplete(ctx.asyncAssertSuccess(minISREntry -> {
+              ctx.assertFalse(minISREntry.isDefault());
+              ctx.assertEquals(minISREntry.getSource(), org.apache.kafka.clients.admin.ConfigEntry.ConfigSource.DYNAMIC_TOPIC_CONFIG);
 
-            ConfigResource topicResource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicName);
-            adminClient.describeConfigs(Collections.singletonList(topicResource)).onComplete(ctx.asyncAssertSuccess(desc -> {
-
-                ConfigEntry minISREntry = desc.get(topicResource)
-                .getEntries()
-                .stream()
-                .filter(entry -> MIN_INSYNC_REPLICAS.equals(entry.getName()))
-                .findFirst()
-                .get();
-
-                ctx.assertFalse(minISREntry.isDefault());
-                ctx.assertEquals(minISREntry.getSource(), org.apache.kafka.clients.admin.ConfigEntry.ConfigSource.DYNAMIC_TOPIC_CONFIG);
-
-                adminClient.deleteTopics(Collections.singletonList(topicName)).onComplete(ctx.asyncAssertSuccess(r -> {
-                    adminClient.close();
-                }));
+              adminClient.deleteTopics(Collections.singletonList(topicName)).onComplete(ctx.asyncAssertSuccess(r -> {
+                adminClient.close();
+              }));
             }));
         }));
     }
-
-
 }

@@ -39,7 +39,6 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -48,7 +47,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Codec tests
  */
-public class CodecsTest extends KafkaClusterTestBase {
+public class CodecsTest extends KafkaStrimziTestBase {
 
   final private String topic = "the_topic";
   private Vertx vertx;

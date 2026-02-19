@@ -31,7 +31,7 @@ import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
 import io.vertx.kafka.client.producer.impl.KafkaProducerImpl;
-import io.vertx.kafka.client.tests.KafkaClusterTestBase;
+import io.vertx.kafka.client.tests.KafkaStrimziTestBase;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -53,7 +53,7 @@ import java.util.function.Consumer;
 /**
  * Tracing tests
  */
-public class TracingTest extends KafkaClusterTestBase {
+public class TracingTest extends KafkaStrimziTestBase {
 
   private static String CONTEXT_CONSUMER_SPAN = "--received-rq--";
   private Vertx vertx;
@@ -298,7 +298,18 @@ public class TracingTest extends KafkaClusterTestBase {
     }
 
     void init(String topic, int sent, int received) {
-      init(topic, sent, received, "localhost:9092,localhost:9093", "localhost", "9093");
+      String bootstrapServers = kafkaCluster.getBootstrapServers();
+      String host = "localhost";
+      String port = extractPortFromBootstrapServers(bootstrapServers);
+      init(topic, sent, received, bootstrapServers, host, port);
+    }
+    
+    private String extractPortFromBootstrapServers(String bootstrapServers) {
+      // Bootstrap servers format is typically hostname:port
+      if (bootstrapServers != null && bootstrapServers.contains(":")) {
+        return bootstrapServers.substring(bootstrapServers.lastIndexOf(":") + 1);
+      }
+      throw new IllegalStateException("Cannot extract port from bootstrap servers: " + bootstrapServers);
     }
 
     void init(String topic, int sent, int received, String peerAddress, String host, String port) {
@@ -315,7 +326,7 @@ public class TracingTest extends KafkaClusterTestBase {
     }
 
     void assertAllDone(int expectedFailures) {
-      done.await(2000);
+      done.await(10000);
       ctx.assertEquals(expectedFailures, failuresCount.intValue());
       ctx.assertEquals(0, sentCount.intValue());
       ctx.assertEquals(0, receivedCount.intValue());
