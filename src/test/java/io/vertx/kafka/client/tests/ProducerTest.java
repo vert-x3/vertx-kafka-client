@@ -34,18 +34,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Producer tests
  */
-public class ProducerTest extends KafkaClusterTestBase {
+public class ProducerTest extends KafkaStrimziTestBase {
 
   private Vertx vertx;
   private KafkaWriteStream<String, String> producer;
@@ -67,6 +62,8 @@ public class ProducerTest extends KafkaClusterTestBase {
     Properties config = kafkaCluster.useTo().getProducerProperties("testStreamProduce_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    // Add max.in.flight.requests.per.connection=1 to ensure ordering
+    config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1");
     producer = producer(Vertx.vertx(), config);
     producer.exceptionHandler(ctx::fail);
     int numMessages = 100000;
@@ -84,6 +81,8 @@ public class ProducerTest extends KafkaClusterTestBase {
     Properties config = kafkaCluster.useTo().getProducerProperties("testProducerProduce_producer");
     config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    // Add max.in.flight.requests.per.connection=1 to ensure ordering
+    config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1");
     producer = producer(Vertx.vertx(), config);
     producer.exceptionHandler(ctx::fail);
     KafkaProducer<String, String> producer = new KafkaProducerImpl<>(this.vertx, this.producer);
