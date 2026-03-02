@@ -36,7 +36,7 @@
 
   <properties>
     <kafka.version>3.7.1</kafka.version>
-    <debezium.version>2.7.3.Final</debezium.version>
+    <strimzi.testcontainer.version>0.109.1</strimzi.testcontainer.version>
   </properties>
 
   <dependencyManagement>
@@ -102,25 +102,35 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.debezium</groupId>
-      <artifactId>debezium-core</artifactId>
-      <version>${debezium.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.debezium</groupId>
-      <artifactId>debezium-core</artifactId>
-      <version>${debezium.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka_2.12</artifactId>
       <version>${kafka.version}</version>
       <scope>test</scope>
     </dependency>
-
+    <!-- Force testcontainers version until strimzi-test-container is upgraded  -->
+    <!-- Otherwise, the build fails on CI  -->
+    <dependency>
+      <groupId>io.strimzi</groupId>
+      <artifactId>strimzi-test-container</artifactId>
+      <version>${strimzi.testcontainer.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.21.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>toxiproxy</artifactId>
+      <version>1.21.4</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.13</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -153,6 +163,9 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
             <argLine>-server -Xmx1200M</argLine>
+            <systemPropertyVariables>
+              <kafka.version>${kafka.version}</kafka.version>
+            </systemPropertyVariables>
           </configuration>
         </plugin>
       </plugins>

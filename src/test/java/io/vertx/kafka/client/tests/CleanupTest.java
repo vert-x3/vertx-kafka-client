@@ -49,7 +49,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class CleanupTest extends KafkaClusterTestBase {
+public class CleanupTest extends KafkaStrimziTestBase {
 
   private Vertx vertx;
   private int numKafkaProducerNetworkThread;
@@ -224,9 +224,8 @@ public class CleanupTest extends KafkaClusterTestBase {
       }
     }).onComplete(ctx.asyncAssertSuccess(v ->  produceLatch.complete()));
     produceLatch.awaitSuccess(10000);
-    kafkaCluster.useTo().produce("testCleanupInConsumer_producer", 100,
-      new StringSerializer(), new StringSerializer(), async::countDown,
-      () -> new ProducerRecord<>(topicName, "the_value"));
+    kafkaCluster.useTo().produceStrings(100, async::countDown,
+      () -> new ProducerRecord<>(topicName, 0, null, "the_value"));
 
     async.awaitSuccess(10000);
     waitUntil("Expected " + countThreads("vert.x-kafka-consumer-thread") + " == " + numVertxKafkaConsumerThread, () -> countThreads("vert.x-kafka-consumer-thread") == numKafkaConsumerNetworkThread);
