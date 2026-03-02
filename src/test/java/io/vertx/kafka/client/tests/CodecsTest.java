@@ -22,10 +22,10 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.client.serialization.BufferDeserializer;
-import io.vertx.kafka.client.serialization.BufferSerializer;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.kafka.client.producer.KafkaWriteStream;
+import io.vertx.kafka.client.serialization.BufferDeserializer;
+import io.vertx.kafka.client.serialization.BufferSerializer;
 import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -39,7 +39,6 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -48,7 +47,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Codec tests
  */
-public class CodecsTest extends KafkaClusterTestBase {
+public class CodecsTest extends KafkaStrimziTestBase {
 
   final private String topic = "the_topic";
   private Vertx vertx;

@@ -16,12 +16,12 @@
 
 package io.vertx.kafka.client.tests;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import io.strimzi.test.container.StrimziKafkaCluster;
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.kafka.client.consumer.KafkaReadStream;
+import io.vertx.kafka.client.producer.KafkaWriteStream;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -33,24 +33,26 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.client.consumer.KafkaReadStream;
-import io.vertx.kafka.client.producer.KafkaWriteStream;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Transactional Producer tests
  */
-public class TransactionalProducerTest extends KafkaClusterTestBase {
+public class TransactionalProducerTest extends KafkaStrimziTestBase {
 
   private Vertx vertx;
   private KafkaWriteStream<String, String> producer;
 
   @BeforeClass
-  public static void setUp() throws IOException {
+  public static void setUp() {
     // Override to use 3 broker setup
-    kafkaCluster = kafkaCluster(false).deleteDataPriorToStartup(true).addBrokers(3).startup();
+    StrimziKafkaCluster strimziCluster = kafkaCluster(false, 3).getDelegate();
+    kafkaCluster = new KafkaClusterWrapper(strimziCluster, new KafkaStrimziTestBase() {
+    });
+    kafkaCluster.start();
   }
 
   @Before
