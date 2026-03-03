@@ -36,7 +36,7 @@
 
   <properties>
     <kafka.version>3.9.1</kafka.version>
-    <strimzi.testcontainer.version>0.109.1</strimzi.testcontainer.version>
+    <strimzi.testcontainer.version>0.111.0</strimzi.testcontainer.version>
   </properties>
 
   <dependencyManagement>
