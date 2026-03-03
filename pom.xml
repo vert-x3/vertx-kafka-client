@@ -36,7 +36,7 @@
 
   <properties>
     <kafka.version>3.9.1</kafka.version>
-    <strimzi.testcontainer.version>0.109.1</strimzi.testcontainer.version>
+    <strimzi.testcontainer.version>0.111.0</strimzi.testcontainer.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
     <maven.compiler.testSource>17</maven.compiler.testSource>
     <maven.compiler.testTarget>17</maven.compiler.testTarget>
