@@ -35,8 +35,13 @@
   </scm>
 
   <properties>
-    <kafka.version>3.9.1</kafka.version>
+    <kafka.version>3.9.2</kafka.version>
     <strimzi.testcontainer.version>0.111.0</strimzi.testcontainer.version>
+    <!-- 3.9.2 is not compatible with Strimzi testcontainer 0.111.0  -->
+    <!-- But 0.111.0 is the latest version that supports Kafka 3.9 -->
+    <!-- So we use the latest 3.9 version of the Kafka client as a dependency -->
+    <!-- But we must use a previous version of Kafka in the Strimzi testcontainer config -->
+    <test.kafka.version>3.9.1</test.kafka.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
     <maven.compiler.testSource>17</maven.compiler.testSource>
     <maven.compiler.testTarget>17</maven.compiler.testTarget>
@@ -135,7 +140,7 @@
           <configuration>
             <argLine>-server -Xmx1200M</argLine>
             <systemPropertyVariables>
-              <kafka.version>${kafka.version}</kafka.version>
+              <test.kafka.version>${test.kafka.version}</test.kafka.version>
             </systemPropertyVariables>
           </configuration>
         </plugin>
