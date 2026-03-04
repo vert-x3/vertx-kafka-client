@@ -69,12 +69,11 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
             kafkaConfig.put("super.users", "User:ANONYMOUS");
         }
 
-        StrimziKafkaCluster strimziCluster = new StrimziKafkaCluster.StrimziKafkaClusterBuilder()
-                .withNumberOfBrokers(brokers)
-                .withKafkaVersion(KAFKA_VERSION)
-                .withKraft()
-                .withAdditionalKafkaConfiguration(kafkaConfig)
-                .build();
+      StrimziKafkaCluster strimziCluster = new StrimziKafkaCluster.StrimziKafkaClusterBuilder()
+        .withNumberOfBrokers(brokers)
+        .withKafkaVersion(KAFKA_VERSION)
+        .withAdditionalKafkaConfiguration(kafkaConfig)
+        .build();
 
         // We need to create the wrapper in the setUp method where we have an instance
         return new KafkaClusterWrapper(strimziCluster, null);
@@ -153,7 +152,7 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
                 OffsetResetStrategy autoOffsetReset) {
             if (groupId == null) {
                 throw new IllegalArgumentException("The groupId is required");
-            } 
+            }
             Properties props = new Properties();
             props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaCluster.getBootstrapServers());
             props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -315,19 +314,19 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
                     topics,
                     recordConsumer);
         }
-        
+
         /**
          * Consume string messages from a topic with a specified count and timeout
          */
         public void consumeStrings(String topicName, int count, long timeout, TimeUnit unit, Runnable completionCallback) {
             AtomicLong readCounter = new AtomicLong();
-            
+
             consumeStrings(
                     () -> readCounter.get() < count,
                     completionCallback,
                     Collections.singleton(topicName),
                     record -> readCounter.incrementAndGet());
-            
+
             try {
                 // Wait for the specified timeout
                 Thread.sleep(unit.toMillis(timeout));
