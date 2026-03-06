@@ -164,7 +164,7 @@
           <configuration>
             <argLine>-server -Xmx1200M</argLine>
             <systemPropertyVariables>
-              <test.kafka.version>${test.kafka.version}</test.kafka.version>
+              <kafka.version>${kafka.version}</kafka.version>
             </systemPropertyVariables>
           </configuration>
         </plugin>
