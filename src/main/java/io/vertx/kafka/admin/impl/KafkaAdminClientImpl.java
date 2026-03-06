@@ -17,6 +17,7 @@
 package io.vertx.kafka.admin.impl;
 
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
+import io.vertx.kafka.admin.ListConsumerGroupOffsetsSpec;
 import io.vertx.kafka.admin.NewPartitions;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.time.Duration;
@@ -471,11 +472,11 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
     return promise.future();
   }
 
-  public Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options) {
+  public Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsSpec spec, ListConsumerGroupOffsetsOptions options) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Map<TopicPartition, OffsetAndMetadata>> promise = ctx.promise();
 
-    ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = this.adminClient.listConsumerGroupOffsets(groupId, Helper.to(options));
+    ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = this.adminClient.listConsumerGroupOffsets(Map.of(groupId, Helper.to(spec)), Helper.to(options));
     listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata().whenComplete((cgo, ex) -> {
 
       if (ex == null) {

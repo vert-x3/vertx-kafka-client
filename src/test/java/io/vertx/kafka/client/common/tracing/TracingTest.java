@@ -302,9 +302,13 @@ public class TracingTest extends KafkaStrimziTestBase {
     }
 
     private String extractPortFromBootstrapServers(String bootstrapServers) {
-      // Bootstrap servers format is typically hostname:port
+      // Bootstrap servers format is typically hostname:port or comma-separated list
+      // Extract first server to match tracer behavior (Kafka 4.0+ Utils.getPort requires single host:port)
       if (bootstrapServers != null && bootstrapServers.contains(":")) {
-        return bootstrapServers.substring(bootstrapServers.lastIndexOf(":") + 1);
+        String firstServer = bootstrapServers.contains(",")
+            ? bootstrapServers.split(",")[0].trim()
+            : bootstrapServers;
+        return firstServer.substring(firstServer.lastIndexOf(":") + 1);
       }
       throw new IllegalStateException("Cannot extract port from bootstrap servers: " + bootstrapServers);
     }
