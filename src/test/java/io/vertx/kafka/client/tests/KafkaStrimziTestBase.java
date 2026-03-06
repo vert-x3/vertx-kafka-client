@@ -35,7 +35,7 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
 
   private static final Map<String, KafkaConsumer<?, ?>> activeConsumers = new ConcurrentHashMap<>();
   protected static boolean ACL = false;
-  private static final String KAFKA_VERSION = System.getProperty("test.kafka.version");
+  private static final String KAFKA_VERSION = System.getProperty("kafka.version");
 
   public static KafkaClusterWrapper kafkaCluster(boolean acl, int brokers) {
     if (kafkaCluster != null) {
