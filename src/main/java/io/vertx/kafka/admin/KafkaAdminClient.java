@@ -292,6 +292,7 @@ public interface KafkaAdminClient {
    * List the consumer group offsets available in the cluster.
    *
    * @param groupId The group id of the group whose offsets will be listed
+   * @param spec The spec to use when listing the consumer group offsets.
    * @param options The options to use when listing the consumer group offsets.
    * @param completionHandler handler called on operation completed with the consumer groups offsets
    */
@@ -302,7 +303,7 @@ public interface KafkaAdminClient {
    * Like {@link #listConsumerGroupOffsets(String, ListConsumerGroupOffsetsOptions, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore
-  Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options);
+  Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsSpec spec, ListConsumerGroupOffsetsOptions options);
 
   /**
    * List the consumer group offsets available in the cluster.
@@ -320,7 +321,7 @@ public interface KafkaAdminClient {
    */
   @GenIgnore
   default Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId) {
-    return listConsumerGroupOffsets(groupId, new ListConsumerGroupOffsetsOptions());
+    return listConsumerGroupOffsets(groupId, new ListConsumerGroupOffsetsSpec(), new ListConsumerGroupOffsetsOptions());
   }
 
   /**

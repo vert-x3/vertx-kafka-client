@@ -217,7 +217,8 @@ public class AdminClientTest extends KafkaStrimziTestBase {
     KafkaAdminClient adminClient = KafkaAdminClient.create(this.vertx, config);
 
     NewTopic newTopic = new NewTopic("testCreateTopicWithConfigs", 1, (short)1);
-    newTopic.setConfig(Collections.singletonMap("segment.bytes", "1000"));
+    // Kafka 4.0+ requires segment.bytes to be at least 1048576 (1MB)
+    newTopic.setConfig(Collections.singletonMap("segment.bytes", "2097152"));
 
     adminClient.createTopics(Collections.singletonList(newTopic), ctx.asyncAssertSuccess(v -> {
 
@@ -241,9 +242,9 @@ public class AdminClientTest extends KafkaStrimziTestBase {
               .filter(e -> e.getName().equals("segment.bytes"))
               .findFirst();
 
-            // Check value of segment.bytes is 1000, like we set it above
+            // Check value of segment.bytes is 2097152 (2MB), like we set it above
             ctx.assertTrue(configEntry.isPresent());
-            ctx.assertEquals("1000", configEntry.get().getValue());
+            ctx.assertEquals("2097152", configEntry.get().getValue());
 
             // Cleanup
             adminClient.deleteTopics(Collections.singletonList("testCreateTopicWithConfigs"), ctx.asyncAssertSuccess(v1 -> {

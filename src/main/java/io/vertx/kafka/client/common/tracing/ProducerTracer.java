@@ -65,8 +65,13 @@ public class ProducerTracer<S> {
   private ProducerTracer(VertxTracer<Void, S> tracer, TracingPolicy policy, String bootstrapServer) {
     this.tracer = tracer;
     this.address = bootstrapServer;
-    this.hostname = Utils.getHost(bootstrapServer);
-    Integer port = Utils.getPort(bootstrapServer);
+    // Kafka 4.0+ Utils.getPort() requires exact match of single host:port
+    // Extract first server if comma-separated list
+    String firstServer = bootstrapServer != null && bootstrapServer.contains(",")
+        ? bootstrapServer.split(",")[0].trim()
+        : bootstrapServer;
+    this.hostname = Utils.getHost(firstServer);
+    Integer port = Utils.getPort(firstServer);
     this.port = port == null ? null : port.toString();
     this.policy = policy;
   }

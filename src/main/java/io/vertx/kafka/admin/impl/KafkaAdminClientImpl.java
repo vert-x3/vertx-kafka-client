@@ -17,6 +17,7 @@
 package io.vertx.kafka.admin.impl;
 
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
+import io.vertx.kafka.admin.ListConsumerGroupOffsetsSpec;
 import io.vertx.kafka.admin.NewPartitions;
 import io.vertx.kafka.client.consumer.OffsetAndMetadata;
 import java.time.Duration;
@@ -546,14 +547,16 @@ public class KafkaAdminClientImpl implements KafkaAdminClient {
   }
 
   public void listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options, Handler<AsyncResult<Map<TopicPartition, OffsetAndMetadata>>> completionHandler) {
-    listConsumerGroupOffsets(groupId, options).onComplete(completionHandler);
+    listConsumerGroupOffsets(groupId, new ListConsumerGroupOffsetsSpec(), options).onComplete(completionHandler);
   }
 
-  public Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions options) {
+  public Future<Map<TopicPartition, OffsetAndMetadata>> listConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsSpec spec, ListConsumerGroupOffsetsOptions options) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     Promise<Map<TopicPartition, OffsetAndMetadata>> promise = ctx.promise();
 
-    ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = this.adminClient.listConsumerGroupOffsets(groupId, Helper.to(options));
+    Map<String, org.apache.kafka.clients.admin.ListConsumerGroupOffsetsSpec> groupSpecs = new HashMap<>();
+    groupSpecs.put(groupId, Helper.to(spec));
+    ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = this.adminClient.listConsumerGroupOffsets(groupSpecs, Helper.to(options));
     listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata().whenComplete((cgo, ex) -> {
 
       if (ex == null) {

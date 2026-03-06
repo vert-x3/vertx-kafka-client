@@ -24,6 +24,7 @@ import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.client.RetryHelper;
 import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.ConfigEntry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -79,8 +80,8 @@ public class AdminClientConfigEntryTest extends KafkaStrimziTestBase {
             })
             .execute()
             .onComplete(ctx.asyncAssertSuccess(minISREntry -> {
-              ctx.assertTrue(minISREntry.isDefault());
-              ctx.assertEquals(minISREntry.getSource(), org.apache.kafka.clients.admin.ConfigEntry.ConfigSource.DEFAULT_CONFIG);
+              ctx.assertFalse(minISREntry.isDefault());
+              ctx.assertEquals(minISREntry.getSource(), ConfigEntry.ConfigSource.DYNAMIC_DEFAULT_BROKER_CONFIG);
               adminClient.deleteTopics(Collections.singletonList(topicName)).onComplete(ctx.asyncAssertSuccess(r -> {
                 adminClient.close();
               }));
