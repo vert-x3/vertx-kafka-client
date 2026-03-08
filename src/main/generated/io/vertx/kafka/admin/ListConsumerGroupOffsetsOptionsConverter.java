@@ -12,6 +12,11 @@ public class ListConsumerGroupOffsetsOptionsConverter {
    static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ListConsumerGroupOffsetsOptions obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
+        case "requireStable":
+          if (member.getValue() instanceof Boolean) {
+            obj.setRequireStable((Boolean)member.getValue());
+          }
+          break;
       }
     }
   }
@@ -21,5 +26,6 @@ public class ListConsumerGroupOffsetsOptionsConverter {
   }
 
    static void toJson(ListConsumerGroupOffsetsOptions obj, java.util.Map<String, Object> json) {
+    json.put("requireStable", obj.isRequireStable());
   }
 }
