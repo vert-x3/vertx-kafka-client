@@ -51,7 +51,7 @@ public class ProducerMockTest {
 
   private static class TestProducer extends MockProducer<String, String> {
     public TestProducer() {
-      super(false, new StringSerializer(), new StringSerializer());
+      super(false, null, new StringSerializer(), new StringSerializer());
     }
 
     public void assertCompleteNext() {
@@ -75,7 +75,7 @@ public class ProducerMockTest {
    */
   private static class TestProducerWriteError extends MockProducer<String, String> {
     public TestProducerWriteError() {
-      super(false, new StringSerializer(), new StringSerializer());
+      super(false, null, new StringSerializer(), new StringSerializer());
     }
 
     @Override

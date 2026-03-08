@@ -331,7 +331,10 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
   public void committed(TopicPartition topicPartition, Handler<AsyncResult<OffsetAndMetadata>> handler) {
 
     this.submitTask((consumer, future) -> {
-      OffsetAndMetadata result = consumer.committed(topicPartition);
+      Set<TopicPartition> partitions = new HashSet<>();
+      partitions.add(topicPartition);
+      Map<TopicPartition, OffsetAndMetadata> committed = consumer.committed(partitions);
+      OffsetAndMetadata result = committed != null ? committed.get(topicPartition) : null;
       if (future != null) {
         future.complete(result);
       }
