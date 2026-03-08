@@ -100,8 +100,8 @@ public abstract class ConsumerMockTestBase {
     consumer.subscribe(Collections.singleton("the_topic")).onComplete(v -> {
       mock.schedulePollTask(() -> {
         mock.rebalance(Collections.singletonList(new TopicPartition("the_topic", 0)));
-        mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, 0L, TimestampType.NO_TIMESTAMP_TYPE, 0L, 0, 0, "abc", "def",
-          new RecordHeaders(Collections.singletonList(new RecordHeader("header_key", "header_value".getBytes())))));
+        mock.addRecord(new ConsumerRecord<>("the_topic", 0, 0L, 0L, TimestampType.NO_TIMESTAMP_TYPE, 0, 0, "abc", "def",
+          new RecordHeaders(Collections.singletonList(new RecordHeader("header_key", "header_value".getBytes()))), java.util.Optional.empty()));
         mock.seek(new TopicPartition("the_topic", 0), 0L);
       });
     });

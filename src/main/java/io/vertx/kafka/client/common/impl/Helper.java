@@ -25,6 +25,7 @@ import io.vertx.kafka.admin.DescribeClusterOptions;
 import io.vertx.kafka.admin.DescribeConsumerGroupsOptions;
 import io.vertx.kafka.admin.DescribeTopicsOptions;
 import io.vertx.kafka.admin.ListConsumerGroupOffsetsOptions;
+import io.vertx.kafka.admin.ListConsumerGroupOffsetsSpec;
 import io.vertx.kafka.admin.ListOffsetsResultInfo;
 import io.vertx.kafka.admin.MemberAssignment;
 import io.vertx.kafka.admin.NewPartitions;
@@ -228,18 +229,22 @@ public class Helper {
   }
 
   public static org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions to(ListConsumerGroupOffsetsOptions listConsumerGroupOffsetsOptions) {
-
     org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions newListConsumerGroupOffsetsOptions = new org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions();
+    newListConsumerGroupOffsetsOptions.requireStable(listConsumerGroupOffsetsOptions.isRequireStable());
+    return newListConsumerGroupOffsetsOptions;
+  }
 
-    if (listConsumerGroupOffsetsOptions.topicPartitions() != null) {
-      List<org.apache.kafka.common.TopicPartition> topicPartitions = listConsumerGroupOffsetsOptions.topicPartitions().stream()
+  public static org.apache.kafka.clients.admin.ListConsumerGroupOffsetsSpec to(ListConsumerGroupOffsetsSpec listConsumerGroupOffsetsSpec) {
+    org.apache.kafka.clients.admin.ListConsumerGroupOffsetsSpec kafkaSpec = new org.apache.kafka.clients.admin.ListConsumerGroupOffsetsSpec();
+
+    if (listConsumerGroupOffsetsSpec.topicPartitions() != null) {
+      List<org.apache.kafka.common.TopicPartition> topicPartitions = listConsumerGroupOffsetsSpec.topicPartitions().stream()
         .map(tp -> new org.apache.kafka.common.TopicPartition(tp.getTopic(), tp.getPartition()))
         .collect(Collectors.toList());
-
-      newListConsumerGroupOffsetsOptions.topicPartitions(topicPartitions);
+      kafkaSpec.topicPartitions(topicPartitions);
     }
 
-    return newListConsumerGroupOffsetsOptions;
+    return kafkaSpec;
   }
 
   public static Set<org.apache.kafka.common.TopicPartition> toTopicPartitionSet(Set<TopicPartition> partitions) {

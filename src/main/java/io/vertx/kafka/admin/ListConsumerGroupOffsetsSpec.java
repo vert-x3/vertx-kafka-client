@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Red Hat Inc.
+ * Copyright 2026 Red Hat Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,43 +19,46 @@ package io.vertx.kafka.admin;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
+import io.vertx.kafka.client.common.TopicPartition;
+import java.util.Collection;
 
 @DataObject
 @JsonGen(publicConverter = false)
-public class ListConsumerGroupOffsetsOptions {
+public class ListConsumerGroupOffsetsSpec {
 
-  private boolean requireStable;
+  private Collection<TopicPartition> topicPartitions = null;
 
   /**
    * Constructor
    */
-  public ListConsumerGroupOffsetsOptions() {}
+  public ListConsumerGroupOffsetsSpec() {}
 
   /**
    * Constructor (from JSON representation)
    *
    * @param json  JSON representation
    */
-  public ListConsumerGroupOffsetsOptions(JsonObject json) {
-    ListConsumerGroupOffsetsOptionsConverter.fromJson(json, this);
+  public ListConsumerGroupOffsetsSpec(JsonObject json) {
+    ListConsumerGroupOffsetsSpecConverter.fromJson(json, this);
   }
 
   /**
-   * Sets an optional requireStable flag.
+   * Set the topic partitions to list as part of the result.
+   * {@code null} includes all topic partitions.
    *
-   * @param requireStable Optional requireStable flag
-   * @return This ListGroupOffsetsOptions
+   * @param topicPartitions Collection of topic partitions to include
+   * @return This ListConsumerGroupOffsetsSpec
    */
-  public ListConsumerGroupOffsetsOptions setRequireStable(boolean requireStable) {
-    this.requireStable = requireStable;
+  public ListConsumerGroupOffsetsSpec topicPartitions(Collection<TopicPartition> topicPartitions) {
+    this.topicPartitions = topicPartitions;
     return this;
   }
 
   /**
-   * Returns Optional requireStable flag.
+   * Returns a collection of topic partitions to add as part of the result.
    */
-  public boolean isRequireStable() {
-    return requireStable;
+  public Collection<TopicPartition> topicPartitions() {
+    return topicPartitions;
   }
 
   /**
@@ -65,14 +68,14 @@ public class ListConsumerGroupOffsetsOptions {
    */
   public JsonObject toJson() {
     JsonObject json = new JsonObject();
-    ListConsumerGroupOffsetsOptionsConverter.toJson(this, json);
+    ListConsumerGroupOffsetsSpecConverter.toJson(this, json);
     return json;
   }
 
   @Override
   public String toString() {
-    return "ListConsumerGroupOffsetsOptions{" +
-      "requireStable=" + requireStable +
+    return "ListConsumerGroupOffsetsSpec{" +
+      "topicPartitions=" + topicPartitions +
       '}';
   }
 
