@@ -18,6 +18,7 @@ package io.vertx.kafka.client.producer;
 
 import io.vertx.codegen.annotations.CacheReturn;
 import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.kafka.client.producer.impl.KafkaHeaderImpl;
@@ -28,17 +29,17 @@ import io.vertx.kafka.client.producer.impl.KafkaHeaderImpl;
 @VertxGen
 public interface KafkaHeader {
 
-  static KafkaHeader header(String key, Buffer value) {
+  static KafkaHeader header(String key, @Nullable Buffer value) {
     return new KafkaHeaderImpl(key, value);
   }
 
-  static KafkaHeader header(String key, String value) {
+  static KafkaHeader header(String key, @Nullable String value) {
     return new KafkaHeaderImpl(key, value);
   }
 
   @GenIgnore
-  static KafkaHeader header(String key, byte[] value) {
-    return new KafkaHeaderImpl(key, Buffer.buffer(value));
+  static KafkaHeader header(String key, @Nullable byte[] value) {
+    return new KafkaHeaderImpl(key, value == null ? null : Buffer.buffer(value));
   }
 
   /**
@@ -48,9 +49,11 @@ public interface KafkaHeader {
   String key();
 
   /**
-   * @return the buffer value
+   * @return the buffer value, may be null
+   * @see <a href="https://kafka.apache.org/42/implementation/message-format/#record-header">Record Header</a>
    */
   @CacheReturn
+  @Nullable
   Buffer value();
 
 }
