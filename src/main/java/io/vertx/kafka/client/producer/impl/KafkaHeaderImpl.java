@@ -35,7 +35,7 @@ public class KafkaHeaderImpl implements KafkaHeader {
   }
 
   public KafkaHeaderImpl(String key, String value) {
-    this(key, Buffer.buffer(value));
+    this(key, value == null ? null : Buffer.buffer(value));
   }
 
   @Override
