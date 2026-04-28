@@ -19,6 +19,8 @@ package io.vertx.kafka.client.consumer;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
+import java.util.Objects;
+
 /**
  * Provide additional metadata when an offset is committed
  */
@@ -108,6 +110,19 @@ public class OffsetAndMetadata {
    */
   public JsonObject toJson() {
     return new JsonObject().put("offset", this.offset).put("metadata", this.metadata);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    OffsetAndMetadata that = (OffsetAndMetadata) o;
+    return offset == that.offset && Objects.equals(metadata, that.metadata);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(offset, metadata);
   }
 
   @Override
