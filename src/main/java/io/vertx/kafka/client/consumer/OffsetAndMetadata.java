@@ -112,6 +112,11 @@ public class OffsetAndMetadata {
     return new JsonObject().put("offset", this.offset).put("metadata", this.metadata);
   }
 
+  /**
+   * Indicates whether some other object is "equal to" this one.
+   * @param o   the reference object with which to compare.
+   * @return
+   */
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
