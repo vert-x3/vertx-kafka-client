@@ -135,6 +135,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
         }
         if (exceptionHandler != null) {
           exceptionHandler.handle(e);
+        } else {
+          context.reportException(e);
         }
       }
     });
@@ -159,6 +161,8 @@ public class KafkaReadStreamImpl<K, V> implements KafkaReadStream<K, V> {
                   } catch (Exception e) {
                     if (exceptionHandler != null) {
                       exceptionHandler.handle(e);
+                    } else {
+                      context.reportException(e);
                     }
                   }
                 }

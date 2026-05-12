@@ -124,6 +124,8 @@ public class KafkaWriteStreamImpl<K, V> implements KafkaWriteStream<K, V> {
           if (this.exceptionHandler != null) {
             Handler<Throwable> exceptionHandler = this.exceptionHandler;
             ctx.runOnContext(v3 -> exceptionHandler.handle(e));
+          } else {
+            ctx.reportException(e);
           }
         }
         if (startedSpan != null) {
