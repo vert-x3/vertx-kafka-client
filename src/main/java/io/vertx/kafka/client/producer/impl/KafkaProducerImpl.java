@@ -128,12 +128,8 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   private static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Supplier<Producer<K, V>> producerFactory, KafkaClientOptions options) {
     synchronized (sharedProducers) {
-      @SuppressWarnings("unchecked") SharedProducer<K, V> sharedProducer = (SharedProducer<K, V>) sharedProducers.computeIfAbsent(name, key -> {
-        Producer<K, V> producer = producerFactory.get();
-        SharedProducer<K, V> s = new SharedProducer<>(KafkaWriteStream.create(vertx, producer, options));
-        s.closeHandler.registerCloseHook((VertxInternal) vertx);
-        return s;
-      });
+      @SuppressWarnings("unchecked") SharedProducer<K, V> sharedProducer = (SharedProducer<K, V>) sharedProducers.computeIfAbsent(name, key ->
+        new SharedProducer<>(KafkaWriteStream.create(vertx, producerFactory.get(), options)));
       Object key = new Object();
       KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>(vertx, KafkaWriteStream.create(vertx, sharedProducer.producer), new CloseHandler((timeout, ar) -> {
         synchronized (sharedProducers) {
@@ -166,11 +162,7 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
   }
 
   public KafkaProducerImpl<K, V> registerCloseHook() {
-    Context context = Vertx.currentContext();
-    if (context == null) {
-      return this;
-    }
-    closeHandler.registerCloseHook((ContextInternal) context);
+    closeHandler.registerCloseHook((ContextInternal) vertx.getOrCreateContext());
     return this;
   }
 
