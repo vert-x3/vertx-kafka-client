@@ -39,11 +39,11 @@ public interface KafkaConsumerRecords<K, V> {
    * @throws IndexOutOfBoundsException if index <0 or index>={@link #size()}
    */
   KafkaConsumerRecord<K, V> recordAt(int index);
-  
+
   /**
    * @return  the native Kafka consumer records with backed information
    */
   @GenIgnore
   ConsumerRecords<K, V> records();
-  
+
 }

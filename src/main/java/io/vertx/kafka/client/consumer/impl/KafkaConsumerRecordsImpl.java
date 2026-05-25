@@ -31,7 +31,7 @@ public class KafkaConsumerRecordsImpl<K, V> implements KafkaConsumerRecords<K, V
   public KafkaConsumerRecordsImpl(ConsumerRecords<K, V> records) {
     this.records = records;
   }
-  
+
   @Override
   public int size() {
     return records.count();
