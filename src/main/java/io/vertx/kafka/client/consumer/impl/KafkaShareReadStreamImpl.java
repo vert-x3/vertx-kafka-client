@@ -54,9 +54,12 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
           }
         } catch (WakeupException ignore) {
         } catch (Exception e) {
-          if (exceptionHandler != null) {
-            exceptionHandler.handle(e);
-          }
+          submitted = true;
+          final Handler<Throwable> eh = exceptionHandler;
+          context.runOnContext(v -> {
+            polling.set(false);
+            if (eh != null) eh.handle(e);
+          });
         } finally {
           if (!submitted) {
             context.runOnContext(v -> {
