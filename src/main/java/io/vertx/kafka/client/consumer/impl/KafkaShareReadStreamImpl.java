@@ -139,14 +139,17 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
     return promise.future();
   }
 
-  /**
-   * Based on Apache Kafka client javadocs, acknowledgment is committed on the next
-   * commitSync(), commitAsync() or poll(Duration) call, so that worker thread
-   * isn't required here.
-   */
   public Future<Void> acknowledge(ConsumerRecord<K, V> record, AcknowledgeType type) {
-    shareConsumer.acknowledge(record, type);
-    return ((ContextInternal) context).succeededFuture();
+    Promise<Void> promise = Promise.promise();
+    worker.submit(() -> {
+      try {
+        shareConsumer.acknowledge(record, type);
+        context.runOnContext(v -> promise.complete());
+      } catch (Exception e) {
+        context.runOnContext(v -> promise.fail(e));
+      }
+    });
+    return promise.future();
   }
 
   public Future<Map<TopicIdPartition, Optional<KafkaException>>> commitSync(Duration timeout) {
