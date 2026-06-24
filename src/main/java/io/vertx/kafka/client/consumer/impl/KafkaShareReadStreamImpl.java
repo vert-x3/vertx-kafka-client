@@ -4,7 +4,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.internal.ContextInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.KafkaException;
@@ -22,6 +21,7 @@ import java.util.stream.Collectors;
 public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<K, V> {
 
   private final ShareConsumer<K, V> shareConsumer;
+  private AcknowledgementCommitCallback pendingAckCallback;
 
   public KafkaShareReadStreamImpl(Vertx vertx, ShareConsumer<K, V> shareConsumer) {
     this(vertx, shareConsumer, new KafkaClientOptions(), null);
@@ -79,8 +79,11 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
       worker = createWorker("vert.x-kafka-share-consumer-thread-");
     }
 
+    AcknowledgementCommitCallback cb = pendingAckCallback;
+    pendingAckCallback = null;
     worker.submit(() -> {
       try {
+        if (cb != null) shareConsumer.setAcknowledgementCommitCallback(cb);
         shareConsumer.subscribe(topics);
         context.runOnContext(v -> {
           promise.complete();
@@ -198,9 +201,13 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
   }
 
   public void setAcknowledgementCommitCallback(AcknowledgementCommitCallback callback) {
-    shareConsumer.setAcknowledgementCommitCallback(
-      (offsets, exception) -> context.runOnContext(v -> callback.onComplete(offsets, exception))
-    );
+    AcknowledgementCommitCallback wrapped = callback == null ? null :
+      (offsets, exception) -> context.runOnContext(v -> callback.onComplete(offsets, exception));
+    if (worker == null) {
+      pendingAckCallback = wrapped;
+    } else {
+      worker.submit(() -> shareConsumer.setAcknowledgementCommitCallback(wrapped));
+    }
   }
 
   public void setPollTimeout(Duration timeout) {
