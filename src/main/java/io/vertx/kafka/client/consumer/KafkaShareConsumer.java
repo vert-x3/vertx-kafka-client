@@ -14,6 +14,8 @@ import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.consumer.AcknowledgeType;
 import org.apache.kafka.clients.consumer.AcknowledgementCommitCallback;
 import org.apache.kafka.clients.consumer.ShareConsumer;
+
+import java.util.concurrent.ThreadFactory;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicIdPartition;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -95,6 +97,32 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
     Map<String, Object> config = new HashMap<>();
     if (options.getConfig() != null) config.putAll(options.getConfig());
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx, new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(config), options);
+    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+  }
+
+  /**
+   * Create a new {@code KafkaShareConsumer} from {@link KafkaClientOptions} with a custom
+   * {@link ThreadFactory} for the internal worker thread.
+   * <p>
+   * <b>Experimental</b>: use this method to control the threading model of the internal poll
+   * worker. For example, on Java 21+ you can pass a virtual thread factory:
+   * <pre>
+   *   KafkaShareConsumer.create(vertx, options,
+   *     Thread.ofVirtual().name("kafka-share-worker-", 0).factory());
+   * </pre>
+   * When {@code null} is passed the default platform thread factory is used.
+   *
+   * @param vertx         the Vert.x instance
+   * @param options       Kafka client options
+   * @param threadFactory factory used to create the internal worker thread, or {@code null} for the default
+   * @return a new {@code KafkaShareConsumer}
+   */
+  @GenIgnore
+  static <K, V> KafkaShareConsumer<K, V> create(Vertx vertx, KafkaClientOptions options, ThreadFactory threadFactory) {
+    Map<String, Object> config = new HashMap<>();
+    if (options.getConfig() != null) config.putAll(options.getConfig());
+    KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx,
+      new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(config), options, threadFactory);
     return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
   }
 
