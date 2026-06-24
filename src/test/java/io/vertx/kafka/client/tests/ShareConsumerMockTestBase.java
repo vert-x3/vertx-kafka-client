@@ -107,12 +107,10 @@ public abstract class ShareConsumerMockTestBase {
 
     shareConsumer.exceptionHandler(ctx::fail);
 
-    shareConsumer.handler(record -> {
-      shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
-        .onComplete(ctx.asyncAssertSuccess(v ->
-          shareConsumer.close().onComplete(ar -> done.complete())
-        ));
-    });
+    shareConsumer.handler(record -> shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
+      .onComplete(ctx.asyncAssertSuccess(v ->
+        shareConsumer.close().onComplete(ar -> done.complete())
+      )));
 
     shareConsumer.subscribe(expectedTopic)
       .onComplete(ctx.asyncAssertSuccess(v ->
@@ -129,13 +127,11 @@ public abstract class ShareConsumerMockTestBase {
 
     shareConsumer.exceptionHandler(ctx::fail);
 
-    shareConsumer.handler(record -> {
-      shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
-        .compose(v -> shareConsumer.commitSync())
-        .onComplete(ctx.asyncAssertSuccess(v ->
-          shareConsumer.close().onComplete(ar -> done.complete())
-        ));
-    });
+    shareConsumer.handler(record -> shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
+      .compose(v -> shareConsumer.commitSync())
+      .onComplete(ctx.asyncAssertSuccess(v ->
+        shareConsumer.close().onComplete(ar -> done.complete())
+      )));
 
     shareConsumer.subscribe(expectedTopic)
       .onComplete(ctx.asyncAssertSuccess(v ->
@@ -152,14 +148,12 @@ public abstract class ShareConsumerMockTestBase {
 
     shareConsumer.exceptionHandler(ctx::fail);
 
-    shareConsumer.handler(record -> {
-      shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
-        .compose(v -> shareConsumer.commitSync(Duration.ofSeconds(5)))
-        .onComplete(ctx.asyncAssertSuccess(map -> {
-          ctx.assertTrue(map.isEmpty());
-          shareConsumer.close().onComplete(ar -> done.complete());
-        }));
-    });
+    shareConsumer.handler(record -> shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
+      .compose(v -> shareConsumer.commitSync(Duration.ofSeconds(5)))
+      .onComplete(ctx.asyncAssertSuccess(map -> {
+        ctx.assertTrue(map.isEmpty());
+        shareConsumer.close().onComplete(ar -> done.complete());
+      })));
 
     shareConsumer.subscribe(expectedTopic)
       .onComplete(ctx.asyncAssertSuccess(v ->
@@ -180,14 +174,12 @@ public abstract class ShareConsumerMockTestBase {
 
     Async done = ctx.async();
 
-    shareConsumer.handler(record -> {
-      shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
-        .compose(v -> shareConsumer.commitSync())
-        .onComplete(ctx.asyncAssertFailure(ex -> {
-          ctx.assertEquals("broker rejected", ex.getMessage());
-          shareConsumer.close().onComplete(ar -> done.complete());
-        }));
-    });
+    shareConsumer.handler(record -> shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
+      .compose(v -> shareConsumer.commitSync())
+      .onComplete(ctx.asyncAssertFailure(ex -> {
+        ctx.assertEquals("broker rejected", ex.getMessage());
+        shareConsumer.close().onComplete(ar -> done.complete());
+      })));
 
     shareConsumer.subscribe(expectedTopic)
       .onComplete(ctx.asyncAssertSuccess(v ->
@@ -211,16 +203,14 @@ public abstract class ShareConsumerMockTestBase {
 
     Async done = ctx.async();
 
-    shareConsumer.handler(record -> {
-      shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
-        .compose(v -> shareConsumer.commitSync())
-        .onComplete(ctx.asyncAssertFailure(ex -> {
-          ctx.assertTrue(ex.getMessage().contains("2 partition(s) failed"));
-          ctx.assertTrue(ex.getMessage().contains(expectedTopic + "-0"));
-          ctx.assertTrue(ex.getMessage().contains(expectedTopic + "-1"));
-          shareConsumer.close().onComplete(ar -> done.complete());
-        }));
-    });
+    shareConsumer.handler(record -> shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
+      .compose(v -> shareConsumer.commitSync())
+      .onComplete(ctx.asyncAssertFailure(ex -> {
+        ctx.assertTrue(ex.getMessage().contains("2 partition(s) failed"));
+        ctx.assertTrue(ex.getMessage().contains(expectedTopic + "-0"));
+        ctx.assertTrue(ex.getMessage().contains(expectedTopic + "-1"));
+        shareConsumer.close().onComplete(ar -> done.complete());
+      })));
 
     shareConsumer.subscribe(expectedTopic)
       .onComplete(ctx.asyncAssertSuccess(v ->
@@ -241,16 +231,14 @@ public abstract class ShareConsumerMockTestBase {
 
     Async done = ctx.async();
 
-    shareConsumer.handler(record -> {
-      shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
-        .compose(v -> shareConsumer.commitSync(Duration.ofSeconds(5)))
-        .onComplete(ctx.asyncAssertSuccess(map -> {
-          ctx.assertEquals(1, map.size());
-          ctx.assertTrue(map.get(tip).isPresent());
-          ctx.assertEquals("broker rejected", map.get(tip).get().getMessage());
-          shareConsumer.close().onComplete(ar -> done.complete());
-        }));
-    });
+    shareConsumer.handler(record -> shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
+      .compose(v -> shareConsumer.commitSync(Duration.ofSeconds(5)))
+      .onComplete(ctx.asyncAssertSuccess(map -> {
+        ctx.assertEquals(1, map.size());
+        ctx.assertTrue(map.get(tip).isPresent());
+        ctx.assertEquals("broker rejected", map.get(tip).get().getMessage());
+        shareConsumer.close().onComplete(ar -> done.complete());
+      })));
 
     shareConsumer.subscribe(expectedTopic)
       .onComplete(ctx.asyncAssertSuccess(v ->
@@ -454,9 +442,7 @@ public abstract class ShareConsumerMockTestBase {
       .onComplete(ctx.asyncAssertSuccess(v -> {
         mock.addRecord(new ConsumerRecord<>(expectedTopic, expectedPartition, 0L, expectedKey, expectedValue));
         // wait briefly, then verify no record was delivered
-        vertx.setTimer(300, t -> {
-          shareConsumer.close().onComplete(ar -> done.complete());
-        });
+        vertx.setTimer(300, t -> shareConsumer.close().onComplete(ar -> done.complete()));
       }));
   }
 
