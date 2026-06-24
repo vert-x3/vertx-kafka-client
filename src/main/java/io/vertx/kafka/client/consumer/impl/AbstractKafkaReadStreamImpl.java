@@ -35,7 +35,7 @@ abstract class AbstractKafkaReadStreamImpl<K, V> {
   protected final Context context;
   private final Runnable wakeup;
   private final Runnable closeNative;
-  private final ConsumerTracer tracer;
+  private final ConsumerTracer<?> tracer;
 
   protected final AtomicBoolean closed = new AtomicBoolean(true);
   protected final AtomicBoolean polling = new AtomicBoolean(false);
@@ -170,7 +170,7 @@ abstract class AbstractKafkaReadStreamImpl<K, V> {
 
   private Handler<ConsumerRecord<K, V>> tracedHandler(Context ctx, Handler<ConsumerRecord<K, V>> handler) {
     return tracer == null ? handler : rec -> {
-      ConsumerTracer.StartedSpan span = tracer.prepareMessageReceived(ctx, rec);
+      ConsumerTracer<?>.StartedSpan span = tracer.prepareMessageReceived(ctx, rec);
       try {
         handler.handle(rec);
         span.finish(ctx);
