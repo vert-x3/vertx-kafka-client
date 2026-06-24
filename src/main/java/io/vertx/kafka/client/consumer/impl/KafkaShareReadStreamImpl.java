@@ -13,6 +13,7 @@ import org.apache.kafka.common.errors.WakeupException;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ThreadFactory;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -23,11 +24,15 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
   private final ShareConsumer<K, V> shareConsumer;
 
   public KafkaShareReadStreamImpl(Vertx vertx, ShareConsumer<K, V> shareConsumer) {
-    this(vertx, shareConsumer, new KafkaClientOptions());
+    this(vertx, shareConsumer, new KafkaClientOptions(), null);
   }
 
   public KafkaShareReadStreamImpl(Vertx vertx, ShareConsumer<K, V> shareConsumer, KafkaClientOptions options) {
-    super(vertx, shareConsumer::wakeup, shareConsumer::close, options);
+    this(vertx, shareConsumer, options, null);
+  }
+
+  public KafkaShareReadStreamImpl(Vertx vertx, ShareConsumer<K, V> shareConsumer, KafkaClientOptions options, ThreadFactory threadFactory) {
+    super(vertx, shareConsumer::wakeup, shareConsumer::close, options, threadFactory);
     this.shareConsumer = shareConsumer;
   }
 

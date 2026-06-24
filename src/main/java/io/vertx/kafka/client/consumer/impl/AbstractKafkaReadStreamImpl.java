@@ -9,8 +9,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 
 import java.time.Duration;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,6 +38,7 @@ abstract class AbstractKafkaReadStreamImpl<K, V> {
   private final Runnable wakeup;
   private final Runnable closeNative;
   private final ConsumerTracer<?> tracer;
+  private final ThreadFactory threadFactory;
 
   protected final AtomicBoolean closed = new AtomicBoolean(true);
   protected final AtomicBoolean polling = new AtomicBoolean(false);
@@ -50,15 +53,22 @@ abstract class AbstractKafkaReadStreamImpl<K, V> {
   private Iterator<ConsumerRecord<K, V>> current;
 
   protected AbstractKafkaReadStreamImpl(Vertx vertx, Runnable wakeup, Runnable closeNative, KafkaClientOptions options) {
+    this(vertx, wakeup, closeNative, options, null);
+  }
+
+  protected AbstractKafkaReadStreamImpl(Vertx vertx, Runnable wakeup, Runnable closeNative, KafkaClientOptions options, ThreadFactory threadFactory) {
     ContextInternal ctxInt = ((ContextInternal) vertx.getOrCreateContext()).unwrap();
     this.context = ctxInt;
     this.wakeup = wakeup;
     this.closeNative = closeNative;
     this.tracer = ConsumerTracer.create(ctxInt.tracer(), options);
+    this.threadFactory = threadFactory;
   }
 
   protected ExecutorService createWorker(String namePrefix) {
-    return Executors.newSingleThreadExecutor(r -> new Thread(r, namePrefix + threadCount.getAndIncrement()));
+    return Executors.newSingleThreadExecutor(
+      Objects.requireNonNullElseGet(threadFactory, () -> r -> new Thread(r, namePrefix + threadCount.getAndIncrement()))
+    );
   }
 
   public void exceptionHandler(Handler<Throwable> handler) {
