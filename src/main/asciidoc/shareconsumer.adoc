@@ -1,0 +1,149 @@
+== Vert.x Kafka Share Consumer
+
+Next to consumer groups, Apache Kafka 4.0 added _share groups_
+(link:https://cwiki.apache.org/confluence/display/KAFKA/KIP-932%3A+Queues+for+Kafka[KIP-932]).
+
+With a consumer group, every partition belongs to exactly one consumer. Add more consumers than
+there are partitions and the extra ones stay idle. A share group drops that rule: its members read
+the same partitions together, each record goes to one of them, and that member acknowledges the
+record on its own. In other words a share group behaves like a work queue, and you scale it by
+adding consumers instead of partitions.
+
+=== Joining a share group
+
+You create a {@link io.vertx.kafka.client.consumer.KafkaShareConsumer} exactly like a
+{@link io.vertx.kafka.client.consumer.KafkaConsumer}, from a configuration map, from
+{@link io.vertx.kafka.client.common.KafkaClientOptions} or from a `Properties` instance.
+The `group.id` is the share group you join.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleCreateShareConsumer(io.vertx.core.Vertx)}
+----
+
+NOTE: There is no `auto.offset.reset` for share groups. The broker keeps the delivery state of the
+group in its internal `__share_group_state` topic and decides where the group starts reading, so a
+share consumer never picks a starting offset itself.
+
+Subscribing works as usual, with
+{@link io.vertx.kafka.client.consumer.KafkaShareConsumer#subscribe(java.util.Set)} and a record
+handler registered through
+{@link io.vertx.kafka.client.consumer.KafkaShareConsumer#handler(io.vertx.core.Handler)}.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerSubscribe(io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
+
+Since nobody owns a partition, there is no assignment and no rebalance to react to, so you will not
+find partition assigned or revoked handlers here. Flow control is unchanged: `pause()`, `resume()`
+and `fetch()` all work as they do on a regular consumer.
+
+=== Acknowledging records
+
+Every record a share consumer receives has to be acknowledged, so the broker knows whether it was
+handled or should be handed out again. The `share.acknowledgement.mode` property decides who does
+that:
+
+`implicit`:: the default. The records from a poll are marked as processed on the next poll or commit.
+You acknowledge nothing yourself.
+`explicit`:: you acknowledge each record with
+{@link io.vertx.kafka.client.consumer.KafkaShareConsumer#acknowledge}. Anything you leave
+unacknowledged is released once the acquisition lock expires, and delivered again.
+
+The Vert.x client never sets this property for you. Pick the mode your application needs.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleCreateShareConsumerExplicitAcknowledgement(io.vertx.core.Vertx)}
+----
+
+In explicit mode, {@link io.vertx.kafka.client.consumer.KafkaShareConsumer#acknowledge} reports the
+outcome of one record.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerAcknowledge(io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
+
+The {@link io.vertx.kafka.client.consumer.AcknowledgeType} says what happened to it:
+
+{@link io.vertx.kafka.client.consumer.AcknowledgeType#ACCEPT}:: handled, never send it again.
+{@link io.vertx.kafka.client.consumer.AcknowledgeType#RELEASE}:: not handled, put it back for anyone
+in the group to pick up.
+{@link io.vertx.kafka.client.consumer.AcknowledgeType#REJECT}:: it can never be handled, drop it for
+the whole group.
+{@link io.vertx.kafka.client.consumer.AcknowledgeType#RENEW}:: still working on it, extend the
+acquisition lock and return it on the next poll.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerAcknowledgeTypes(io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
+
+Releasing a record that always fails would keep it circling the group forever.
+{@link io.vertx.kafka.client.consumer.KafkaShareConsumerRecord#deliveryCount()} tells you how many
+times the broker has already delivered it, which is what you need to give up after a few attempts.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerDeliveryCount(io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
+
+=== Committing acknowledgements
+
+Acknowledging only changes an in-memory state. The broker hears about it when the acknowledgements
+are committed, which happens on the next poll, or when you ask for it.
+
+{@link io.vertx.kafka.client.consumer.KafkaShareConsumer#commitSync()} sends what is pending and
+completes once the broker has confirmed it.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerCommitSync(io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
+
+{@link io.vertx.kafka.client.consumer.KafkaShareConsumer#commitAsync()} sends it without waiting.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerCommitAsync(io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
+
+ifdef::java[]
+`commitAsync()` gives you no result, so register an acknowledgement commit callback if you want to
+know how it went. The callback fires once per broker response and carries the offsets that were
+confirmed, which usually means one call covers several records.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerCommitCallback(io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
+endif::[]
+
+=== Polling explicitly
+
+Instead of registering a record handler you can drive the polling yourself with
+{@link io.vertx.kafka.client.consumer.KafkaShareConsumer#poll(java.time.Duration)}.
+
+Keep calling it regularly. A member that stops polling for longer than `max.poll.interval.ms` is
+removed from the share group.
+
+Start polling as soon as the subscription completes, rather than waiting until you expect records.
+The group only begins reading once its members are active, so records produced during an idle gap
+right after subscribing may not reach you.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerWithPoll(io.vertx.core.Vertx, io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
+
+=== Closing the share consumer
+
+Closing releases the connections and leaves the share group. Anything you acknowledged but never
+committed is released, so it will be delivered again.
+
+[source,$lang]
+----
+{@link examples.KafkaShareConsumerExamples#exampleShareConsumerClose(io.vertx.kafka.client.consumer.KafkaShareConsumer)}
+----
