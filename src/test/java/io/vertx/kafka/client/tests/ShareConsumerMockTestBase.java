@@ -14,6 +14,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.kafka.client.consumer.AcknowledgeType;
 import io.vertx.kafka.client.consumer.KafkaShareConsumer;
 import io.vertx.kafka.client.consumer.KafkaShareConsumerRecord;
 import org.apache.kafka.clients.consumer.*;

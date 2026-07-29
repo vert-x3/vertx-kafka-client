@@ -14,7 +14,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.kafka.client.consumer.KafkaShareConsumer;
-import org.apache.kafka.clients.consumer.AcknowledgeType;
+import io.vertx.kafka.client.consumer.AcknowledgeType;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -39,10 +39,12 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
 
   /*
-   * Share groups initialize the share partition on the first heartbeat cycle.
-   * With group.share.heartbeat.interval.ms=1000 in the test cluster the assignment arrives at ~1s.
-   * We wait 2s before producing so the partition is already initialized on an empty topic (start offset = 0),
-   * making messages at offset 0+ visible to the share consumer.
+   * A share group needs a moment after subscribing before it starts reading: records produced
+   * during that window are not delivered to the consumer. The tests therefore let the consumer
+   * settle in the group before producing, so that every message is seen.
+   *
+   * The value is empirical. The test cluster runs with group.share.heartbeat.interval.ms=1000
+   * (see KafkaStrimziTestBase) and 4s has proven reliable there; it is not a documented bound.
    */
   private static final long SHARE_GROUP_INIT_DELAY_MS = 4000L;
 
@@ -67,9 +69,9 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
 
   /**
    * Build share consumer properties for the given share group and client ID.
-   * Unlike regular consumers, share groups do not use {@code auto.offset.reset},
-   * the share coordinator manages delivery state in __share_group_state topic
-   * and initializes the start offset on the first heartbeat.
+   * Unlike regular consumers, share groups do not use {@code auto.offset.reset}: the share
+   * coordinator manages the delivery state in the __share_group_state topic and decides where
+   * the group starts reading.
    */
   protected Properties shareConsumerProperties(String groupId, String clientId) {
     return shareConsumerProperties(groupId, clientId, false);
@@ -320,8 +322,8 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     consumer.exceptionHandler(ctx::fail);
     consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
       ctx.assertTrue(ar.succeeded());
-      // Start polling immediately so heartbeats drive share partition initialization.
-      // Produce after the init delay so records land at offset 0+ (after start offset is set).
+      // Start polling immediately: without an active consumer the group does not start reading.
+      // Produce only after the init delay, so no record falls into that window and is missed.
       AtomicInteger index = new AtomicInteger();
       AtomicLong timerId = new AtomicLong();
       timerId.set(vertx.setPeriodic(1000, t -> {

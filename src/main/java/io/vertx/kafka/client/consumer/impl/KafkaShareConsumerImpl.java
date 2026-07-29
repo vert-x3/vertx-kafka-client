@@ -18,10 +18,10 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.kafka.client.common.impl.CloseHandler;
+import io.vertx.kafka.client.consumer.AcknowledgeType;
 import io.vertx.kafka.client.consumer.KafkaShareConsumer;
 import io.vertx.kafka.client.consumer.KafkaShareConsumerRecord;
 import io.vertx.kafka.client.consumer.KafkaShareConsumerRecords;
-import org.apache.kafka.clients.consumer.AcknowledgeType;
 import org.apache.kafka.clients.consumer.AcknowledgementCommitCallback;
 import org.apache.kafka.clients.consumer.ShareConsumer;
 import org.apache.kafka.common.KafkaException;
@@ -147,7 +147,26 @@ public class KafkaShareConsumerImpl<K, V> implements KafkaShareConsumer<K, V> {
 
   @Override
   public Future<Void> acknowledge(KafkaShareConsumerRecord<K, V> record, AcknowledgeType type) {
-    return stream.acknowledge(record.record(), type);
+    return stream.acknowledge(record.record(), toKafkaAcknowledgeType(type));
+  }
+
+  /**
+   * Map the Vert.x acknowledgement type onto the native Kafka one. The switch is exhaustive
+   * so that adding a constant to {@link AcknowledgeType} fails at compile time.
+   */
+  private static org.apache.kafka.clients.consumer.AcknowledgeType toKafkaAcknowledgeType(AcknowledgeType type) {
+    switch (type) {
+      case ACCEPT:
+        return org.apache.kafka.clients.consumer.AcknowledgeType.ACCEPT;
+      case RELEASE:
+        return org.apache.kafka.clients.consumer.AcknowledgeType.RELEASE;
+      case REJECT:
+        return org.apache.kafka.clients.consumer.AcknowledgeType.REJECT;
+      case RENEW:
+        return org.apache.kafka.clients.consumer.AcknowledgeType.RENEW;
+      default:
+        throw new IllegalArgumentException("Unsupported acknowledge type: " + type);
+    }
   }
 
   @Override

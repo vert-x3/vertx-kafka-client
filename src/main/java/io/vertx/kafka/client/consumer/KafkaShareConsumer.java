@@ -21,7 +21,6 @@ import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.consumer.impl.KafkaShareConsumerImpl;
 import io.vertx.kafka.client.consumer.impl.KafkaShareReadStreamImpl;
 import io.vertx.kafka.client.serialization.VertxSerdes;
-import org.apache.kafka.clients.consumer.AcknowledgeType;
 import org.apache.kafka.clients.consumer.AcknowledgementCommitCallback;
 import org.apache.kafka.clients.consumer.ShareConsumer;
 
@@ -225,6 +224,21 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
   @Fluent
   @Override
   KafkaShareConsumer<K, V> handler(Handler<KafkaShareConsumerRecord<K, V>> handler);
+
+  @Fluent
+  @Override
+  KafkaShareConsumer<K, V> pause();
+
+  @Fluent
+  @Override
+  KafkaShareConsumer<K, V> resume();
+
+  @Override
+  KafkaShareConsumer<K, V> fetch(long amount);
+
+  @Fluent
+  @Override
+  KafkaShareConsumer<K, V> endHandler(Handler<Void> endHandler);
 
   /**
    * Set a handler to receive records in batches rather than one at a time.
