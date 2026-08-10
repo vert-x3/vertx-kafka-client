@@ -10,11 +10,15 @@
  */
 package io.vertx.kafka.client.tests;
 
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.kafka.client.consumer.KafkaShareConsumer;
 import io.vertx.kafka.client.consumer.AcknowledgeType;
+import io.vertx.kafka.client.consumer.KafkaShareConsumer;
+import io.vertx.kafka.client.consumer.KafkaShareConsumerRecord;
+import io.vertx.kafka.client.consumer.KafkaShareConsumerRecords;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -38,15 +42,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
 
-  /*
-   * A share group needs a moment after subscribing before it starts reading: records produced
-   * during that window are not delivered to the consumer. The tests therefore let the consumer
-   * settle in the group before producing, so that every message is seen.
-   *
-   * The value is empirical. The test cluster runs with group.share.heartbeat.interval.ms=1000
-   * (see KafkaStrimziTestBase) and 4s has proven reliable there; it is not a documented bound.
-   */
-  private static final long SHARE_GROUP_INIT_DELAY_MS = 4000L;
+  private static final Duration READY_POLL_TIMEOUT = Duration.ofMillis(500);
+  private static final long READY_RETRY_DELAY_MS = 250L;
+  private static final int READY_MAX_ATTEMPTS = 60;
+
+  private static final String READY_KEY = "__ready_probe";
 
   protected Vertx vertx;
   protected KafkaShareConsumer<String, String> consumer;
@@ -67,12 +67,6 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     vertx.close().onComplete(ctx.asyncAssertSuccess());
   }
 
-  /**
-   * Build share consumer properties for the given share group and client ID.
-   * Unlike regular consumers, share groups do not use {@code auto.offset.reset}: the share
-   * coordinator manages the delivery state in the __share_group_state topic and decides where
-   * the group starts reading.
-   */
   protected Properties shareConsumerProperties(String groupId, String clientId) {
     return shareConsumerProperties(groupId, clientId, false);
   }
@@ -92,11 +86,78 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     return props;
   }
 
-  /**
-   * Create the {@link KafkaShareConsumer} under test.
-   * Concrete subclasses choose the factory method / options to exercise.
-   */
   protected abstract KafkaShareConsumer<String, String> createShareConsumer(Vertx vertx, Properties config);
+
+  protected Future<Void> awaitShareGroupReady(String topicName, boolean explicitAck) {
+    Promise<Void> promise = Promise.promise();
+    probe(topicName, explicitAck, promise, 0);
+    return promise.future();
+  }
+
+  private void probe(String topicName, boolean explicitAck, Promise<Void> promise, int attempt) {
+    if (attempt >= READY_MAX_ATTEMPTS) {
+      promise.fail("share group did not start reading " + topicName
+        + " within " + READY_MAX_ATTEMPTS + " attempts");
+      return;
+    }
+
+    kafkaCluster.useTo().produceStrings(1, () -> {
+    }, () -> new ProducerRecord<>(topicName, READY_KEY, READY_KEY));
+
+    consumer.poll(READY_POLL_TIMEOUT).onComplete(ar -> {
+      if (ar.failed()) {
+        promise.fail(ar.cause());
+      } else if (ar.result().isEmpty()) {
+        vertx.setTimer(READY_RETRY_DELAY_MS, t -> probe(topicName, explicitAck, promise, attempt + 1));
+      } else {
+        acknowledgeAll(ar.result(), explicitAck)
+          .onComplete(ackAr -> {
+            if (ackAr.failed()) {
+              promise.fail(ackAr.cause());
+            } else {
+              drain(explicitAck, promise);
+            }
+          });
+      }
+    });
+  }
+
+  private void drain(boolean explicitAck, Promise<Void> promise) {
+    consumer.poll(READY_POLL_TIMEOUT).onComplete(ar -> {
+      if (ar.failed()) {
+        promise.fail(ar.cause());
+      } else if (ar.result().isEmpty()) {
+        promise.complete();
+      } else {
+        acknowledgeAll(ar.result(), explicitAck)
+          .onComplete(ackAr -> {
+            if (ackAr.failed()) {
+              promise.fail(ackAr.cause());
+            } else {
+              drain(explicitAck, promise);
+            }
+          });
+      }
+    });
+  }
+
+  private Future<Void> acknowledgeAll(KafkaShareConsumerRecords<String, String> records, boolean explicitAck) {
+    if (!explicitAck) {
+      return Future.succeededFuture();
+    }
+    Future<Void> chain = Future.succeededFuture();
+    for (int i = 0; i < records.size(); i++) {
+      KafkaShareConsumerRecord<String, String> record = records.recordAt(i);
+      chain = chain.compose(v -> consumer.acknowledge(record, AcknowledgeType.ACCEPT));
+    }
+    return chain.compose(v -> consumer.commitSync());
+  }
+
+  private void produce(String topicName, int count) {
+    AtomicInteger index = new AtomicInteger();
+    kafkaCluster.useTo().produceStrings(count, () -> {
+    }, () -> new ProducerRecord<>(topicName, "key-" + index.get(), "value-" + index.getAndIncrement()));
+  }
 
   @Test
   public void testConsume(TestContext ctx) {
@@ -109,20 +170,17 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
     consumer.exceptionHandler(ctx::fail);
-    consumer.handler(rec -> {
-      if (count.decrementAndGet() == 0) {
-        done.complete();
-      }
-    });
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t -> {
-        AtomicInteger index = new AtomicInteger();
-        kafkaCluster.useTo().produceStrings(numMessages, () -> {
-        }, () ->
-          new ProducerRecord<>(topicName, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, false))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.handler(rec -> {
+          if (count.decrementAndGet() == 0) {
+            done.complete();
+          }
+        });
+        produce(topicName, numMessages);
       });
-    });
   }
 
   @Test
@@ -137,17 +195,18 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     AtomicInteger count = new AtomicInteger(numMessages);
     AtomicInteger headerIndex = new AtomicInteger();
     consumer.exceptionHandler(ctx::fail);
-    consumer.handler(rec -> {
-      ctx.assertEquals(1, rec.headers().size());
-      ctx.assertEquals("hk-" + headerIndex.get(), rec.headers().get(0).key());
-      ctx.assertEquals("hv-" + headerIndex.getAndIncrement(), rec.headers().get(0).value().toString());
-      if (count.decrementAndGet() == 0) {
-        done.complete();
-      }
-    });
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t -> {
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, false))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.handler(rec -> {
+          ctx.assertEquals(1, rec.headers().size());
+          ctx.assertEquals("hk-" + headerIndex.get(), rec.headers().get(0).key());
+          ctx.assertEquals("hv-" + headerIndex.getAndIncrement(), rec.headers().get(0).value().toString());
+          if (count.decrementAndGet() == 0) {
+            done.complete();
+          }
+        });
         AtomicInteger index = new AtomicInteger();
         kafkaCluster.useTo().produceStrings(numMessages, () -> {
         }, () ->
@@ -156,7 +215,6 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
               new org.apache.kafka.common.header.internals.RecordHeader(
                 "hk-" + index.get(), ("hv-" + index.getAndIncrement()).getBytes()))));
       });
-    });
   }
 
   @Test
@@ -171,30 +229,27 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     AtomicInteger count = new AtomicInteger(numMessages);
     AtomicBoolean paused = new AtomicBoolean();
     consumer.exceptionHandler(ctx::fail);
-    consumer.handler(rec -> {
-      ctx.assertFalse(paused.get());
-      int val = count.decrementAndGet();
-      if (val == numMessages / 2) {
-        paused.set(true);
-        consumer.pause();
-        vertx.setTimer(500, id -> {
-          paused.set(false);
-          consumer.resume();
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, false))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.handler(rec -> {
+          ctx.assertFalse(paused.get());
+          int val = count.decrementAndGet();
+          if (val == numMessages / 2) {
+            paused.set(true);
+            consumer.pause();
+            vertx.setTimer(500, id -> {
+              paused.set(false);
+              consumer.resume();
+            });
+          }
+          if (val == 0) {
+            done.complete();
+          }
         });
-      }
-      if (val == 0) {
-        done.complete();
-      }
-    });
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t -> {
-        AtomicInteger index = new AtomicInteger();
-        kafkaCluster.useTo().produceStrings(numMessages, () -> {
-        }, () ->
-          new ProducerRecord<>(topicName, "key-" + index.get(), "value-" + index.getAndIncrement()));
+        produce(topicName, numMessages);
       });
-    });
   }
 
   @Test
@@ -210,32 +265,28 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     AtomicInteger count = new AtomicInteger(numMessages);
     AtomicLong demand = new AtomicLong();
     consumer.exceptionHandler(ctx::fail);
-    consumer.handler(rec -> {
-      long remaining = demand.decrementAndGet();
-      ctx.assertTrue(remaining >= 0L);
-      if (remaining == 0L) {
-        vertx.setTimer(200, id -> {
-          demand.set(batchSize);
-          consumer.fetch(batchSize);
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, false))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.pause();
+        demand.set(batchSize);
+        consumer.fetch(batchSize);
+        consumer.handler(rec -> {
+          long remaining = demand.decrementAndGet();
+          ctx.assertTrue(remaining >= 0L);
+          if (remaining == 0L) {
+            vertx.setTimer(200, id -> {
+              demand.set(batchSize);
+              consumer.fetch(batchSize);
+            });
+          }
+          if (count.decrementAndGet() == 0) {
+            done.complete();
+          }
         });
-      }
-      if (count.decrementAndGet() == 0) {
-        done.complete();
-      }
-    });
-
-    consumer.pause();
-    demand.set(batchSize);
-    consumer.fetch(batchSize);
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t -> {
-        AtomicInteger index = new AtomicInteger();
-        kafkaCluster.useTo().produceStrings(numMessages, () -> {
-        }, () ->
-          new ProducerRecord<>(topicName, "key-" + index.get(), "value-" + index.getAndIncrement()));
+        produce(topicName, numMessages);
       });
-    });
   }
 
   @Test
@@ -267,21 +318,18 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger();
     consumer.exceptionHandler(ctx::fail);
-    consumer.batchHandler(records -> {
-      count.addAndGet(records.size());
-      if (count.get() >= numMessages) {
-        done.complete();
-      }
-    });
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t -> {
-        AtomicInteger index = new AtomicInteger();
-        kafkaCluster.useTo().produceStrings(numMessages, () -> {
-        }, () ->
-          new ProducerRecord<>(topicName, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, false))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.batchHandler(records -> {
+          count.addAndGet(records.size());
+          if (count.get() >= numMessages) {
+            done.complete();
+          }
+        });
+        produce(topicName, numMessages);
       });
-    });
   }
 
   @Test
@@ -320,30 +368,25 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
     consumer.exceptionHandler(ctx::fail);
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      // Start polling immediately: without an active consumer the group does not start reading.
-      // Produce only after the init delay, so no record falls into that window and is missed.
-      AtomicInteger index = new AtomicInteger();
-      AtomicLong timerId = new AtomicLong();
-      timerId.set(vertx.setPeriodic(1000, t -> {
-        consumer.poll(Duration.ofMillis(500))
-          .onComplete(pollAr -> {
-            if (pollAr.succeeded()) {
-              if (count.addAndGet(-pollAr.result().size()) <= 0) {
-                vertx.cancelTimer(timerId.get());
-                done.complete();
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, false))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        AtomicLong timerId = new AtomicLong();
+        timerId.set(vertx.setPeriodic(1000, t ->
+          consumer.poll(Duration.ofMillis(500))
+            .onComplete(pollAr -> {
+              if (pollAr.succeeded()) {
+                if (count.addAndGet(-pollAr.result().size()) <= 0) {
+                  vertx.cancelTimer(timerId.get());
+                  done.complete();
+                }
+              } else {
+                ctx.fail(pollAr.cause());
               }
-            } else {
-              ctx.fail(pollAr.cause());
-            }
-          });
-      }));
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t ->
-        kafkaCluster.useTo().produceStrings(numMessages, () -> {
-        }, () ->
-          new ProducerRecord<>(topicName, "key-" + index.get(), "value-" + index.getAndIncrement())));
-    });
+            })));
+        produce(topicName, numMessages);
+      });
   }
 
   @Test
@@ -395,26 +438,22 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
     consumer.exceptionHandler(ctx::fail);
-    consumer.handler(rec -> {
-      consumer.acknowledge(rec, AcknowledgeType.ACCEPT).onComplete(ackAr -> {
-        ctx.assertTrue(ackAr.succeeded());
-        consumer.commitSync().onComplete(commitAr -> {
-          ctx.assertTrue(commitAr.succeeded());
-          if (count.decrementAndGet() == 0) {
-            done.complete();
-          }
-        });
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, true))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.handler(rec ->
+          consumer.acknowledge(rec, AcknowledgeType.ACCEPT).onComplete(ackAr -> {
+            ctx.assertTrue(ackAr.succeeded());
+            consumer.commitSync().onComplete(commitAr -> {
+              ctx.assertTrue(commitAr.succeeded());
+              if (count.decrementAndGet() == 0) {
+                done.complete();
+              }
+            });
+          }));
+        produce(topicName, numMessages);
       });
-    });
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t -> {
-        AtomicInteger index = new AtomicInteger();
-        kafkaCluster.useTo().produceStrings(numMessages, () -> {
-        }, () ->
-          new ProducerRecord<>(topicName, "key-" + index.get(), "value-" + index.getAndIncrement()));
-      });
-    });
   }
 
   @Test
@@ -427,25 +466,29 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     Async done = ctx.async();
     AtomicInteger deliveries = new AtomicInteger();
     consumer.exceptionHandler(ctx::fail);
-    consumer.handler(rec -> {
-      int delivery = deliveries.incrementAndGet();
-      if (delivery == 1) {
-        consumer.acknowledge(rec, AcknowledgeType.RELEASE).onComplete(ar ->
-          ctx.assertTrue(ar.succeeded()));
-      } else {
-        consumer.acknowledge(rec, AcknowledgeType.ACCEPT).onComplete(ar -> {
-          ctx.assertTrue(ar.succeeded());
-          done.complete();
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, true))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.handler(rec -> {
+          deliveries.incrementAndGet();
+          if (rec.deliveryCount() <= 1) {
+            consumer.acknowledge(rec, AcknowledgeType.RELEASE)
+              .compose(v -> consumer.commitSync())
+              .onComplete(relAr -> ctx.assertTrue(relAr.succeeded()));
+          } else {
+            consumer.acknowledge(rec, AcknowledgeType.ACCEPT)
+              .compose(v -> consumer.commitSync())
+              .onComplete(accAr -> {
+                ctx.assertTrue(accAr.succeeded());
+                ctx.assertTrue(deliveries.get() >= 2, "record should have been redelivered");
+                done.complete();
+              });
+          }
         });
-      }
-    });
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t ->
         kafkaCluster.useTo().produceStrings(1, () -> {
-        }, () ->
-          new ProducerRecord<>(topicName, "key", "value")));
-    });
+        }, () -> new ProducerRecord<>(topicName, "key", "value"));
+      });
   }
 
   @Test
@@ -459,28 +502,25 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     Async done = ctx.async();
     AtomicInteger count = new AtomicInteger(numMessages);
     consumer.exceptionHandler(ctx::fail);
-    consumer.setAcknowledgementCommitCallback((offsets, exception) -> {
-      ctx.assertNull(exception);
-      int acked = offsets.values().stream().mapToInt(Set::size).sum();
-      if (count.addAndGet(-acked) <= 0) done.complete();
-    });
-    consumer.handler(rec -> {
-      consumer.acknowledge(rec, AcknowledgeType.ACCEPT);
-      consumer.commitAsync();
-    });
-    consumer.subscribe(Collections.singleton(topicName)).onComplete(ar -> {
-      ctx.assertTrue(ar.succeeded());
-      vertx.setTimer(SHARE_GROUP_INIT_DELAY_MS, t -> {
-        AtomicInteger index = new AtomicInteger();
-        kafkaCluster.useTo().produceStrings(numMessages, () -> {
-        }, () ->
-          new ProducerRecord<>(topicName, "key-" + index.get(), "value-" + index.getAndIncrement()));
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, true))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.setAcknowledgementCommitCallback((offsets, exception) -> {
+          ctx.assertNull(exception);
+          int acked = offsets.values().stream().mapToInt(Set::size).sum();
+          if (count.addAndGet(-acked) <= 0) done.complete();
+        });
+        consumer.handler(rec -> {
+          consumer.acknowledge(rec, AcknowledgeType.ACCEPT);
+          consumer.commitAsync();
+        });
+        produce(topicName, numMessages);
       });
-    });
   }
 
   @Test(expected = org.apache.kafka.common.KafkaException.class)
-  public void testPollExceptionHandler(TestContext ctx) {
+  public void testMissingGroupIdFailsFast(TestContext ctx) {
     Properties config = shareConsumerProperties(null, null);
     config.remove(ConsumerConfig.GROUP_ID_CONFIG);
     consumer = createShareConsumer(vertx, config);
