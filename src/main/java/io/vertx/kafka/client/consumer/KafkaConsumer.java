@@ -60,7 +60,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   @GenIgnore(PERMITTED_TYPE)
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Consumer<K, V> consumer) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, consumer);
-    return new KafkaConsumerImpl<>(stream);
+    return new KafkaConsumerImpl<>(stream, false);
   }
 
   /**
@@ -74,7 +74,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   @GenIgnore(PERMITTED_TYPE)
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Consumer<K, V> consumer, KafkaClientOptions options) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, consumer, options);
-    return new KafkaConsumerImpl<>(stream);
+    return new KafkaConsumerImpl<>(stream, false);
   }
 
   /**
@@ -86,7 +86,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    */
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, new HashMap<>(config));
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   /**
@@ -101,7 +101,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config,
                                            Class<K> keyType, Class<V> valueType) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, new HashMap<>(config), keyType, valueType);
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   /**
@@ -117,7 +117,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Map<String, String> config,
                                            Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, new HashMap<>(config), keyDeserializer, valueDeserializer);
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   /**
@@ -129,7 +129,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
    */
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, KafkaClientOptions options) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options);
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   /**
@@ -144,7 +144,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, KafkaClientOptions options,
                                            Class<K> keyType, Class<V> valueType) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, keyType, valueType);
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   /**
@@ -160,7 +160,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, KafkaClientOptions options,
                                            Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, options, keyDeserializer, valueDeserializer);
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   /**
@@ -173,7 +173,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   @GenIgnore
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config);
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   /**
@@ -189,7 +189,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config,
                                            Class<K> keyType, Class<V> valueType) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config, keyType, valueType);
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   /**
@@ -205,7 +205,7 @@ public interface KafkaConsumer<K, V> extends ReadStream<KafkaConsumerRecord<K, V
   static <K, V> KafkaConsumer<K, V> create(Vertx vertx, Properties config,
                                            Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
     KafkaReadStream<K, V> stream = KafkaReadStream.create(vertx, config, keyDeserializer, valueDeserializer);
-    return new KafkaConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaConsumerImpl<>(stream, true);
   }
 
   @Fluent

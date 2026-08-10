@@ -17,12 +17,12 @@
 package io.vertx.kafka.client.producer.impl;
 
 import io.vertx.core.*;
-import io.vertx.core.internal.CloseFuture;
+import io.vertx.core.internal.Closeable;
+import io.vertx.core.internal.CloseableResource;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.kafka.client.common.KafkaClientOptions;
 import io.vertx.kafka.client.common.PartitionInfo;
-import io.vertx.kafka.client.common.impl.CloseHandler;
 import io.vertx.kafka.client.common.impl.Helper;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
@@ -32,6 +32,7 @@ import io.vertx.kafka.client.serialization.VertxSerdes;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.common.serialization.Serializer;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,45 +115,57 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     return createShared(vertx, name, () -> new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer), options);
   }
 
-  private static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Supplier<Producer<K, V>> producerFactory, KafkaClientOptions options) {
-    CloseFuture closeFuture = new CloseFuture();
-    Producer<K, V> s = ((VertxInternal)vertx).createSharedResource("__vertx.shared.kafka.producer", name, closeFuture, cf -> {
-      Producer<K, V> producer = producerFactory.get();
-      cf.add(completion -> vertx.<Void>executeBlocking(() -> {
+  private static class SharedProducer<K, V> implements Closeable {
+
+    private final Vertx vertx;
+    private final Producer<K, V> producer;
+
+    public SharedProducer(Vertx vertx,  Producer<K, V> producer) {
+      this.vertx = vertx;
+      this.producer = producer;
+    }
+
+    @Override
+    public Future<Void> shutdown(Duration timeout) {
+      return vertx.executeBlocking(() -> {
         producer.close();
         return null;
-      }).onComplete(completion));
-      return producer;
-    });
-    KafkaWriteStream<K, V> kafkaWriteStream = KafkaWriteStream.create(vertx, s, options);
-    KafkaProducerImpl<K, V> producer = new KafkaProducerImpl<>(vertx, kafkaWriteStream, new CloseHandler((timeout, ar) -> {
-      closeFuture.close().onComplete(ar);
-    }));
-    producer.registerCloseHook();
-    return producer;
+      });
+    }
   }
 
-  private final Vertx vertx;
-  private final KafkaWriteStream<K, V> stream;
-  private final CloseHandler closeHandler;
+  private static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Supplier<Producer<K, V>> producerFactory, KafkaClientOptions options) {
+    CloseableResource<SharedProducer<K, V>> sharedProducer = ((VertxInternal) vertx).createSharedResource("__vertx.shared.kafka.producer", name, () -> {
+      Producer<K, V> producer = producerFactory.get();
+      return new SharedProducer<>(vertx, producer);
+    });
+    KafkaWriteStream<K, V> kafkaWriteStream = KafkaWriteStream.create(vertx, sharedProducer.get().producer, options);
+    return new KafkaProducerImpl<>(kafkaWriteStream, sharedProducer, true);
+  }
 
-  public KafkaProducerImpl(Vertx vertx, KafkaWriteStream<K, V> stream, CloseHandler closeHandler) {
-    this.vertx = vertx;
+  private final KafkaWriteStream<K, V> stream;
+  private final Closeable close;
+
+  public KafkaProducerImpl(KafkaWriteStream<K, V> stream, Closeable close, boolean registerHook) {
+
+    Context context;
+    if (registerHook && (context = Vertx.currentContext()) != null) {
+      close = ((ContextInternal)context).registerResource(close);
+    }
+
     this.stream = stream;
-    this.closeHandler = closeHandler;
+    this.close = close;
   }
 
   public KafkaProducerImpl(Vertx vertx, KafkaWriteStream<K, V> stream) {
-    this(vertx, stream, new CloseHandler((timeout, handler) -> stream.close(timeout).onComplete(handler)));
+    this(vertx, stream, false);
   }
 
-  public KafkaProducerImpl<K, V> registerCloseHook() {
-    Context context = Vertx.currentContext();
-    if (context == null) {
-      return this;
-    }
-    closeHandler.registerCloseHook((ContextInternal) context);
-    return this;
+  public KafkaProducerImpl(Vertx vertx, KafkaWriteStream<K, V> stream, boolean registerHook) {
+    this(stream, timeout -> vertx.executeBlocking(() -> {
+      stream.close();
+      return null;
+    }), registerHook);
   }
 
   @Override
@@ -237,16 +250,12 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
 
   @Override
   public Future<Void> close(long timeout) {
-    Promise<Void> promise = Promise.promise();
-    closeHandler.close(timeout, promise);
-    return promise.future();
+    return close.shutdown(Duration.ofMillis(timeout));
   }
 
   @Override
   public Future<Void> close() {
-    Promise<Void> promise = Promise.promise();
-    closeHandler.close(promise);
-    return promise.future();
+    return close.close();
   }
 
   @Override
