@@ -47,7 +47,7 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
   @GenIgnore(PERMITTED_TYPE)
   static <K, V> KafkaShareConsumer<K, V> create(Vertx vertx, ShareConsumer<K, V> shareConsumer) {
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx, shareConsumer, new KafkaClientOptions());
-    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaShareConsumerImpl<>(stream, true);
   }
 
   /**
@@ -59,7 +59,7 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
    */
   static <K, V> KafkaShareConsumer<K, V> create(Vertx vertx, Map<String, String> config) {
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx, new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(new HashMap<>(config)), new KafkaClientOptions());
-    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaShareConsumerImpl<>(stream, true);
   }
 
   /**
@@ -92,7 +92,7 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
                                                 Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx,
       new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(new HashMap<>(config), keyDeserializer, valueDeserializer), new KafkaClientOptions());
-    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaShareConsumerImpl<>(stream, true);
   }
 
   /**
@@ -106,7 +106,7 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
     Map<String, Object> config = new HashMap<>();
     if (options.getConfig() != null) config.putAll(options.getConfig());
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx, new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(config), options);
-    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaShareConsumerImpl<>(stream, true);
   }
 
   /**
@@ -132,7 +132,7 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
     if (options.getConfig() != null) config.putAll(options.getConfig());
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx,
       new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(config), options, threadFactory);
-    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaShareConsumerImpl<>(stream, true);
   }
 
   /**
@@ -167,7 +167,7 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
     if (options.getConfig() != null) config.putAll(options.getConfig());
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx,
       new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(config, keyDeserializer, valueDeserializer), options);
-    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaShareConsumerImpl<>(stream, true);
   }
 
   /**
@@ -180,7 +180,7 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
   @GenIgnore
   static <K, V> KafkaShareConsumer<K, V> create(Vertx vertx, Properties config) {
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx, new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(config), new KafkaClientOptions());
-    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaShareConsumerImpl<>(stream, true);
   }
 
   /**
@@ -214,7 +214,7 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
                                                 Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
     KafkaShareReadStreamImpl<K, V> stream = new KafkaShareReadStreamImpl<>(vertx,
       new org.apache.kafka.clients.consumer.KafkaShareConsumer<>(config, keyDeserializer, valueDeserializer), new KafkaClientOptions());
-    return new KafkaShareConsumerImpl<>(stream).registerCloseHook();
+    return new KafkaShareConsumerImpl<>(stream, true);
   }
 
   @Fluent

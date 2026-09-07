@@ -17,7 +17,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.internal.ContextInternal;
-import io.vertx.kafka.client.common.impl.CloseHandler;
+import io.vertx.core.internal.Closeable;
 import io.vertx.kafka.client.consumer.AcknowledgeType;
 import io.vertx.kafka.client.consumer.KafkaShareConsumer;
 import io.vertx.kafka.client.consumer.KafkaShareConsumerRecord;
@@ -35,20 +35,23 @@ import java.util.Set;
 public class KafkaShareConsumerImpl<K, V> implements KafkaShareConsumer<K, V> {
 
   private final KafkaShareReadStreamImpl<K, V> stream;
-  private final CloseHandler closeHandler;
+  private final Closeable close;
 
   public KafkaShareConsumerImpl(KafkaShareReadStreamImpl<K, V> stream) {
-    this.stream = stream;
-    this.closeHandler = new CloseHandler((timeout, ar) -> stream.close().onComplete(ar));
+    this(stream, false);
   }
 
-  public synchronized KafkaShareConsumerImpl<K, V> registerCloseHook() {
-    Context context = Vertx.currentContext();
-    if (context == null) {
-      return this;
+  public KafkaShareConsumerImpl(KafkaShareReadStreamImpl<K, V> stream, boolean registerHook) {
+
+    Closeable close = timeout -> stream.close();
+
+    Context context;
+    if (registerHook && (context = Vertx.currentContext()) != null) {
+      close = ((ContextInternal) context).registerResource(close);
     }
-    closeHandler.registerCloseHook((ContextInternal) context);
-    return this;
+
+    this.stream = stream;
+    this.close = close;
   }
 
   @Override
@@ -103,9 +106,7 @@ public class KafkaShareConsumerImpl<K, V> implements KafkaShareConsumer<K, V> {
 
   @Override
   public Future<Void> close() {
-    Promise<Void> promise = Promise.promise();
-    closeHandler.close(promise);
-    return promise.future();
+    return close.close();
   }
 
   @Override
