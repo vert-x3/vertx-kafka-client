@@ -48,6 +48,13 @@ public abstract class KafkaStrimziTestBase extends KafkaTestBase {
       kafkaConfig.put("super.users", "User:ANONYMOUS");
     }
 
+    // Required for KIP-932 share groups with single broker (__share_group_state to become ready <= 2)
+    kafkaConfig.put("share.coordinator.state.topic.replication.factor", "1");
+    kafkaConfig.put("share.coordinator.state.topic.num.partitions", "1");
+    // Reduce heartbeat interval so share partition initializes faster in tests
+    kafkaConfig.put("group.share.min.heartbeat.interval.ms", "500");
+    kafkaConfig.put("group.share.heartbeat.interval.ms", "1000");
+
     StrimziKafkaCluster strimziCluster = new StrimziKafkaCluster.StrimziKafkaClusterBuilder()
       .withNumberOfBrokers(brokers)
       .withKafkaVersion(KAFKA_VERSION)
