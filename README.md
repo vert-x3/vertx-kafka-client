@@ -16,3 +16,19 @@ See the online docs for more details:
 - [Topic Management](https://vertx.io/docs/vertx-kafka-client/java/#_vert_x_kafka_admin_client)
 
 **Note: This module has Tech Preview status, this means the API can change between versions.**
+
+## Running tests
+
+The full test suite starts Kafka brokers using Strimzi Testcontainers, so Docker must be installed and running before executing:
+
+```bash
+mvn clean verify
+```
+
+Some mock and unit tests do not start Kafka containers and can be run without Docker, for example:
+
+```bash
+mvn -Dtest=ProducerMockTest,ConsumerMockTest,KafkaReadStreamMockTest,NoClusterTest,RetryHelperTest,KafkaHeaderTest,TopicPartitionTest test
+```
+
+This runs only the specified tests, not the full test suite.
