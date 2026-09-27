@@ -84,10 +84,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config) {
-    return new KafkaReadStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.consumer.KafkaConsumer<>(config),
-      KafkaClientOptions.fromProperties(config, false));
+    try {
+      return new KafkaReadStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.consumer.KafkaConsumer<>(config),
+        KafkaClientOptions.fromProperties(config, false));
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -115,10 +119,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Properties config, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
-    return new KafkaReadStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer),
-      KafkaClientOptions.fromProperties(config, false));
+    try {
+      return new KafkaReadStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer),
+        KafkaClientOptions.fromProperties(config, false));
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -129,10 +137,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config) {
-    return new KafkaReadStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.consumer.KafkaConsumer<>(config),
-      KafkaClientOptions.fromMap(config, false));
+    try {
+      return new KafkaReadStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.consumer.KafkaConsumer<>(config),
+        KafkaClientOptions.fromMap(config, false));
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -160,10 +172,14 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, Map<String, Object> config, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
-    return new KafkaReadStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer),
-      KafkaClientOptions.fromMap(config, false));
+    try {
+      return new KafkaReadStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer),
+        KafkaClientOptions.fromMap(config, false));
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -174,11 +190,15 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, KafkaClientOptions options) {
-    Map<String, Object> config = new HashMap<>();
-    if (options.getConfig() != null) {
-      config.putAll(options.getConfig());
+    try {
+      Map<String, Object> config = new HashMap<>();
+      if (options.getConfig() != null) {
+        config.putAll(options.getConfig());
+      }
+      return new KafkaReadStreamImpl<>(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config), options);
+    } catch (Exception e) {
+      throw e;
     }
-    return new KafkaReadStreamImpl<>(vertx, new org.apache.kafka.clients.consumer.KafkaConsumer<>(config), options);
   }
 
   /**
@@ -206,14 +226,18 @@ public interface KafkaReadStream<K, V> extends ReadStream<ConsumerRecord<K, V>> 
    * @return  an instance of the KafkaReadStream
    */
   static <K, V> KafkaReadStream<K, V> create(Vertx vertx, KafkaClientOptions options, Deserializer<K> keyDeserializer, Deserializer<V> valueDeserializer) {
-    Map<String, Object> config = new HashMap<>();
-    if (options.getConfig() != null) {
-      config.putAll(options.getConfig());
+    try {
+      Map<String, Object> config = new HashMap<>();
+      if (options.getConfig() != null) {
+        config.putAll(options.getConfig());
+      }
+      return new KafkaReadStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer),
+        options);
+    } catch (Exception e) {
+      throw e;
     }
-    return new KafkaReadStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.consumer.KafkaConsumer<>(config, keyDeserializer, valueDeserializer),
-      options);
   }
 
   /**
