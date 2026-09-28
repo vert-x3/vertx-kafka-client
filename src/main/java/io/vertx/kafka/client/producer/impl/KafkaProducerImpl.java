@@ -134,14 +134,18 @@ public class KafkaProducerImpl<K, V> implements KafkaProducer<K, V> {
     }
   }
 
-  private static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Supplier<Producer<K, V>> producerFactory, KafkaClientOptions options) {
-    CloseableResource<SharedProducer<K, V>> sharedProducer = ((VertxInternal) vertx).createSharedResource("__vertx.shared.kafka.producer", name, () -> {
-      Producer<K, V> producer = producerFactory.get();
-      return new SharedProducer<>(vertx, producer);
-    });
-    KafkaWriteStream<K, V> kafkaWriteStream = KafkaWriteStream.create(vertx, sharedProducer.get().producer, options);
-    return new KafkaProducerImpl<>(kafkaWriteStream, sharedProducer, true);
-  }
+   private static <K, V> KafkaProducer<K, V> createShared(Vertx vertx, String name, Supplier<Producer<K, V>> producerFactory, KafkaClientOptions options) {
+     CloseableResource<SharedProducer<K, V>> sharedProducer = ((VertxInternal) vertx).createSharedResource("__vertx.shared.kafka.producer", name, () -> {
+       try {
+         Producer<K, V> producer = producerFactory.get();
+         return new SharedProducer<>(vertx, producer);
+       } catch (Exception e) {
+         throw e;
+       }
+     });
+     KafkaWriteStream<K, V> kafkaWriteStream = KafkaWriteStream.create(vertx, sharedProducer.get().producer, options);
+     return new KafkaProducerImpl<>(kafkaWriteStream, sharedProducer, true);
+   }
 
   private final KafkaWriteStream<K, V> stream;
   private final Closeable close;

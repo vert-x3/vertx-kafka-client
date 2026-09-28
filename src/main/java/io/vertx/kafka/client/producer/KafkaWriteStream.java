@@ -44,6 +44,7 @@ import java.util.Properties;
  */
 public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>> {
 
+
   int DEFAULT_MAX_SIZE = 1024 * 1024;
 
   /**
@@ -54,10 +55,14 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @return  an instance of the KafkaWriteStream
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Properties config) {
-    return new KafkaWriteStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.producer.KafkaProducer<>(config),
-      KafkaClientOptions.fromProperties(config, true));
+    try {
+      return new KafkaWriteStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.producer.KafkaProducer<>(config),
+        KafkaClientOptions.fromProperties(config, true));
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -85,10 +90,14 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @return  an instance of the KafkaWriteStream
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Properties config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return new KafkaWriteStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer),
-      KafkaClientOptions.fromProperties(config, true));
+    try {
+      return new KafkaWriteStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer),
+        KafkaClientOptions.fromProperties(config, true));
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -99,10 +108,14 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @return  an instance of the KafkaWriteStream
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Map<String, Object> config) {
-    return new KafkaWriteStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.producer.KafkaProducer<>(config),
-      KafkaClientOptions.fromMap(config, true));
+    try {
+      return new KafkaWriteStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.producer.KafkaProducer<>(config),
+        KafkaClientOptions.fromMap(config, true));
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -130,10 +143,14 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @return  an instance of the KafkaWriteStream
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, Map<String, Object> config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    return new KafkaWriteStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer),
-      KafkaClientOptions.fromMap(config, true));
+    try {
+      return new KafkaWriteStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer),
+        KafkaClientOptions.fromMap(config, true));
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   /**
@@ -144,11 +161,15 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @return  an instance of the KafkaWriteStream
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, KafkaClientOptions options) {
-    Map<String, Object> config = new HashMap<>();
-    if (options.getConfig() != null) {
-      config.putAll(options.getConfig());
+    try {
+      Map<String, Object> config = new HashMap<>();
+      if (options.getConfig() != null) {
+        config.putAll(options.getConfig());
+      }
+      return new KafkaWriteStreamImpl<>(vertx, new org.apache.kafka.clients.producer.KafkaProducer<>(config), options);
+    } catch (Exception e) {
+      throw e;
     }
-    return new KafkaWriteStreamImpl<>(vertx, new org.apache.kafka.clients.producer.KafkaProducer<>(config), options);
   }
 
   /**
@@ -176,14 +197,18 @@ public interface KafkaWriteStream<K, V> extends WriteStream<ProducerRecord<K, V>
    * @return  an instance of the KafkaWriteStream
    */
   static <K, V> KafkaWriteStream<K, V> create(Vertx vertx, KafkaClientOptions options, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
-    Map<String, Object> config = new HashMap<>();
-    if (options.getConfig() != null) {
-      config.putAll(options.getConfig());
+    try {
+      Map<String, Object> config = new HashMap<>();
+      if (options.getConfig() != null) {
+        config.putAll(options.getConfig());
+      }
+      return new KafkaWriteStreamImpl<>(
+        vertx,
+        new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer),
+        options);
+    } catch (Exception e) {
+      throw e;
     }
-    return new KafkaWriteStreamImpl<>(
-      vertx,
-      new org.apache.kafka.clients.producer.KafkaProducer<>(config, keySerializer, valueSerializer),
-      options);
   }
 
   /**
