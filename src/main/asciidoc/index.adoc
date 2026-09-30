@@ -319,6 +319,8 @@ This handler will then be called when the close has fully completed.
 {@link examples.VertxKafkaClientExamples#exampleConsumerClose(io.vertx.kafka.client.consumer.KafkaConsumer)}
 ----
 
+include::shareconsumer.adoc[]
+
 == Sending messages to a topic
 
 You can use  {@link io.vertx.kafka.client.producer.KafkaProducer#write} to send messages (records) to a topic.
