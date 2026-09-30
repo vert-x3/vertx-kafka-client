@@ -350,6 +350,8 @@ public interface KafkaShareConsumer<K, V> extends ReadStream<KafkaShareConsumerR
    * <p>
    * This method can only be used if the consumer is configured with
    * <b>explicit acknowledgement</b> ({@code share.acknowledgement.mode=explicit}).
+   * That property defaults to {@code implicit}, and calling this method on a consumer
+   * left at the default fails with an {@link IllegalStateException}.
    *
    * @param record the record to acknowledge
    * @param type   the acknowledgement type indicating how the record was processed

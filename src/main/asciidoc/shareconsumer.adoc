@@ -51,7 +51,11 @@ You acknowledge nothing yourself.
 {@link io.vertx.kafka.client.consumer.KafkaShareConsumer#acknowledge}. Anything you leave
 unacknowledged is released once the acquisition lock expires, and delivered again.
 
-The Vert.x client never sets this property for you. Pick the mode your application needs.
+The Vert.x client never sets this property for you, so a consumer created without it runs in
+`implicit` mode. The two modes cannot be mixed: calling
+{@link io.vertx.kafka.client.consumer.KafkaShareConsumer#acknowledge} on an implicit consumer
+fails with an `IllegalStateException`, and in `explicit` mode every record handed to the
+application must be acknowledged before the next poll or commit.
 
 [source,$lang]
 ----
