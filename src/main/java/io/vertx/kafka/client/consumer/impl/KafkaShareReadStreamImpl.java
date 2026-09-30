@@ -22,6 +22,7 @@ import org.apache.kafka.common.errors.WakeupException;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +30,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<K, V> {
+
+  private static final String NOT_SUBSCRIBED = "Consumer is not subscribed to any topics";
 
   private final ShareConsumer<K, V> shareConsumer;
   private AcknowledgementCommitCallback pendingAckCallback;
@@ -107,77 +110,42 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
     return promise.future();
   }
 
+  private <T> Future<T> submitWhenSubscribed(Callable<T> task) {
+    return submitWhenStarted(NOT_SUBSCRIBED, task);
+  }
+
   public Future<Set<String>> subscription() {
-    Promise<Set<String>> promise = Promise.promise();
-    worker.submit(() -> {
-      try {
-        Set<String> topics = shareConsumer.subscription();
-        context.runOnContext(v -> promise.complete(topics));
-      } catch (Exception e) {
-        context.runOnContext(v -> promise.fail(e));
-      }
-    });
-    return promise.future();
+    return submitWhenSubscribed(shareConsumer::subscription);
   }
 
   public Future<Void> unsubscribe() {
-    Promise<Void> promise = Promise.promise();
-    worker.submit(() -> {
-      try {
-        shareConsumer.unsubscribe();
-        context.runOnContext(v -> promise.complete());
-      } catch (Exception e) {
-        context.runOnContext(v -> promise.fail(e));
-      }
+    return submitWhenSubscribed(() -> {
+      shareConsumer.unsubscribe();
+      return null;
     });
-    return promise.future();
   }
 
   public Future<ConsumerRecords<K, V>> poll(Duration timeout) {
-    Promise<ConsumerRecords<K, V>> promise = Promise.promise();
-    if (worker == null) {
-      promise.fail(new IllegalStateException("Consumer is not subscribed to any topics"));
-      return promise.future();
-    }
-    worker.submit(() -> {
+    return submitWhenSubscribed(() -> {
       try {
-        ConsumerRecords<K, V> records = shareConsumer.poll(timeout);
-        context.runOnContext(v -> promise.complete(records));
+        return shareConsumer.poll(timeout);
       } catch (WakeupException ignore) {
-        context.runOnContext(v -> promise.complete(ConsumerRecords.empty()));
-      } catch (Exception e) {
-        context.runOnContext(v -> promise.fail(e));
+        return ConsumerRecords.empty();
       }
     });
-    return promise.future();
   }
 
   public Future<Void> acknowledge(ConsumerRecord<K, V> record, AcknowledgeType type) {
-    Promise<Void> promise = Promise.promise();
-    worker.submit(() -> {
-      try {
-        shareConsumer.acknowledge(record, type);
-        context.runOnContext(v -> promise.complete());
-      } catch (Exception e) {
-        context.runOnContext(v -> promise.fail(e));
-      }
+    return submitWhenSubscribed(() -> {
+      shareConsumer.acknowledge(record, type);
+      return null;
     });
-    return promise.future();
   }
 
   public Future<Map<TopicIdPartition, Optional<KafkaException>>> commitSync(Duration timeout) {
-    Promise<Map<TopicIdPartition, Optional<KafkaException>>> promise = Promise.promise();
-    worker.submit(() -> {
-      try {
-        Map<TopicIdPartition, Optional<KafkaException>> result = timeout != null
-          ? shareConsumer.commitSync(timeout)
-          : shareConsumer.commitSync();
-        context.runOnContext(v -> promise.complete(result));
-      } catch (Exception e) {
-        context.runOnContext(v -> promise.fail(e));
-      }
-    });
-    return promise.future();
+    return submitWhenSubscribed(() -> timeout != null
+      ? shareConsumer.commitSync(timeout)
+      : shareConsumer.commitSync());
   }
 
   public Future<Void> commitSync() {
@@ -199,6 +167,9 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
   }
 
   public void commitAsync() {
+    if (worker == null) {
+      throw new IllegalStateException(NOT_SUBSCRIBED);
+    }
     worker.submit(() -> {
       try {
         shareConsumer.commitAsync();

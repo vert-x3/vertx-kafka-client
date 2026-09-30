@@ -20,6 +20,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -79,6 +80,35 @@ abstract class AbstractKafkaReadStreamImpl<K, V> {
     return Executors.newSingleThreadExecutor(
       Objects.requireNonNullElseGet(threadFactory, () -> r -> new Thread(r, namePrefix + threadCount.getAndIncrement()))
     );
+  }
+
+  /**
+   * Run {@code task} on the worker thread that owns the native consumer and deliver its result
+   * on the event loop.
+   * <p>
+   * The worker is created lazily, when the subclass first subscribes or assigns, so submitting
+   * to it directly throws a {@link NullPointerException} on a consumer that has done neither.
+   * Every operation therefore goes through here, and the returned future fails with an
+   * {@link IllegalStateException} carrying {@code notStartedMessage} instead.
+   *
+   * @param notStartedMessage describes, in the subclass' own terms, what has not happened yet
+   * @param task              the work to run on the worker thread
+   */
+  protected <T> Future<T> submitWhenStarted(String notStartedMessage, Callable<T> task) {
+    Promise<T> promise = Promise.promise();
+    if (worker == null) {
+      promise.fail(new IllegalStateException(notStartedMessage));
+      return promise.future();
+    }
+    worker.submit(() -> {
+      try {
+        T result = task.call();
+        context.runOnContext(v -> promise.complete(result));
+      } catch (Exception e) {
+        context.runOnContext(v -> promise.fail(e));
+      }
+    });
+    return promise.future();
   }
 
   public void exceptionHandler(Handler<Throwable> handler) {

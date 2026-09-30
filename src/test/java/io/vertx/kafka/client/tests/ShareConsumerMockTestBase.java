@@ -17,6 +17,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.kafka.client.consumer.AcknowledgeType;
 import io.vertx.kafka.client.consumer.KafkaShareConsumer;
 import io.vertx.kafka.client.consumer.KafkaShareConsumerRecord;
+import io.vertx.kafka.client.consumer.impl.KafkaShareConsumerRecordImpl;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicIdPartition;
@@ -477,6 +478,67 @@ public abstract class ShareConsumerMockTestBase {
         mock.addRecord(new ConsumerRecord<>(expectedTopic, expectedPartition, 0L, expectedKey, expectedValue));
         vertx.setTimer(100, t -> shareConsumer.resume());
       }));
+  }
+
+  @Test
+  public void testSubscriptionBeforeSubscribeFails(TestContext ctx) {
+    MockShareConsumer<String, String> mock = new MockShareConsumer<>();
+    KafkaShareConsumer<String, String> shareConsumer = createShareConsumer(vertx, mock);
+
+    shareConsumer.subscription()
+      .onComplete(ctx.asyncAssertFailure(err ->
+        ctx.assertTrue(err instanceof IllegalStateException, "got " + err)));
+  }
+
+  @Test
+  public void testUnsubscribeBeforeSubscribeFails(TestContext ctx) {
+    MockShareConsumer<String, String> mock = new MockShareConsumer<>();
+    KafkaShareConsumer<String, String> shareConsumer = createShareConsumer(vertx, mock);
+
+    shareConsumer.unsubscribe()
+      .onComplete(ctx.asyncAssertFailure(err ->
+        ctx.assertTrue(err instanceof IllegalStateException, "got " + err)));
+  }
+
+  @Test
+  public void testAcknowledgeBeforeSubscribeFails(TestContext ctx) {
+    MockShareConsumer<String, String> mock = new MockShareConsumer<>();
+    KafkaShareConsumer<String, String> shareConsumer = createShareConsumer(vertx, mock);
+
+    KafkaShareConsumerRecord<String, String> record = new KafkaShareConsumerRecordImpl<>(
+      new ConsumerRecord<>(expectedTopic, expectedPartition, 0L, expectedKey, expectedValue));
+
+    shareConsumer.acknowledge(record, AcknowledgeType.ACCEPT)
+      .onComplete(ctx.asyncAssertFailure(err ->
+        ctx.assertTrue(err instanceof IllegalStateException, "got " + err)));
+  }
+
+  @Test
+  public void testCommitSyncBeforeSubscribeFails(TestContext ctx) {
+    MockShareConsumer<String, String> mock = new MockShareConsumer<>();
+    KafkaShareConsumer<String, String> shareConsumer = createShareConsumer(vertx, mock);
+
+    shareConsumer.commitSync()
+      .onComplete(ctx.asyncAssertFailure(err ->
+        ctx.assertTrue(err instanceof IllegalStateException, "got " + err)));
+  }
+
+  @Test
+  public void testCommitSyncWithDurationBeforeSubscribeFails(TestContext ctx) {
+    MockShareConsumer<String, String> mock = new MockShareConsumer<>();
+    KafkaShareConsumer<String, String> shareConsumer = createShareConsumer(vertx, mock);
+
+    shareConsumer.commitSync(Duration.ofSeconds(1))
+      .onComplete(ctx.asyncAssertFailure(err ->
+        ctx.assertTrue(err instanceof IllegalStateException, "got " + err)));
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testCommitAsyncBeforeSubscribeThrows(TestContext ctx) {
+    MockShareConsumer<String, String> mock = new MockShareConsumer<>();
+    KafkaShareConsumer<String, String> shareConsumer = createShareConsumer(vertx, mock);
+
+    shareConsumer.commitAsync();
   }
 
 }
