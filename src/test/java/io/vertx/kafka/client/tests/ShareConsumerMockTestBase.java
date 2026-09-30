@@ -29,6 +29,7 @@ import org.junit.runner.RunWith;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Optional;
 import java.util.Set;
 
@@ -541,4 +542,23 @@ public abstract class ShareConsumerMockTestBase {
     shareConsumer.commitAsync();
   }
 
+
+  @Test
+  public void testCloseAfterUnsubscribeClosesNativeConsumer(TestContext ctx) {
+    AtomicBoolean nativeClosed = new AtomicBoolean();
+    MockShareConsumer<String, String> mock = new MockShareConsumer<>() {
+      @Override
+      public synchronized void close() {
+        nativeClosed.set(true);
+        super.close();
+      }
+    };
+    KafkaShareConsumer<String, String> shareConsumer = createShareConsumer(vertx, mock);
+
+    shareConsumer.subscribe(expectedTopic)
+      .compose(v -> shareConsumer.unsubscribe())
+      .compose(v -> shareConsumer.close())
+      .onComplete(ctx.asyncAssertSuccess(v -> ctx.assertTrue(nativeClosed.get(),
+        "close() must still reach the native consumer after unsubscribe")));
+  }
 }

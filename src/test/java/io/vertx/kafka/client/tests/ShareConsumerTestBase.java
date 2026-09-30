@@ -525,4 +525,34 @@ public abstract class ShareConsumerTestBase extends KafkaStrimziTestBase {
     config.remove(ConsumerConfig.GROUP_ID_CONFIG);
     consumer = createShareConsumer(vertx, config);
   }
+
+  @Test
+  public void testUnsubscribeStopsPollingWithoutError(TestContext ctx) {
+    String topicName = "testShareUnsubNoError-" + this.getClass().getName();
+
+    kafkaCluster.createTopic(topicName, 1, 1);
+
+    consumer = createShareConsumer(vertx, shareConsumerProperties(topicName, topicName));
+    Async done = ctx.async();
+    AtomicInteger errors = new AtomicInteger();
+    consumer.exceptionHandler(err -> errors.incrementAndGet());
+    consumer.subscribe(Collections.singleton(topicName))
+      .compose(v -> awaitShareGroupReady(topicName, false))
+      .onComplete(ar -> {
+        ctx.assertTrue(ar.succeeded());
+        consumer.handler(rec -> {
+        });
+        consumer.unsubscribe().onComplete(unsubAr -> {
+          ctx.assertTrue(unsubAr.succeeded());
+          vertx.setTimer(2000, t ->
+            consumer.subscription().onComplete(subAr -> {
+              ctx.assertTrue(subAr.succeeded());
+              ctx.assertTrue(subAr.result().isEmpty());
+              ctx.assertEquals(0, errors.get(),
+                "unsubscribing must not surface an error to the exception handler");
+              done.complete();
+            }));
+        });
+      });
+  }
 }

@@ -52,6 +52,7 @@ abstract class AbstractKafkaReadStreamImpl<K, V> {
   private final ThreadFactory threadFactory;
 
   protected final AtomicBoolean closed = new AtomicBoolean(true);
+  protected final AtomicBoolean subscribed = new AtomicBoolean(false);
   protected final AtomicBoolean polling = new AtomicBoolean(false);
   protected final AtomicLong demand = new AtomicLong(Long.MAX_VALUE);
 
@@ -172,13 +173,13 @@ abstract class AbstractKafkaReadStreamImpl<K, V> {
   }
 
   protected void schedule() {
-    if (!closed.get() && demand.get() > 0L && (recordHandler != null || batchHandler != null)) {
+    if (!closed.get() && subscribed.get() && demand.get() > 0L && (recordHandler != null || batchHandler != null)) {
       context.runOnContext(v -> run());
     }
   }
 
   private void run() {
-    if (closed.get()) {
+    if (closed.get() || !subscribed.get()) {
       return;
     }
 

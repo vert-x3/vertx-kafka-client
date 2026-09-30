@@ -55,7 +55,7 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
       worker.submit(() -> {
         boolean submitted = false;
         try {
-          if (!closed.get()) {
+          if (!closed.get() && subscribed.get()) {
             ConsumerRecords<K, V> records = shareConsumer.poll(pollTimeout);
             if (records != null && records.count() > 0) {
               submitted = true;
@@ -98,6 +98,7 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
       try {
         if (cb != null) shareConsumer.setAcknowledgementCommitCallback(cb);
         shareConsumer.subscribe(topics);
+        subscribed.set(true);
         context.runOnContext(v -> {
           promise.complete();
           schedule();
@@ -120,6 +121,7 @@ public class KafkaShareReadStreamImpl<K, V> extends AbstractKafkaReadStreamImpl<
 
   public Future<Void> unsubscribe() {
     return submitWhenSubscribed(() -> {
+      subscribed.set(false);
       shareConsumer.unsubscribe();
       return null;
     });
