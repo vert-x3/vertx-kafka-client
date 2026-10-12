@@ -163,5 +163,24 @@ public abstract class ConsumerMockTestBase {
     }));
   }
 
+  /**
+   * Test that invalid Kafka configuration throws exception
+   */
+  @Test
+  public void testInvalidConsumerConfiguration(TestContext ctx) {
+    java.util.Properties config = new java.util.Properties();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("group.id", "test-group");
+    config.put("session.timeout.ms", "invalid"); // Invalid - should be a number
+
+    try {
+      io.vertx.kafka.client.consumer.KafkaConsumer.create(vertx, config);
+      ctx.fail("Expected exception for invalid configuration");
+    } catch (Exception e) {
+      // Expected - configuration validation should throw exception
+      ctx.assertTrue(e.getMessage() != null);
+    }
+  }
+
   abstract <K, V> KafkaReadStream<K, V> createConsumer(Vertx vertx, Consumer<K, V> consumer);
 }

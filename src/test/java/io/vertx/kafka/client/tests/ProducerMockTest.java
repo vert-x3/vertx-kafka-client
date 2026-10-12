@@ -215,4 +215,22 @@ public class ProducerMockTest {
       vertx.exceptionHandler(null);
     }
   }
+
+  /**
+   * Test that invalid Kafka configuration throws exception
+   */
+  @Test
+  public void testInvalidProducerConfiguration(TestContext ctx) {
+    Properties config = new Properties();
+    config.put("bootstrap.servers", "localhost:9092");
+    config.put("acks", "invalid"); // Invalid - should be "all", "1", or "0"
+
+    try {
+      KafkaProducer.create(vertx, config);
+      ctx.fail("Expected exception for invalid configuration");
+    } catch (Exception e) {
+      // Expected - configuration validation should throw exception
+      ctx.assertTrue(e.getMessage() != null);
+    }
+  }
 }
